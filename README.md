@@ -22,8 +22,7 @@ On some READMEs, you may see small images that convey metadata, such as whether 
 ## Visuals
 Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method. -->
 
-![Animation of the optimal trajectory](https://gitlab.lrz.de/00000000014B2A56/rocket-control-framework/-/blob/main/Videos/animation.gif)
-
+![Animation of the optimal trajectory](Videos/animation.gif)
 
 ## Installation
 Currently, just clone the repository.
@@ -62,7 +61,7 @@ This project is still in development. The next steps are:
 Thank you for your interest in contributing to this project! Currently we have no guidelines for external aditions, but feel free to contact me if you have any suggestions or ideas.
 
 ## Acknowledgments
-I would like to express my gratitude to my mentors, Jon Arrizabalaga and Felix Ebert, for their guidance and support throughout this project. Their expertise and insights have been invaluable in this project an it's results.
+I would like to express my gratitude to my mentors, Jon Arrizabalaga and Felix Ebert, for their guidance and support throughout this project. Their expertise and insights have been invaluable in this project and it's results.
 
 ## License
 Currenty, no license.
