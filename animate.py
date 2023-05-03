@@ -34,10 +34,12 @@ def animate(
     x,
     y,
     gamma,
+    delta_tvc,
     state_horizon_list,
     control_horizon_list,
     N=False,
     dt=False,
+    target_goal=False,
     save=False,
     scale=1,
     matplotlib=False,
@@ -46,11 +48,12 @@ def animate(
     f_x = Function(t, x)
     f_y = Function(t, y)
     f_gamma = Function(t, np.rad2deg(gamma))
+    f_delta_tvc_c = Function(t, np.rad2deg(delta_tvc))
 
     # animation constants
     offset = 10
     dt = 1 / 60 / 3
-    target_goal = (30, 30)
+    target_goal = (30, 30) if target_goal == False else target_goal
 
     # Initialization
     xlim_inf = abs(min(x))
@@ -66,8 +69,8 @@ def animate(
         w = imageio.get_writer("Videos/rocket.mp4", format="FFMPEG", fps=60)
 
     # Creating animation screen
-    size = np.array([int(1920 / 1.25), int(1080 / 1.25)])
-    # size = np.array([int(3840 / 1.5), int(2160 / 1.5)])
+    # size = np.array([int(1920 / 1.25), int(1080 / 1.25)])
+    size = np.array([int(3840 / 1.5), int(2160 / 1.5)])
     screen = pygame.display.set_mode(size)
 
     # Preparing images
@@ -75,13 +78,35 @@ def animate(
     background = pygame.transform.scale(background, (size))
 
     rocket = pygame.image.load("Animation/rocket.png")
-    rocket = pygame.transform.scale(rocket, (int(size[0] / 10), int((151 / 10))))
-    # rocket = pygame.transform.scale(
-    #     rocket, (int(size[0] / 10), int((3840 / 1920) * 151 / 10))
-    # )
+    # rocket = pygame.transform.scale(rocket, (int(size[0] / 10), int((151 / 10))))
+    rocket = pygame.transform.scale(
+        rocket, (int(size[0] / 10), int((3840 / 1920) * 151 / 10))
+    )
 
     target = pygame.image.load("Animation/target.png")
     target = pygame.transform.scale(target, (40, 40))
+
+    # nozzle: 2000x731
+    nozzle = pygame.image.load("Animation/nozzle.png")
+    nozzle_scale = rocket.get_size()[1] / nozzle.get_size()[1]
+    nozzle = pygame.transform.scale(
+        nozzle,
+        (
+            int(nozzle_scale * nozzle.get_size()[0]),
+            int(nozzle_scale * nozzle.get_size()[1]),
+        ),
+    )
+
+    # flame: 2000x731
+    flame = pygame.image.load("Animation/flame.png")
+    flame_scale = rocket.get_size()[1] / flame.get_size()[1]
+    flame = pygame.transform.scale(
+        flame,
+        (
+            int(flame_scale * flame.get_size()[0]),
+            int(flame_scale * flame.get_size()[1]),
+        ),
+    )
 
     # Initialize position vectors
     initial_position = np.array([0, size[1] - 128])
@@ -146,6 +171,19 @@ def animate(
         # screen.blit(escala, (5, 70))
         screen.blit(target, target_pos)
         blitRotateCenter(screen, rocket, position, f_gamma(timeCount))
+        # pos_nozzle = (
+        #     position  # + np.array([rocket.get_width() / 2, -rocket.get_height()])
+        # )
+        # blitRotateCenter(screen, nozzle, pos_nozzle, f_gamma(timeCount) + 180)
+        # pos_flame = position + np.array(
+        #     [
+        #         rocket.get_width() / 2 * np.cos(np.deg2rad(f_gamma(timeCount)))
+        #         - rocket.get_height() * np.sin(np.deg2rad(f_gamma(timeCount))),
+        #         rocket.get_width() / 2 * np.sin(np.deg2rad(f_gamma(timeCount)))
+        #         + rocket.get_height() * np.cos(np.deg2rad(f_gamma(timeCount))),
+        #     ]
+        # )
+        # blitRotateCenter(screen, flame, pos_flame, f_gamma(timeCount) + 180)
 
         time_list.append(timeCount)
         x_list.append(f_x(timeCount))

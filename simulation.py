@@ -9,79 +9,168 @@ import casadi as ca
 from MPC_controller import MPC_controller
 from animate import *
 
-# global variables
-# universal constants
+
+############################ User defined parameters ###########################
+# environment variables
 g = 9.81  # gravity
 
 # rocket variables
 m = 150  # mass of the hopper
+mf = 50  # final mass of the hopper
 h = 2  # height of the hopper
 radius = 0.25  # radius of the hopper
-C = (
-    1 / 12 * m * (h**2 + 3 * radius**2)
-)  # moment of inertia of the hopper perpendicular to the main axis
+l_tvc = 0.5  # distance from the center of mass to the TVC
+
+# TVC parameters
+K_tvc = 1  # TVC gain
+T_tvc = 0.1  # TVC time constant
+
+# Thrust parameters
+K_thrust = 1  # Thrust gain
+T_thrust = 1  # Thrust time constant
 
 # solution parameters
 t0 = 0  # initial time
 tf = 15  # final time
-initial_state = [0, 0, 0, 0, np.deg2rad(90), 0]
-target = [30, 0, 30, 0, np.deg2rad(90), 0]
+
+# state space: [x, x_dot, y, y_dot, gamma, gamma_dot, delta_tvc]
+initial_state = [0, 0, 0, 0, np.deg2rad(90), 0, 0]
+target = [30, 0, 30, 0, np.deg2rad(90), 0, 0]
 max_step = 1e-4
 
 # controller parameters
 T = 1  # time horizon
 N = 40  # Number of control intervals
+u_max_f = 2 * m * g  # maxium thrust
+u_min_f = 0.35 * u_max_f  # should be 30% to 40% of the max thrust
+u_max_delta_tvc_c = np.deg2rad(10)  # maxium thrust vector angle
+u_min_delta_tvc_c = -np.deg2rad(10)  # minium thrust vector angle
+gamma_max = np.deg2rad(30) + initial_state[4]  # maxium yaw angle
+gamma_min = np.deg2rad(-30) + initial_state[4]  # minium yaw angle
 
-u_max_f = 10
-u_min_f = -10
-u_max_tau = 10
-u_min_tau = -10
+q1 = 5  # position in x cost penalty
+q2 = 5  # velocity in x cost penalty
+q3 = 10  # position in y cost penalty
+q4 = 10  # velocity in y cost penalty
+q5 = 15  # yaw angle cost penalty
+q6 = 3  # yaw rate cost penalty
+q7 = 1e-15  # thrust vector angle cost penalty
+Qf_gain = 10  # gain of the final cost
 
-q1 = 5
-q2 = 5
-q3 = 10
-q4 = 10
-q5 = 15
-q6 = 3
-Qf_gain = 10
-r = 1e-4
+r1 = 1e-4  # thrust cost penalty
+r2 = 100  # thrust vector angle cost penalty
+
+# normalizing parameters
+pos_norm = 1  # position normalization
+vel_norm = 1  # velocity normalization
+angle_norm = 1  # np.deg2rad(15)  # angle normalization
+angle_rate_norm = 1  # np.deg2rad(5)  # angle rate normalization
+thrust_norm = 1  # thrust normalization
+
+###################### Calculated and casadi varibles ##########################
+C = (
+    1 / 12 * m * (h**2 + 3 * radius**2)
+)  # moment of inertia of the hopper perpendicular to the main axis
 
 # initial state
-t0_val = 0
-x0_val = ca.vertcat(*initial_state)
-x_target = ca.vertcat(*target)
-Q = ca.diag([q1, q2, q3, q4, q5, q6])
-Qf = Qf_gain * Q
+t0_val = 0  # initial time
+x0_val = ca.vertcat(*initial_state)  # initial state in casadi varible
+x_target = ca.vertcat(*target)  # target state in casadi varible
 
-u_bounds = [(u_min_f, u_max_f), (u_min_tau, u_max_tau)]
+Q = ca.diag([q1, q2, q3, q4, q5, q6, q7])  # cost matrix
+Qf = Qf_gain * Q  # final cost matrix
+R = ca.diag([r1, r2])  # control cost matrix
 
+# control bounds
+u_bounds = [(u_min_f, u_max_f), (u_min_delta_tvc_c, u_max_delta_tvc_c)]
+
+
+######################### Creating the dictionaries ############################
+# environment parameters
+env_params = {
+    "g": g,
+}
+
+# Rocket parameters
+rocket_params = {
+    "m": m,
+    "h": h,
+    "radius": radius,
+    "C": C,
+    "K_tvc": K_tvc,
+    "T_tvc": T_tvc,
+    "l_tvc": l_tvc,
+    "K_thrust": K_thrust,
+    "T_thrust": T_thrust,
+}
+
+# Controller parameters
+controller_params = {
+    "T": T,
+    "N": N,
+    "dt": T / N,
+    "u_bounds": u_bounds,
+    "t0": t0_val,
+    "x0": x0_val,
+    "x_target": x_target,
+    "Q": Q,
+    "Qf": Qf,
+    "R": R,
+    "gamma_bounds": (gamma_min, gamma_max),
+}
+
+normalization_params_x = [
+    1 / pos_norm,
+    1 / vel_norm,
+    1 / pos_norm,
+    1 / vel_norm,
+    1 / angle_norm,
+    1 / angle_rate_norm,
+    1 / angle_norm,
+]
+
+normalization_params_u = [thrust_norm, angle_norm]
+
+# Solution parameters
+# sol_params = {
+#     "t0": t0,
+#     "tf": tf,
+#     "initial_state": initial_state,
+#     "target": target,
+#     "max_step": max_step,
+# }
+
+
+######################### Creating the controller ##############################
 controller = MPC_controller(
-    m=m,
-    C=C,
-    g=g,
-    T=T,
-    N=N,
-    u_bounds=u_bounds,
-    t0=t0_val,
-    x0=x0_val,
-    x_target=x_target,
-    Q=Q,
-    Qf=Qf,
-    r=r,
+    env_params=env_params,
+    rocket_params=rocket_params,
+    controller_params=controller_params,
+    normalization_params_x=normalization_params_x,
+    normalization_params_u=normalization_params_u,
 )
-print("target =", x_target)
 
+
+################################## Simulation ##################################
 t, x, u, state_horizon_list, control_horizon_list = controller.simulate_inside(tf)
+
+
+################################## Plotting ####################################
 controller.plot_simulation(t, x, u)
+
+
+################################## Animation ###################################
 animate(
     t,
     x=x[:, 0],
     y=x[:, 2],
     gamma=x[:, 4],
+    delta_tvc=x[:, 6],
     state_horizon_list=state_horizon_list,
     control_horizon_list=control_horizon_list,
     N=N,
     dt=T / N,
+    target_goal=[target[0], target[2]],
     scale=1,
     matplotlib=False,
     save=False,
