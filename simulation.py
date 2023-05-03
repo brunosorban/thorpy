@@ -27,15 +27,15 @@ T_tvc = 0.1  # TVC time constant
 
 # Thrust parameters
 K_thrust = 1  # Thrust gain
-T_thrust = 1  # Thrust time constant
+T_thrust = 0.1  # Thrust time constant
 
 # solution parameters
 t0 = 0  # initial time
-tf = 15  # final time
+tf = 10  # final time
 
 # state space: [x, x_dot, y, y_dot, gamma, gamma_dot, delta_tvc]
-initial_state = [0, 0, 0, 0, np.deg2rad(90), 0, 0]
-target = [30, 0, 30, 0, np.deg2rad(90), 0, 0]
+initial_state = [0, 0, 0, 0, np.deg2rad(90), 0, m * g, 0]
+target = [30, 0, 30, 0, np.deg2rad(90), 0, m * g, 0]
 max_step = 1e-4
 
 # controller parameters
@@ -54,7 +54,8 @@ q3 = 10  # position in y cost penalty
 q4 = 10  # velocity in y cost penalty
 q5 = 15  # yaw angle cost penalty
 q6 = 3  # yaw rate cost penalty
-q7 = 1e-15  # thrust vector angle cost penalty
+q7 = 1e-15  # thrust cost penalty
+q8 = 1e-15  # thrust vector angle cost penalty
 Qf_gain = 10  # gain of the final cost
 
 r1 = 1e-4  # thrust cost penalty
@@ -77,7 +78,7 @@ t0_val = 0  # initial time
 x0_val = ca.vertcat(*initial_state)  # initial state in casadi varible
 x_target = ca.vertcat(*target)  # target state in casadi varible
 
-Q = ca.diag([q1, q2, q3, q4, q5, q6, q7])  # cost matrix
+Q = ca.diag([q1, q2, q3, q4, q5, q6, q7, q8])  # cost matrix
 Qf = Qf_gain * Q  # final cost matrix
 R = ca.diag([r1, r2])  # control cost matrix
 
@@ -126,6 +127,7 @@ normalization_params_x = [
     1 / vel_norm,
     1 / angle_norm,
     1 / angle_rate_norm,
+    1 / thrust_norm,
     1 / angle_norm,
 ]
 
@@ -152,7 +154,7 @@ controller = MPC_controller(
 
 
 ################################## Simulation ##################################
-t, x, u, state_horizon_list, control_horizon_list = controller.simulate_inside(tf)
+t, x, u, state_horizon_list, control_horizon_list = controller.simulate_inside(tf, plot_online=False)
 
 
 ################################## Plotting ####################################
