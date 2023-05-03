@@ -15,7 +15,7 @@ from animate import *
 g = 9.81  # gravity
 
 # rocket variables
-m = 150  # mass of the hopper
+m = 100  # mass of the hopper
 mf = 50  # final mass of the hopper
 h = 2  # height of the hopper
 radius = 0.25  # radius of the hopper
@@ -23,15 +23,15 @@ l_tvc = 0.5  # distance from the center of mass to the TVC
 
 # TVC parameters
 K_tvc = 1  # TVC gain
-T_tvc = 0.1  # TVC time constant
+T_tvc = 0.5  # TVC time constant
 
 # Thrust parameters
 K_thrust = 1  # Thrust gain
-T_thrust = 0.1  # Thrust time constant
+T_thrust = 1  # Thrust time constant
 
 # solution parameters
 t0 = 0  # initial time
-tf = 10  # final time
+tf = 15  # final time
 
 # state space: [x, x_dot, y, y_dot, gamma, gamma_dot, delta_tvc]
 initial_state = [0, 0, 0, 0, np.deg2rad(90), 0, m * g, 0]
@@ -39,27 +39,36 @@ target = [30, 0, 30, 0, np.deg2rad(90), 0, m * g, 0]
 max_step = 1e-4
 
 # controller parameters
-T = 1  # time horizon
+T = 2  # time horizon
 N = 40  # Number of control intervals
-u_max_f = 2 * m * g  # maxium thrust
+
+# controller input bounds
+u_max_f = 2 * m * g # maxium thrust rate
 u_min_f = 0.35 * u_max_f  # should be 30% to 40% of the max thrust
-u_max_delta_tvc_c = np.deg2rad(10)  # maxium thrust vector angle
+u_max_delta_tvc_c = np.deg2rad(10) # maxium thrust vector angle
 u_min_delta_tvc_c = -np.deg2rad(10)  # minium thrust vector angle
+
+# state bounds
 gamma_max = np.deg2rad(30) + initial_state[4]  # maxium yaw angle
 gamma_min = np.deg2rad(-30) + initial_state[4]  # minium yaw angle
 
+u_max_f_deriv = 1500 # u_max_f / T_thrust # maxium thrust rate
+u_min_f_deriv = - u_max_f_deriv  # should be 30% to 40% of the max thrust
+u_max_delta_tvc_c_deriv = np.deg2rad(10) / T_tvc # maxium thrust vector angle
+u_min_delta_tvc_c_deriv = -np.deg2rad(10) / T_tvc  # minium thrust vector angle
+
 q1 = 5  # position in x cost penalty
 q2 = 5  # velocity in x cost penalty
-q3 = 10  # position in y cost penalty
-q4 = 10  # velocity in y cost penalty
+q3 = 15  # position in y cost penalty
+q4 = 20  # velocity in y cost penalty
 q5 = 15  # yaw angle cost penalty
 q6 = 3  # yaw rate cost penalty
 q7 = 1e-15  # thrust cost penalty
 q8 = 1e-15  # thrust vector angle cost penalty
 Qf_gain = 10  # gain of the final cost
 
-r1 = 1e-4  # thrust cost penalty
-r2 = 100  # thrust vector angle cost penalty
+r1 = 1e-3  # thrust cost penalty
+r2 = 20  # thrust vector angle cost penalty
 
 # normalizing parameters
 pos_norm = 1  # position normalization
@@ -83,7 +92,7 @@ Qf = Qf_gain * Q  # final cost matrix
 R = ca.diag([r1, r2])  # control cost matrix
 
 # control bounds
-u_bounds = [(u_min_f, u_max_f), (u_min_delta_tvc_c, u_max_delta_tvc_c)]
+u_bounds = [(u_min_f_deriv, u_max_f_deriv), (u_min_delta_tvc_c_deriv, u_max_delta_tvc_c_deriv)]
 
 
 ######################### Creating the dictionaries ############################
@@ -118,6 +127,8 @@ controller_params = {
     "Qf": Qf,
     "R": R,
     "gamma_bounds": (gamma_min, gamma_max),
+    "thrust_bounds": (u_min_f, u_max_f),
+    "delta_tvc_bounds": (u_min_delta_tvc_c, u_max_delta_tvc_c),
 }
 
 normalization_params_x = [

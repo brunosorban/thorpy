@@ -41,6 +41,8 @@ class MPC_controller:
         N = controller_params["N"]  # Number of control intervals
         u_bounds = controller_params["u_bounds"]
         gamma_bounds = controller_params["gamma_bounds"]
+        thrust_bounds = controller_params["thrust_bounds"]
+        delta_tvc_bounds = controller_params["delta_tvc_bounds"]
 
         # state parameters
         t0_val = controller_params["t0"]
@@ -74,11 +76,11 @@ class MPC_controller:
         variables = ca.vertcat(x, x_dot, y, y_dot, gamma, gamma_dot, thrust, delta_tvc)
 
         # initializing the control varibles
-        thrust_ref = ca.SX.sym("thrust_ref")  # controls
-        delta_tvc_ref = ca.SX.sym("delta_tvc_ref")  # controls
+        thrust_dot = ca.SX.sym("thrust_dot")  # controls
+        delta_tvc_dot = ca.SX.sym("delta_tvc_dot")  # controls
 
         # create a vector with variable names
-        u = ca.vertcat(thrust_ref, delta_tvc_ref)
+        u = ca.vertcat(thrust_dot, delta_tvc_dot)
 
         # define the nonlinear ode
         ode = ca.vertcat(
@@ -88,8 +90,8 @@ class MPC_controller:
             thrust * ca.sin(gamma - delta_tvc) / m - g,
             gamma_dot,
             -ca.power(gamma_dot, 2) - thrust * l_tvc * ca.sin(delta_tvc) / C,
-            1 / T_thrust * (K_thrust * thrust_ref - thrust),
-            1 / T_tvc * (K_tvc * delta_tvc_ref - delta_tvc),
+            thrust_dot,
+            delta_tvc_dot,
         )
 
         # define the linear ode
@@ -175,8 +177,17 @@ class MPC_controller:
                 self.opti.subject_to(self.u[1, k] <= u_bounds[1][1])
 
             # # apply bounds to the states
+            # gamma = self.x[4, k]
             self.opti.subject_to(self.x[4, k] >= gamma_bounds[0])
             self.opti.subject_to(self.x[4, k] <= gamma_bounds[1])
+            
+            # thrust = self.x[6, k]
+            self.opti.subject_to(self.x[6, k] >= thrust_bounds[0])
+            self.opti.subject_to(self.x[6, k] <= thrust_bounds[1])
+            
+            # delta_tvc = self.x[7, k]
+            self.opti.subject_to(self.x[7, k] >= delta_tvc_bounds[0])
+            self.opti.subject_to(self.x[7, k] <= delta_tvc_bounds[1])
 
         # set target
         self.opti.set_value(self.x_target, x_target)
@@ -278,7 +289,7 @@ class MPC_controller:
         )
 
     def plot_simulation(self, t, x, u):
-        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(12, 4))
+        fig, ((ax1, ax2, ax3), (ax4, ax5, ax6)) = plt.subplots(2, 3, figsize=(15, 12))
 
         # plot 1: x, and y
         ax1.plot(t, x[:, 0])
@@ -291,42 +302,63 @@ class MPC_controller:
         ax1.set_title("Position vs Time")
         ax1.grid()
 
-        thrust_list = u[0]
-        delta_tvc_ref_list = u[1]
+        thrust_deriv_list = u[0]
+        delta_tvc_ref_deriv_list = u[1]
         u_bounds = self.controller_params["u_bounds"]
+        gamma_bounds = self.controller_params["gamma_bounds"]
+        thrust_bounds = self.controller_params["thrust_bounds"]
+        delta_tvc_bounds = self.controller_params["delta_tvc_bounds"]
 
-        # plot 2: u
+
+        # plot 2: thrust
         ax2.plot(t, x[:, 6])
-        ax2.plot(t[0: len(t) - 1], thrust_list)
-        ax2.plot(t, [u_bounds[0][0]] * len(t), "--", color="black")
-        ax2.plot(t, [u_bounds[0][1]] * len(t), "--", color="black")
-        ax2.legend(["$f$", "$f_{ref}$", "$f_{min}$", "$f_{max}$"])
+        ax2.plot(t, [thrust_bounds[0]] * len(t), "--", color="black")
+        ax2.plot(t, [thrust_bounds[1]] * len(t), "--", color="black")
+        ax2.legend(["$f$", "$f_{min}$", "$f_{max}$"])
         ax2.set_xlabel("Time (s)")
         ax2.set_ylabel("Thrust (N)")
         ax2.set_title("Thrust vs Time")
         ax2.grid()
 
-        gamma_bounds = self.controller_params["gamma_bounds"]
-        # plot 3: gamma
-        ax3.plot(t, np.rad2deg(x[:, 4]))
-        ax3.plot(t, [np.rad2deg(gamma_bounds[0])] * len(t), "--", color="black")
-        ax3.plot(t, [np.rad2deg(gamma_bounds[1])] * len(t), "--", color="black")
-        ax3.legend(["$\\gamma$", "$\\gamma_{min}$", "$\\gamma_{max}$"])
+        # plot 3: thrust derivative
+        ax3.plot(t[0: len(t) - 1], thrust_deriv_list)
+        ax3.plot(t, [u_bounds[0][0]] * len(t), "--", color="black")
+        ax3.plot(t, [u_bounds[0][1]] * len(t), "--", color="black")
+        ax3.legend(["$\dot{f}$", "$\dot{f}_{ref}$", "$\dot{f}_{max}$"])
         ax3.set_xlabel("Time (s)")
-        ax3.set_ylabel("Angle (degrees)")
-        ax3.set_title("Angle vs Time")
+        ax3.set_ylabel("Thrust derivative (N/s)")
+        ax3.set_title("Thrust derivative vs Time")
         ax3.grid()
-
-        # plot 4: u
-        ax4.plot(t, np.rad2deg(x[:, 7]))
-        ax4.plot(t[0: len(t) - 1], np.rad2deg(delta_tvc_ref_list))
-        ax4.plot(t, [np.rad2deg(u_bounds[1][0])] * len(t), "--", color="black")
-        ax4.plot(t, [np.rad2deg(u_bounds[1][1])] * len(t), "--", color="black")
-        ax4.legend(["$\\delta_{tvc}$", "$\\delta_{tvc_{ref}}$", "$\\delta_{tvc_{min}}$", "$\\delta_{tvc_{max}}$"], loc='upper right')
+        
+        # plot 4: gamma
+        ax4.plot(t, np.rad2deg(x[:, 4]))
+        ax4.plot(t, [np.rad2deg(gamma_bounds[0])] * len(t), "--", color="black")
+        ax4.plot(t, [np.rad2deg(gamma_bounds[1])] * len(t), "--", color="black")
+        ax4.legend(["$\\gamma$", "$\\gamma_{min}$", "$\\gamma_{max}$"])
         ax4.set_xlabel("Time (s)")
-        ax4.set_ylabel("$\\delta_{tvc}$ (degrees)")
-        ax4.set_title("$\\delta_{tvc}$ vs Time")
+        ax4.set_ylabel("Angle (degrees)")
+        ax4.set_title("Angle vs Time")
         ax4.grid()
+
+        # plot 5: delta_tvc
+        ax5.plot(t, np.rad2deg(x[:, 7]))
+        ax5.plot(t, [np.rad2deg(delta_tvc_bounds[0])] * len(t), "--", color="black")
+        ax5.plot(t, [np.rad2deg(delta_tvc_bounds[1])] * len(t), "--", color="black")
+        ax5.legend(["$\\delta_{tvc}$", "$\\delta_{tvc_{min}}$", "$\\delta_{tvc_{max}}$"], loc='upper right')
+        ax5.set_xlabel("Time (s)")
+        ax5.set_ylabel("$\\delta_{tvc}$ (degrees)")
+        ax5.set_title("$\\delta_{tvc}$ vs Time")
+        ax5.grid()
+        
+        # plot 5: delta_tvc
+        ax6.plot(t[0: len(t) - 1], np.rad2deg(delta_tvc_ref_deriv_list))
+        ax6.plot(t, [np.rad2deg(u_bounds[1][0])] * len(t), "--", color="black")
+        ax6.plot(t, [np.rad2deg(u_bounds[1][1])] * len(t), "--", color="black")
+        ax6.legend(["$\\dot{\\delta}_{tvc}$", "$\\dot{\\delta}_{tvc_{min}}$", "$\\dot{\\delta}_{tvc_{max}}$"], loc='upper right')
+        ax6.set_xlabel("Time (s)")
+        ax6.set_ylabel("$\\dot{\\delta}_{tvc}$ (degrees)")
+        ax6.set_title("$\\dot{\\delta}_{tvc}$ vs Time")
+        ax6.grid()
 
         plt.tight_layout()
         plt.show()

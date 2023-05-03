@@ -51,7 +51,7 @@ def animate(
     f_delta_tvc_c = Function(t, np.rad2deg(delta_tvc))
 
     # animation constants
-    offset = 10
+    offset = 0.2 * max(max(x), max(y))
     dt = 1 / 60 / 3
     target_goal = (30, 30) if target_goal == False else target_goal
 
