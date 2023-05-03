@@ -39,6 +39,7 @@ def animate(
     control_horizon_list,
     N=False,
     dt=False,
+    target_goal=False,
     save=False,
     scale=1,
     matplotlib=False,
@@ -52,7 +53,7 @@ def animate(
     # animation constants
     offset = 10
     dt = 1 / 60 / 3
-    target_goal = (30, 30)
+    target_goal = (30, 30) if target_goal == False else target_goal
 
     # Initialization
     xlim_inf = abs(min(x))
@@ -68,8 +69,8 @@ def animate(
         w = imageio.get_writer("Videos/rocket.mp4", format="FFMPEG", fps=60)
 
     # Creating animation screen
-    size = np.array([int(1920 / 1.25), int(1080 / 1.25)])
-    # size = np.array([int(3840 / 1.5), int(2160 / 1.5)])
+    # size = np.array([int(1920 / 1.25), int(1080 / 1.25)])
+    size = np.array([int(3840 / 1.5), int(2160 / 1.5)])
     screen = pygame.display.set_mode(size)
 
     # Preparing images
@@ -77,10 +78,10 @@ def animate(
     background = pygame.transform.scale(background, (size))
 
     rocket = pygame.image.load("Animation/rocket.png")
-    rocket = pygame.transform.scale(rocket, (int(size[0] / 10), int((151 / 10))))
-    # rocket = pygame.transform.scale(
-    #     rocket, (int(size[0] / 10), int((3840 / 1920) * 151 / 10))
-    # )
+    # rocket = pygame.transform.scale(rocket, (int(size[0] / 10), int((151 / 10))))
+    rocket = pygame.transform.scale(
+        rocket, (int(size[0] / 10), int((3840 / 1920) * 151 / 10))
+    )
 
     target = pygame.image.load("Animation/target.png")
     target = pygame.transform.scale(target, (40, 40))

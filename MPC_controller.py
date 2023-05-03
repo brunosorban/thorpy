@@ -10,11 +10,20 @@ class MPC_controller:
     class so that the controller can be updated with a new target position.
     """
 
-    def __init__(self, env_params, rocket_params, controller_params):
+    def __init__(
+        self,
+        env_params,
+        rocket_params,
+        controller_params,
+        normalization_params_x,
+        normalization_params_u,
+    ):
         # store the parameters
         self.env_params = env_params
         self.rocket_params = rocket_params
         self.controller_params = controller_params
+        self.normalization_params_x = normalization_params_x
+        self.normalization_params_u = normalization_params_u
 
         # rocket and environment parameters
         g = env_params["g"]
@@ -22,7 +31,7 @@ class MPC_controller:
         C = rocket_params["C"]
         K_tvc = rocket_params["K_tvc"]
         T_tvc = rocket_params["T_tvc"]
-        x_tvc = rocket_params["x_tvc"]
+        l_tvc = rocket_params["l_tvc"]
 
         # controller parameters
         dt = controller_params["dt"]
@@ -75,7 +84,7 @@ class MPC_controller:
             y_dot,
             thrust * ca.sin(gamma - delta_tvc) / m - g,
             gamma_dot,
-            -ca.power(gamma_dot, 2) - thrust * x_tvc * ca.sin(delta_tvc) / C,
+            -ca.power(gamma_dot, 2) - thrust * l_tvc * ca.sin(delta_tvc) / C,
             1 / T_tvc * (K_tvc * delta_tvc_ref - delta_tvc),
         )
 
@@ -119,8 +128,14 @@ class MPC_controller:
         self.opti = ca.Opti()
 
         # create the state, control and initial state varibles
-        self.x = self.opti.variable(7, N + 1)
-        self.u = self.opti.variable(2, N)
+        self.x = ca.repmat(
+            ca.vertcat(*normalization_params_x), 1, N + 1
+        ) * self.opti.variable(7, N + 1)
+
+        self.u = ca.repmat(
+            ca.vertcat(*normalization_params_u), 1, N
+        ) * self.opti.variable(2, N)
+
         self.x_initial = self.opti.parameter(7, 1)
         self.x_target = self.opti.parameter(7, 1)
 
@@ -128,7 +143,8 @@ class MPC_controller:
         self.obj = 0
         for k in range(N):
             self.obj += ca.mtimes(
-                [(self.x[:, k] - self.x_target).T, Q, (self.x[:, k] - self.x_target)]
+                [(self.x[:, k] - self.x_target).T,
+                 Q, (self.x[:, k] - self.x_target)]
             ) + ca.mtimes([self.u[:, k].T, R, self.u[:, k]])
 
         self.obj += ca.mtimes(
@@ -136,32 +152,35 @@ class MPC_controller:
         )
         self.opti.minimize(self.obj)
 
-        # apply the constraint that the state is defined by my linear system
-        self.F = F
-        for k in range(0, N):
-            self.opti.subject_to(self.x[:, k + 1] == F(self.x[:, k], self.u[:, k]))
-
-        # apply bounds to the inputs
-        # self.opti.subject_to(self.u[0] >= u_bounds[0][0])
-        # self.opti.subject_to(self.u[0] <= u_bounds[0][1])
-
-        # self.opti.subject_to(self.u[1] >= u_bounds[1][0])
-        # self.opti.subject_to(self.u[1] <= u_bounds[1][1])
-
-        # apply contraints
-        # self.opti.subject_to(self.x[4] >= gamma_bounds[0])
-        # self.opti.subject_to(self.x[4] <= gamma_bounds[1])
-
+        # apply the constraint that the state is defined by my system       
         # set the initial position
         self.opti.subject_to(self.x[:, 0] == self.x_initial)
+        
+        # set the dynamics
+        self.F = F
+        for k in range(0, N):
+            # apply the dynamics as constraints
+            self.opti.subject_to(
+                self.x[:, k + 1] == F(self.x[:, k], self.u[:, k]))
+
+            # apply bounds to the inputs
+            self.opti.subject_to(self.u[0, k] >= u_bounds[0][0])
+            self.opti.subject_to(self.u[0, k] <= u_bounds[0][1])
+            self.opti.subject_to(self.u[1, k] >= u_bounds[1][0])
+            self.opti.subject_to(self.u[1, k] <= u_bounds[1][1])
+
+            # # apply bounds to the states
+            self.opti.subject_to(self.x[4, k] >= gamma_bounds[0])
+            self.opti.subject_to(self.x[4, k] <= gamma_bounds[1])
 
         # set target
         self.opti.set_value(self.x_target, x_target)
         self.opti.set_value(self.x_initial, x0_val)
 
         # select the desired solver
-        opts = {"ipopt.print_level": 0, "print_time": 0}  # hide solution output
-        self.opti.solver("ipopt", opts)
+        # hide solution output
+        opts = {"ipopt.print_level": 0, "print_time": 0}
+        self.opti.solver("ipopt" , opts)
 
     def update_target(self, new_target):
         self.opti.set_value(self.x_target, ca.vertcat(*new_target))
@@ -180,7 +199,8 @@ class MPC_controller:
 
             self.out = np.array(sol.value(self.u))[:, 0]
 
-            self.J_total += sol.value(self.obj)  # add the cost payed on this solution
+            # add the cost payed on this solution
+            self.J_total += sol.value(self.obj)
             self.J_total_list.append((t, self.J_total))
             self.last_time_control = t  # update last time it was controlled
         print("Controller output =", self.out)
@@ -198,7 +218,12 @@ class MPC_controller:
         while t[-1] < sim_time:
             # update and solve the optimal control problem
             self.opti.set_value(self.x_initial, x_list[-1])
-            sol = self.opti.solve()
+
+            if t[-1] == 0:
+                sol = self.opti.solve()
+            else:
+                self.opti.set_initial(self.x, last_sol.value(self.x))
+                sol = self.opti.solve()
 
             # retrieve the results
             u = sol.value(self.u)
@@ -221,9 +246,10 @@ class MPC_controller:
             thrust.append(u[0, 0])
             torque.append(u[1, 0])
             t.append(t[-1] + self.dt)
+            last_sol = sol
 
             # plot the results
-            # self.plot_horizon(t, x, u, horizon)
+            # self.plot_horizon(t, x_list, u, horizon)
             # input("Press Enter to continue...")
         print("Simulation finished")
         return (
@@ -239,8 +265,10 @@ class MPC_controller:
 
         # plot 1: x, and y
         ax1.plot(t, x[:, 0])
+        ax1.plot(t, x[:, 1])
         ax1.plot(t, x[:, 2])
-        ax1.legend(["$x$", "$y$"])
+        ax1.plot(t, x[:, 3])
+        ax1.legend(["$x$", "$v_x$", "$y$", "$v_y$"])
         ax1.set_xlabel("Time (s)")
         ax1.set_ylabel("Position (m)")
         ax1.set_title("Position vs Time")
@@ -250,25 +278,31 @@ class MPC_controller:
         delta_tvc_ref_list = u[1]
 
         # plot 2: u
-        ax2.plot(t[0 : len(t) - 1], f_list)
+        ax2.plot(t[0: len(t) - 1], f_list)
         ax2.legend(["$f$"])
         ax2.set_xlabel("Time (s)")
         ax2.set_ylabel("Thrust (N)")
         ax2.set_title("Thrust vs Time")
         ax2.grid()
 
+        gamma_bounds = self.controller_params["gamma_bounds"]
         # plot 3: gamma
         ax3.plot(t, np.rad2deg(x[:, 4]))
-        ax3.legend(["$\\gamma$"])
+        ax3.plot(t, [np.rad2deg(gamma_bounds[0])] * len(t), "--", color="black")
+        ax3.plot(t, [np.rad2deg(gamma_bounds[1])] * len(t), "--", color="black")
+        ax3.legend(["$\\gamma$", "$\\gamma_{min}$", "$\\gamma_{max}$"])
         ax3.set_xlabel("Time (s)")
         ax3.set_ylabel("Angle (degrees)")
         ax3.set_title("Angle vs Time")
         ax3.grid()
 
+        u_bounds = self.controller_params["u_bounds"]
         # plot 4: u
-        ax4.plot(t[0 : len(t) - 1], np.rad2deg(delta_tvc_ref_list))
+        ax4.plot(t[0: len(t) - 1], np.rad2deg(delta_tvc_ref_list))
         ax4.plot(t, np.rad2deg(x[:, 6]))
-        ax4.legend(["$\\delta_{tvc_{ref}}$", "$\\delta_{tvc}$"])
+        ax4.plot(t, [np.rad2deg(u_bounds[1][0])] * len(t), "--", color="black")
+        ax4.plot(t, [np.rad2deg(u_bounds[1][1])] * len(t), "--", color="black")
+        ax4.legend(["$\\delta_{tvc_{ref}}$", "$\\delta_{tvc}$", "$\\delta_{tvc_{min}}$", "$\\delta_{tvc_{max}}$"], loc='upper right')
         ax4.set_xlabel("Time (s)")
         ax4.set_ylabel("$\\delta_{tvc}$ (degrees)")
         ax4.set_title("$\\delta_{tvc}$ vs Time")
@@ -278,10 +312,11 @@ class MPC_controller:
         plt.show()
 
     def plot_horizon(self, t, x, u, horizon):
-        t_list = np.linspace(t[-2], t[-2] + self.N * self.dt, self.N + 1, endpoint=True)
+        N = self.controller_params["N"]
+        t_list = np.linspace(t[-2], t[-2] + N * self.dt, N + 1, endpoint=True)
         horizon = np.array(horizon)
 
-        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(12, 4))
+        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 10))
 
         # plot 1: x, x_hor, and vx_hor
         ax1.plot(np.array(x)[:, 0], np.array(x)[:, 2])
@@ -294,7 +329,7 @@ class MPC_controller:
         delta_tvc_ref_list = u[1]
 
         # plot 2: u
-        ax2.step(t_list[0 : len(t_list) - 1], f_list)
+        ax2.scatter(t_list[0: len(t_list) - 1], f_list)
         ax2.legend(["$f$"])
         ax2.grid()
 
@@ -306,9 +341,10 @@ class MPC_controller:
         ax3.grid()
 
         # plot 4: u
-        ax4.step(t_list[0 : len(t_list) - 1], delta_tvc_ref_list)
-        ax4.step(t, np.rad2deg(np.array(x)[:, 6]))
-        ax4.legend(["$delta_tvc_ref$", "$delta_tvc$"])
+        ax4.scatter(t_list[0: len(t_list) - 1], np.rad2deg(delta_tvc_ref_list))
+        ax4.scatter(t, np.rad2deg(np.array(x)[:, 6]))
+        ax4.scatter(t_list, np.rad2deg(horizon[6, :]))
+        ax4.legend(["$delta_{tvc_{ref}}$", "$delta_{tvc}$", "$delta_{tvc_{hor}}$"])
         ax4.grid()
 
         plt.show()
