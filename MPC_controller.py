@@ -245,6 +245,7 @@ class MPC_controller:
                 sol = self.opti.solve()
             else:
                 self.opti.set_initial(self.x, last_sol.value(self.x))
+                self.opti.set_initial(self.u, last_sol.value(self.u))
                 sol = self.opti.solve()
 
             # retrieve the results
