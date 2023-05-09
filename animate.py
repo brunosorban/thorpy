@@ -40,6 +40,7 @@ def animate(
     N=False,
     dt=False,
     target_goal=False,
+    trajectory_params=False,
     save=False,
     scale=1,
     matplotlib=False,
@@ -52,14 +53,23 @@ def animate(
 
     # animation constants
     offset = 0.2 * max(max(x), max(y))
-    dt = 1 / 60 / 3
+    dt = 1 / 60 * 3
     target_goal = (30, 30) if target_goal == False else target_goal
+    
+    if trajectory_params is False:
+        following_trajectory = False
+    else:
+        following_trajectory = True
+        f_x_traj = Function(trajectory_params["t"], trajectory_params["x"])
+        f_y_traj = Function(trajectory_params["t"], trajectory_params["y"])
 
     # Initialization
     xlim_inf = abs(min(x))
     xlim_sup = max(x) + offset
     ylim_inf = abs(min(y))
     ylim_sup = max(y) + offset
+    gamma_lin_inf = np.rad2deg(abs(min(gamma))) - 5
+    gamma_lin_sup = np.rad2deg(max(gamma)) + 5
 
     pygame.init()
     pygame.display.init()
@@ -136,17 +146,30 @@ def animate(
             realScale=True,
         )
 
-        # Get position, current time and vehicle velocity
-        target_pos = initial_position + mapi(
-            target_goal[0],
-            -target_goal[1],
-            xlim_sup,
-            ylim_sup,
-            xlim_inf,
-            ylim_inf,
-            size,
-            realScale=True,
-        )
+        if following_trajectory:
+            # Get position, current time and vehicle velocity
+            target_pos = initial_position + mapi(
+                f_x_traj(timeCount),
+                -f_y_traj(timeCount),
+                xlim_sup,
+                ylim_sup,
+                xlim_inf,
+                ylim_inf,
+                size,
+                realScale=True,
+            )
+        else:
+            # Get position, current time and vehicle velocity
+            target_pos = initial_position + mapi(
+                target_goal[0],
+                -target_goal[1],
+                xlim_sup,
+                ylim_sup,
+                xlim_inf,
+                ylim_inf,
+                size,
+                realScale=True,
+            )
 
         # Compensate to be on rocket center
         target_pos += np.array(
@@ -236,12 +259,16 @@ def animate(
             ax1.set_xlabel("Horizontal Position (m)")
             ax1.set_ylabel("Vertical Position (m)")
             ax1.set_title("Rocket Trajectory")
+            ax1.set_xlim([xlim_inf, xlim_sup])
+            ax1.set_ylim([ylim_inf, ylim_sup])
+            ax1.axis("equal")
 
             ax2.plot(time_list, gamma_list)
             ax2.plot(t_list, np.rad2deg(horizon_list_gamma[horizon_index]))
             ax2.set_xlabel("Time (s)")
             ax2.set_ylabel("Yaw angle (°)")
             ax2.set_title("Rocket yaw angle")
+            ax2.set_ylim([gamma_lin_inf, gamma_lin_sup])
             fig.tight_layout()
 
             # Convert the Matplotlib figure to an image
