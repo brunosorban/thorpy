@@ -2,7 +2,7 @@ import sys
 import os
 
 # Get the path of the parent folder
-parent_folder_path = os.path.abspath(os.path.join(os.getcwd(), '..'))
+parent_folder_path = os.path.abspath(os.path.join(os.getcwd(), ".."))
 
 # Add the parent folder path to the system path
 sys.path.append(parent_folder_path)
@@ -14,6 +14,7 @@ import numpy as np
 import casadi as ca
 import matplotlib.pyplot as plt
 from RK4 import RK4
+
 # from animate import *
 
 # from Traj_planning.RK4 import RK4
@@ -167,7 +168,7 @@ def mpc_trajectory_planning(
             # opti.subject_to(x[1, i]) == desired_velocities[k, 0] # x_dot
             # opti.subject_to(x[3, i]) == desired_velocities[k, 1] # y_dot
             last_k += 1
-            
+
             print("k: ", k)
             print("Constraints added at t = ", t)
             print("x_ref[{:.0f}]: {:.1f}".format(k, x_ref[k]))
@@ -178,12 +179,12 @@ def mpc_trajectory_planning(
         cost += ca.mtimes([tracking_error.T, Q, tracking_error]) + ca.mtimes(
             [u[:, i].T, R, u[:, i]]
         )
-        
+
     # check if all constraints were added
     if t < total_time:
         opti.subject_to(x[0, i] == x_ref[k])  # x
         opti.subject_to(x[2, i] == y_ref[k])  # y
-    
+
         print("k: ", k)
         print("Constraints added at t = ", t)
         print("x_ref[{:.0f}]: {:.1f}".format(k, x_ref[k]))
@@ -203,13 +204,13 @@ def mpc_trajectory_planning(
     for k in range(num_steps):
         # apply the dynamics as constraints
         opti.subject_to(x[:, k + 1] == F(x[:, k], u[:, k]))
-        
+
         # apply the control input constraints
         opti.subject_to(u[0, k] >= u_bounds[0][0])
         opti.subject_to(u[0, k] <= u_bounds[0][1])
         opti.subject_to(u[1, k] >= u_bounds[1][0])
         opti.subject_to(u[1, k] <= u_bounds[1][1])
-        
+
         # thrust = x[6, k]
         opti.subject_to(x[6, k] >= thrust_bounds[0])
         opti.subject_to(x[6, k] <= thrust_bounds[1])
@@ -228,9 +229,9 @@ def mpc_trajectory_planning(
             gamma_ref[i] if gamma_ref[i] is not None else 0,
             gamma_dot_ref[i] if gamma_dot_ref[i] is not None else 0,
             0,
-            0
+            0,
         )
-        
+
         opti.set_value(x_target[:, i], states_ref)
 
     # select the desired solver
@@ -239,6 +240,7 @@ def mpc_trajectory_planning(
     sol = opti.solve()
 
     return sol.value(x), sol.value(u)
+
 
 def plot_simulation(x, u, dt, controller_params, trajectory_params):
     fig, ((ax1, ax2, ax3), (ax4, ax5, ax6)) = plt.subplots(2, 3, figsize=(15, 12))

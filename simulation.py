@@ -7,21 +7,29 @@ sys.path.append("../Traj_planning")
 # import Function as ft
 from flight_class import *
 import casadi as ca
-from MPC_controller import MPC_controller
+from MPC_SE3_controller import MPC_controller
 from animate import *
 from simulation_parameters import *
 
 
 ########################## Trajectory generation ###############################
 
-from Traj_planning.hop import hopper_traj
-trajectory_params = hopper_traj()
-tf = 120 + 5 # 5 seconds after the landing
+# from Traj_planning.hop import hopper_traj
+# trajectory_params = hopper_traj()
+# tf = 120 + 5 # 5 seconds after the landing
+
+# from Traj_planning.hop_min_snap import hop_min_snap
+# trajectory_params = hop_min_snap()
+# tf = 120 + 5 # 5 seconds after the landing
+
+from Traj_planning.hop_ms_reduced import hop_ms_reduced
+
+trajectory_params = hop_ms_reduced()
+tf = 12 + 1  # 5 seconds after the landing
 
 # from Traj_planning.backflip import traj_backflip
 # trajectory_params = traj_backflip()
 # tf = 152 + 5 # 5 seconds after the landing
-
 
 
 ######################### Creating the controller ##############################
@@ -47,19 +55,19 @@ controller.plot_tracking_results(t, x)
 
 
 ################################## Animation ###################################
-animate(
-    t,
-    x=x[:, 0],
-    y=x[:, 2],
-    gamma=x[:, 4],
-    delta_tvc=x[:, 6],
-    state_horizon_list=state_horizon_list,
-    control_horizon_list=control_horizon_list, 
-    N=N,
-    dt=T / N,
-    target_goal=[target[0], target[2]],
-    trajectory_params=trajectory_params,
-    scale=1,
-    matplotlib=False,
-    save=False,
-)
+# animate(
+#     t,
+#     x=x[:, 0],
+#     y=x[:, 2],
+#     gamma=x[:, 4],
+#     delta_tvc=x[:, 6],
+#     state_horizon_list=state_horizon_list,
+#     control_horizon_list=control_horizon_list,
+#     N=N,
+#     dt=T / N,
+#     target_goal=None,
+#     trajectory_params=trajectory_params,
+#     scale=1,
+#     matplotlib=False,
+#     save=False,
+# )

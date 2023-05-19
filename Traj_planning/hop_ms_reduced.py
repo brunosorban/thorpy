@@ -16,16 +16,16 @@ l_tvc = 0.5  # distance from the center of mass to the TVC
 target_points = np.array(
     [
         [0, 0, 0],
-        [0, 500, 0],
-        [1000, 500, 0],
-        [1000, 0, 0],
+        [0, 50, 0],
+        [100, 50, 0],
+        [100, 0, 0],
     ]
 )
 
 gamma_points_deg = np.array([90, 90, 90, 90])
 target_velocities = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]])  # m/s
 target_accelerations = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]])  # m/s^2
-time_points = np.array([0, 30, 80, 120])  # time list
+time_points = np.array([0, 7, 14, 21])  # time list
 dt = 0.01  # time step
 
 # controller input bounds
@@ -62,7 +62,7 @@ constraints = {
 }
 
 
-def hop_min_snap():
+def hop_ms_reduced():
     trajectory_params = get_traj_params(time_points, states, constraints)
     return trajectory_params
 

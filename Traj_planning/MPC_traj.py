@@ -5,7 +5,7 @@ from traj_plan_MPC import *
 dt = 0.05
 t0 = 0  # beginning
 dt1 = 23  # first jump
-dt2 = 50 #30  # second jump
+dt2 = 50  # 30  # second jump
 dt3 = 3  # getting into inverted flight
 dt4 = 10  # inverted flight upside down
 dt5 = 15  # getting out of inverted flight
@@ -14,15 +14,15 @@ dt7 = 50  # slowing down
 dt8 = 18  # landing
 
 time_points = [
-    t0, # beginning
-    t0 + dt1, # first jump
-    t0 + dt1 + dt2, # second jump
-    t0 + dt1 + dt2 + dt3, # getting into inverted flight
-    t0 + dt1 + dt2 + dt3 + dt4, # inverted flight upside down
-    t0 + dt1 + dt2 + dt3 + dt4 + dt5, # getting out of inverted flight
-    t0 + dt1 + dt2 + dt3 + dt4 + dt5 + dt6, # returning to upside up
-    t0 + dt1 + dt2 + dt3 + dt4 + dt5 + dt6 + dt7, # slowing down
-    t0 + dt1 + dt2 + dt3 + dt4 + dt5 + dt6 + dt7 + dt8, # landing
+    t0,  # beginning
+    t0 + dt1,  # first jump
+    t0 + dt1 + dt2,  # second jump
+    t0 + dt1 + dt2 + dt3,  # getting into inverted flight
+    t0 + dt1 + dt2 + dt3 + dt4,  # inverted flight upside down
+    t0 + dt1 + dt2 + dt3 + dt4 + dt5,  # getting out of inverted flight
+    t0 + dt1 + dt2 + dt3 + dt4 + dt5 + dt6,  # returning to upside up
+    t0 + dt1 + dt2 + dt3 + dt4 + dt5 + dt6 + dt7,  # slowing down
+    t0 + dt1 + dt2 + dt3 + dt4 + dt5 + dt6 + dt7 + dt8,  # landing
 ]
 g = 9.81  # gravity
 

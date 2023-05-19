@@ -13,9 +13,9 @@ target_points = np.array(
 
 gamma_points_deg = np.array([90, 90, 90, 90])
 target_velocities = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]])  # m/s
-target_accelerations = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]]) # m/s^2
-time_points = np.array([0, 30, 80, 120]) # time list
-dt = 0.01 # time step
+target_accelerations = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]])  # m/s^2
+time_points = np.array([0, 30, 80, 120])  # time list
+dt = 0.01  # time step
 
 states = {
     "x": target_points[:, 0],
@@ -33,11 +33,24 @@ states = {
 }
 
 
-def hopper_traj():    
+def hopper_traj():
     trajectory_params = safe_traj(
-        target_points, target_velocities, target_accelerations, time_points, dt, plot=False
+        target_points,
+        target_velocities,
+        target_accelerations,
+        time_points,
+        dt,
+        plot=False,
     )
     return trajectory_params
 
+
 def plot_traj():
-    safe_traj(target_points, target_velocities, target_accelerations, time_points, dt, plot=True)
+    safe_traj(
+        target_points,
+        target_velocities,
+        target_accelerations,
+        time_points,
+        dt,
+        plot=True,
+    )

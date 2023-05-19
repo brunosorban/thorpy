@@ -26,8 +26,10 @@ t0 = 0  # initial time
 tf = 60  # final time
 
 # state space: [x, x_dot, y, y_dot, gamma, gamma_dot, thrust, delta_tvc]
-initial_state = [0, 0, 0, 0, np.deg2rad(90), 0, m * g, 0]
-target = [30, 0, 30, 0, np.deg2rad(90), 0, 0, 0]
+# initial_state = [0, 0, 0, 0, np.deg2rad(90), 0, m * g, 0]
+initial_state = [0, 0, 0, 0, 0, 1, -1, 0, 0, 1, -1, 0, 0, m * g]
+# target = [30, 0, 30, 0, np.deg2rad(90), 0, 0, 0]
+x_target = None
 max_step = 1e-4
 
 # controller parameters
@@ -44,18 +46,24 @@ u_min_delta_tvc_c = -np.deg2rad(10)  # minium thrust vector angle
 gamma_max = np.deg2rad(30) + initial_state[4]  # maxium yaw angle
 gamma_min = np.deg2rad(-30) + initial_state[4]  # minium yaw angle
 
-stab_time_criterion = 3 # corresponds to the system reach 95% of the final value
-u_max_f_deriv = u_max_f / (stab_time_criterion * T_thrust)  # u_max_f / T_thrust # maxium thrust rate
+stab_time_criterion = 3  # corresponds to the system reach 95% of the final value
+u_max_f_deriv = u_max_f / (
+    stab_time_criterion * T_thrust
+)  # u_max_f / T_thrust # maxium thrust rate
 u_min_f_deriv = -u_max_f_deriv  # should be 30% to 40% of the max thrust
-u_max_delta_tvc_c_deriv = np.deg2rad(10) / (stab_time_criterion * T_tvc)  # maxium thrust vector angle
-u_min_delta_tvc_c_deriv = -np.deg2rad(10) / (stab_time_criterion * T_tvc)  # minium thrust vector angle
+u_max_delta_tvc_c_deriv = np.deg2rad(10) / (
+    stab_time_criterion * T_tvc
+)  # maxium thrust vector angle
+u_min_delta_tvc_c_deriv = -np.deg2rad(10) / (
+    stab_time_criterion * T_tvc
+)  # minium thrust vector angle
 
 q1 = 15  # position in x cost penalty
 q2 = 20  # velocity in x cost penalty
 q3 = 15  # position in y cost penalty
 q4 = 20  # velocity in y cost penalty
-q5 = 15 * 100 # yaw angle cost penalty
-q6 = 3 * 100 # yaw rate cost penalty
+q5 = 15 * 100  # yaw angle cost penalty
+q6 = 3 * 100  # yaw rate cost penalty
 q7 = 1e-15  # thrust cost penalty
 q8 = 1e-15  # thrust vector angle cost penalty
 Qf_gain = 10  # gain of the final cost
@@ -78,7 +86,7 @@ C = (
 # initial state
 t0_val = 0  # initial time
 x0_val = ca.vertcat(*initial_state)  # initial state in casadi varible
-x_target = ca.vertcat(*target)  # target state in casadi varible
+# x_target = ca.vertcat(*target)  # target state in casadi varible
 
 Q = ca.diag([q1, q2, q3, q4, q5, q6, q7, q8])  # cost matrix
 Qf = Qf_gain * Q  # final cost matrix
@@ -125,6 +133,7 @@ controller_params = {
     "gamma_bounds": (gamma_min, gamma_max),
     "thrust_bounds": (u_min_f, u_max_f),
     "delta_tvc_bounds": (u_min_delta_tvc_c, u_max_delta_tvc_c),
+    "omega_control_bounds": (1, 1),
 }
 
 normalization_params_x = [
