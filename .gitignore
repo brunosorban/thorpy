@@ -3,3 +3,6 @@ __pycache__
 **/old/
 /Images/
 /.vscode/
+*.mp4
+/Traj_planning/Animation/
+/Traj_planning/Videos/

@@ -5,7 +5,6 @@ import sys, pygame  # For the animation function
 import imageio  # For the animation function
 from Function import Function
 
-
 # Animation
 def blitRotateCenter(surf, image, topleft, angle):
     # Auxiliar function to blit the animation image rotated
@@ -36,7 +35,7 @@ def animate(
     gamma,
     delta_tvc,
     state_horizon_list,
-    control_horizon_list,
+    control_horizon_list=None,
     N=False,
     dt=False,
     target_goal=False,
