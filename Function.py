@@ -540,15 +540,15 @@ class Function:
                 T[i][j] = T[i][j - 1] + (T[i][j - 1] - T[i - 1][j - 1]) / (4**j - 1)
         return T
 
-    def derivate(self, x=0, order=2):
+    def derivative(self, x=0, order=2):
         if order == 1:
             # TODO: add the method to execute the derivative
             # return (self.getValue(x + dx) - self.getValue(x)) / dx
             return 0
         else:
-            return self.derivate_second_order(x)
+            return self.derivative_second_order(x)
 
-    def derivate_second_order(self, x=0):
+    def derivative_second_order(self, x=0):
         """Derivate the function at point x using partial differences with error
         of 2nd order."""
 
@@ -581,10 +581,10 @@ class Function:
             )
             return df
 
-    def derive_function(self, order=2, method="linear"):
+    def derivative_function(self, order=2, method="linear"):
         d_F = np.zeros(len(self.__X_source__))
         for i in range(len(self.__X_source__)):
-            d_F[i] = self.derivate(self.__X_source__[i], order=order)
+            d_F[i] = self.derivative(self.__X_source__[i], order=order)
         self.derivative = Function(
             self.__X_source__,
             d_F,

@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def safe_traj_min_snap(
+def safe_traj(
     target_points, target_velocities, target_accelerations, t_list, dt, plot=False
 ):
     # initialize trajectory variables
@@ -182,7 +182,7 @@ def safe_traj_min_snap(
         ax2.grid()
         ax3.grid()
 
-        plt.show()
+        fig.show()
 
     trajectory = {
         "t": t,
@@ -195,6 +195,9 @@ def safe_traj_min_snap(
         "ax": ax,
         "ay": ay,
         "az": az,
+        "gamma": np.zeros(len(t)) + np.deg2rad(90),
+        "gamma_dot": np.zeros(len(t)),
+        "gamma_ddot": np.zeros(len(t)),
     }
 
     return trajectory
