@@ -3,7 +3,7 @@ import numpy as np
 
 sys.path.append("../")
 sys.path.append("../Traj_planning")
-from Traj_planning.traj_planner import *
+from Traj_planning.traj_generators.traj_planner import *
 
 dt = 0.01
 plot = False

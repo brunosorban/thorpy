@@ -159,7 +159,7 @@ class MPC_controller:
         self.x = self.opti.variable(14, N + 1)
         self.u = self.opti.variable(2, N)
         self.x_initial = self.opti.parameter(14, 1)
-        self.x_target = self.opti.parameter(8, N + 1)
+        self.x_target = self.opti.parameter(14, N + 1)
 
         # self.x = ca.repmat(
         #     ca.vertcat(*normalization_params_x), 1, N + 1
@@ -177,18 +177,14 @@ class MPC_controller:
             self.obj += ca.mtimes([tracking_error.T, Q[0:4, 0:4], tracking_error])
 
             # # rotation error
-            # [[e1dx, e2dx, _], [e1dy, e2dy, _], [_, _, _]] = self.calculate_Rd(
-            #     self.x_target[4, k]
-            # )
+            er = (
+                0.5 * self.x[4, k] * self.x_target[6, k]
+                + 0.5 * self.x[5, k] * self.x_target[7, k]
+                - 0.5 * self.x_target[4, k] * self.x[6, k]
+                - 0.5 * self.x_target[5, k] * self.x[7, k]
+            )
 
-            # er = (
-            #     0.5 * self.x[4, k] * e2dx
-            #     + 0.5 * self.x[5, k] * e2dy
-            #     - 0.5 * e1dx * self.x[6, k]
-            #     - 0.5 * e1dy * self.x[7, k]
-            # )
-
-            # self.obj += ca.mtimes([er, Q[4:5, 4:5], er])
+            self.obj += ca.mtimes([er, Q[4:5, 4:5], er])
 
             # angular velocity error
             self.obj += ca.mtimes([self.x[12, k], Q[5, 5], self.x[12, k]])
@@ -204,16 +200,13 @@ class MPC_controller:
         self.obj += ca.mtimes([tracking_error.T, Q[0:4, 0:4], tracking_error])
 
         # rotation error
-        # [[e1dx, e2dx, _], [e1dy, e2dy, _], [_, _, _]] = self.calculate_Rd(
-        #     self.x_target[4, N]
-        # )
-        # er = (
-        #     0.5 * self.x[4, N] * e2dx
-        #     + 0.5 * self.x[5, N] * e2dy
-        #     - 0.5 * e1dx * self.x[6, N]
-        #     - 0.5 * e1dy * self.x[7, N]
-        # )
-        # self.obj += ca.mtimes([er, Q[4:5, 4:5], er])
+        er = (
+            0.5 * self.x[4, k] * self.x_target[6, k]
+            + 0.5 * self.x[5, k] * self.x_target[7, k]
+            - 0.5 * self.x_target[4, k] * self.x[6, k]
+            - 0.5 * self.x_target[5, k] * self.x[7, k]
+        )
+        self.obj += ca.mtimes([er, Q[4:5, 4:5], er])
 
         # angular velocity error
         self.obj += ca.mtimes([self.x[12, k], Q[5, 5], self.x[12, k]])
@@ -235,10 +228,10 @@ class MPC_controller:
                 self.opti.subject_to(self.x[:, k + 1] == F(self.x[:, k], self.u[:, k]))
 
                 # apply bounds to the inputs
-                self.opti.subject_to(self.u[0, k] >= u_bounds[0][0])
-                self.opti.subject_to(self.u[0, k] <= u_bounds[0][1])
-                self.opti.subject_to(self.u[1, k] >= u_bounds[1][0])
-                self.opti.subject_to(self.u[1, k] <= u_bounds[1][1])
+                # self.opti.subject_to(self.u[0, k] >= u_bounds[0][0])
+                # self.opti.subject_to(self.u[0, k] <= u_bounds[0][1])
+                # self.opti.subject_to(self.u[1, k] >= u_bounds[1][0])
+                # self.opti.subject_to(self.u[1, k] <= u_bounds[1][1])
 
             # # apply bounds to the states
             # gamma = self.x[4, k]
@@ -246,8 +239,8 @@ class MPC_controller:
             # self.opti.subject_to(self.x[4, k] <= gamma_bounds[1])
 
             # thrust = self.x[6, k]
-            self.opti.subject_to(self.x[13, k] >= thrust_bounds[0])
-            self.opti.subject_to(self.x[13, k] <= thrust_bounds[1])
+            # self.opti.subject_to(self.x[13, k] >= thrust_bounds[0])
+            # self.opti.subject_to(self.x[13, k] <= thrust_bounds[1])
 
             # delta_tvc = self.x[7, k]
             # self.opti.subject_to(self.x[7, k] >= delta_tvc_bounds[0])
@@ -347,8 +340,14 @@ class MPC_controller:
         py = self.trajectory_params["y"]
         vx = self.trajectory_params["vx"]
         vy = self.trajectory_params["vy"]
-        gamma = self.trajectory_params["gamma"]
-        gamma_dot = self.trajectory_params["gamma_dot"]
+        e1bx = self.trajectory_params["e1bx"]
+        e1by = self.trajectory_params["e1by"]
+        e2bx = self.trajectory_params["e2bx"]
+        e2by = self.trajectory_params["e2by"]
+        e1tx = e1bx
+        e1ty = e1by
+        e2tx = e2bx
+        e2ty = e2by
 
         N = self.controller_params["N"]
         t_list = np.linspace(time, time + N * self.dt, N + 1, endpoint=True)
@@ -357,21 +356,44 @@ class MPC_controller:
         py_list = np.zeros(len(t_list))
         vx_list = np.zeros(len(t_list))
         vy_list = np.zeros(len(t_list))
-        gamma_list = np.zeros(len(t_list))
-        gamma_dot_list = np.zeros(len(t_list))
+        e1bx_list = np.zeros(len(t_list))
+        e1by_list = np.zeros(len(t_list))
+        e2bx_list = np.zeros(len(t_list))
+        e2by_list = np.zeros(len(t_list))
+        e1tx_list = np.zeros(len(t_list))
+        e1ty_list = np.zeros(len(t_list))
+        e2tx_list = np.zeros(len(t_list))
+        e2ty_list = np.zeros(len(t_list))
         thrust_list = np.zeros(len(t_list))  # keep as 0
-        delta_tvc_list = np.zeros(len(t_list))  # keep as 0
 
         for i in range(len(t_list)):
             px_list[i] = self.linear_spline(t_list[i], self.trajectory_params["t"], px)
             py_list[i] = self.linear_spline(t_list[i], self.trajectory_params["t"], py)
             vx_list[i] = self.linear_spline(t_list[i], self.trajectory_params["t"], vx)
             vy_list[i] = self.linear_spline(t_list[i], self.trajectory_params["t"], vy)
-            gamma_list[i] = self.linear_spline(
-                t_list[i], self.trajectory_params["t"], gamma
+            e1bx_list[i] = self.linear_spline(
+                t_list[i], self.trajectory_params["t"], e1bx
             )
-            gamma_dot_list[i] = self.linear_spline(
-                t_list[i], self.trajectory_params["t"], gamma_dot
+            e1by_list[i] = self.linear_spline(
+                t_list[i], self.trajectory_params["t"], e1by
+            )
+            e2bx_list[i] = self.linear_spline(
+                t_list[i], self.trajectory_params["t"], e2bx
+            )
+            e2by_list[i] = self.linear_spline(
+                t_list[i], self.trajectory_params["t"], e2by
+            )
+            e1tx_list[i] = self.linear_spline(
+                t_list[i], self.trajectory_params["t"], e1tx
+            )
+            e1ty_list[i] = self.linear_spline(
+                t_list[i], self.trajectory_params["t"], e1ty
+            )
+            e2tx_list[i] = self.linear_spline(
+                t_list[i], self.trajectory_params["t"], e2tx
+            )
+            e2ty_list[i] = self.linear_spline(
+                t_list[i], self.trajectory_params["t"], e2ty
             )
 
         target = np.array(
@@ -380,10 +402,16 @@ class MPC_controller:
                 vx_list,
                 py_list,
                 vy_list,
-                gamma_list,
-                gamma_dot_list,
+                e1bx_list,
+                e1by_list,
+                e2bx_list,
+                e2by_list,
+                e1tx_list,
+                e1ty_list,
+                e2tx_list,
+                e2ty_list,
+                np.zeros_like(thrust_list),  # omega = angular velocity
                 thrust_list,
-                delta_tvc_list,
             ]
         )
         self.update_target(target)
@@ -575,49 +603,49 @@ class MPC_controller:
         ax1.set_xlim([t[0], t[-1]])
         ax1.grid()
 
-        ax2.plot(t, x[:, 1], label="vx")
+        ax2.plot(t, x[:, 2], label="y")
         ax2.plot(
-            self.trajectory_params["t"], self.trajectory_params["vx"], label="vx_ref"
+            self.trajectory_params["t"], self.trajectory_params["y"], label="y_ref"
         )
         ax2.legend()
         ax2.set_xlabel("Time (s)")
-        ax2.set_ylabel("X velocity (m/s)")
-        ax2.set_title("X velocity vs Time")
+        ax2.set_ylabel("Y position (m)")
+        ax2.set_title("Y position vs Time")
         ax2.set_xlim([t[0], t[-1]])
         ax2.grid()
 
-        ax3.plot(t, x[:, 2], label="y")
+        ax3.plot(t, np.rad2deg(gamma), label="gamma")
         ax3.plot(
-            self.trajectory_params["t"], self.trajectory_params["y"], label="y_ref"
-        )
-        ax3.legend()
-        ax3.set_xlabel("Time (s)")
-        ax3.set_ylabel("Y position (m)")
-        ax3.set_title("Y position vs Time")
-        ax3.set_xlim([t[0], t[-1]])
-        ax3.grid()
-
-        ax4.plot(t, x[:, 3], label="vy")
-        ax4.plot(
-            self.trajectory_params["t"], self.trajectory_params["vy"], label="vy_ref"
-        )
-        ax4.legend()
-        ax4.set_xlabel("Time (s)")
-        ax4.set_ylabel("Y velocity (m/s)")
-        ax4.set_title("Y velocity vs Time")
-        ax4.set_xlim([t[0], t[-1]])
-        ax4.grid()
-
-        ax5.plot(t, np.rad2deg(gamma), label="gamma")
-        ax5.plot(
             self.trajectory_params["t"],
             np.rad2deg(self.trajectory_params["gamma"]),
             label="gamma_ref",
         )
+        ax3.legend()
+        ax3.set_xlabel("Time (s)")
+        ax3.set_ylabel("Gamma angle (deg)")
+        ax3.set_title("Gamma angle vs Time")
+        ax3.set_xlim([t[0], t[-1]])
+        ax3.grid()
+
+        ax4.plot(t, x[:, 1], label="vx")
+        ax4.plot(
+            self.trajectory_params["t"], self.trajectory_params["vx"], label="vx_ref"
+        )
+        ax4.legend()
+        ax4.set_xlabel("Time (s)")
+        ax4.set_ylabel("X velocity (m/s)")
+        ax4.set_title("X velocity vs Time")
+        ax4.set_xlim([t[0], t[-1]])
+        ax4.grid()
+
+        ax5.plot(t, x[:, 3], label="vy")
+        ax5.plot(
+            self.trajectory_params["t"], self.trajectory_params["vy"], label="vy_ref"
+        )
         ax5.legend()
         ax5.set_xlabel("Time (s)")
-        ax5.set_ylabel("Gamma angle (deg)")
-        ax5.set_title("Gamma angle vs Time")
+        ax5.set_ylabel("Y velocity (m/s)")
+        ax5.set_title("Y velocity vs Time")
         ax5.set_xlim([t[0], t[-1]])
         ax5.grid()
 
@@ -670,8 +698,8 @@ class MPC_controller:
         self.ax1.axis("equal")
         self.ax1.grid()
 
-        self.ax2.scatter(t, np.array(x)[:, 6])
-        self.ax2.scatter(t_list, horizon[6, :])
+        self.ax2.scatter(t, np.array(x)[:, 13])
+        self.ax2.scatter(t_list, horizon[13, :])
         self.ax2.plot(t_full, [thrust_bounds[0]] * len(t_full), "--", color="black")
         self.ax2.plot(t_full, [thrust_bounds[1]] * len(t_full), "--", color="black")
         self.ax2.legend(["$f$", "$f_{ref}$", "$f_{min}$", "$f_{max}$"])
@@ -692,24 +720,26 @@ class MPC_controller:
         self.ax3.set_title("Thrust derivative vs Time")
         self.ax3.grid()
 
-        self.ax4.scatter(t, np.rad2deg(np.array(x)[:, 4]))
-        self.ax4.scatter(t_list, np.rad2deg(horizon[4, :]))
-        self.ax4.plot(
-            t_full, [np.rad2deg(gamma_bounds[0])] * len(t_full), "--", color="black"
+        self.ax4.scatter(
+            t, np.rad2deg(np.arctan2(np.array(x)[:, 5], np.array(x)[:, 4]))
         )
-        self.ax4.plot(
-            t_full, [np.rad2deg(gamma_bounds[1])] * len(t_full), "--", color="black"
-        )
+        self.ax4.scatter(t_list, np.rad2deg(np.arctan2(horizon[5, :], horizon[4, :])))
+        # self.ax4.plot(
+        #     t_full, [np.rad2deg(gamma_bounds[0])] * len(t_full), "--", color="black"
+        # )
+        # self.ax4.plot(
+        #     t_full, [np.rad2deg(gamma_bounds[1])] * len(t_full), "--", color="black"
+        # )
         self.ax4.legend(
-            ["$gamma$", "$gamma_{hor}$", "$\\gamma_{min}$", "$\\gamma_{max}$"]
+            ["$gamma$", "$gamma_{hor}$"]  # , "$\\gamma_{min}$", "$\\gamma_{max}$"]
         )
         self.ax4.set_xlabel("Time (s)")
         self.ax4.set_ylabel("Angle (degrees)")
         self.ax4.set_title("Angle vs Time")
         self.ax4.grid()
 
-        self.ax5.scatter(t, np.rad2deg(np.array(x)[:, 7]))
-        self.ax5.scatter(t_list, np.rad2deg(horizon[7, :]))
+        self.ax5.scatter(t, np.rad2deg(np.array(x)[:, 12]))
+        self.ax5.scatter(t_list, np.rad2deg(horizon[12, :]))
         self.ax5.plot(
             t_full, [np.rad2deg(delta_tvc_bounds[0])] * len(t_full), "--", color="black"
         )

@@ -28,6 +28,45 @@ def mapi(x, y, xlim_sup, ylim_sup, xlim_inf, ylim_inf, size, realScale=True):
     return np.array([(x - xlim_inf) * x_factor, (y - ylim_inf) * y_factor])
 
 
+def draw_vector(initial_point, length, arrow_length, ei, color, screen):
+    """
+    Draw a vector with initial point and length
+    """
+    pygame.draw.line(
+        screen,
+        color,
+        initial_point,
+        (initial_point[0] + length * ei[0], initial_point[1] + length * ei[1]),
+        2,
+    )
+
+    arrow_points = [
+        (initial_point[0] + length * ei[0], initial_point[1] + length * ei[1]),
+        (
+            initial_point[0]
+            + length * ei[0]
+            - arrow_length * ei[0]
+            + arrow_length * ei[1],
+            initial_point[1]
+            + length * ei[1]
+            - arrow_length * ei[1]
+            - arrow_length * ei[0],
+        ),
+        (
+            initial_point[0]
+            + length * ei[0]
+            - arrow_length * ei[0]
+            - arrow_length * ei[1],
+            initial_point[1]
+            + length * ei[1]
+            - arrow_length * ei[1]
+            + arrow_length * ei[0],
+        ),
+    ]
+
+    pygame.draw.polygon(screen, color, arrow_points)
+
+
 def animate(
     t,
     x,
@@ -92,30 +131,24 @@ def animate(
     #     rocket, (int(size[0] / 10), int((3840 / 1920) * 151 / 10))
     # )
 
-    target = pygame.image.load("Animation/target.png")
-    target = pygame.transform.scale(target, (40, 40))
+    if matplotlib:
+        # retrive control horizons
+        horizon_list_x = []
+        horizon_list_y = []
+        horizon_list_gamma = []
+        horizon_list_e1bx = []
+        horizon_list_e1by = []
+        horizon_list_e2bx = []
+        horizon_list_e2by = []
 
-    # nozzle: 2000x731
-    nozzle = pygame.image.load("Animation/nozzle.png")
-    nozzle_scale = rocket.get_size()[1] / nozzle.get_size()[1]
-    nozzle = pygame.transform.scale(
-        nozzle,
-        (
-            int(nozzle_scale * nozzle.get_size()[0]),
-            int(nozzle_scale * nozzle.get_size()[1]),
-        ),
-    )
-
-    # flame: 2000x731
-    flame = pygame.image.load("Animation/flame.png")
-    flame_scale = rocket.get_size()[1] / flame.get_size()[1]
-    flame = pygame.transform.scale(
-        flame,
-        (
-            int(flame_scale * flame.get_size()[0]),
-            int(flame_scale * flame.get_size()[1]),
-        ),
-    )
+        for horizon in state_horizon_list:
+            horizon_list_x.append(horizon[0, :])
+            horizon_list_y.append(horizon[2, :])
+            horizon_list_gamma.append(np.arctan2(horizon[5, :], horizon[4, :]))
+            horizon_list_e1bx.append(horizon[4, :])
+            horizon_list_e1by.append(horizon[5, :])
+            horizon_list_e2bx.append(horizon[6, :])
+            horizon_list_e2by.append(horizon[7, :])
 
     # Initialize position vectors
     initial_position = np.array([0, size[1] - 128])
@@ -145,36 +178,6 @@ def animate(
             realScale=True,
         )
 
-        if following_trajectory:
-            # Get position, current time and vehicle velocity
-            target_pos = initial_position + mapi(
-                f_x_traj(timeCount),
-                -f_y_traj(timeCount),
-                xlim_sup,
-                ylim_sup,
-                xlim_inf,
-                ylim_inf,
-                size,
-                realScale=True,
-            )
-        else:
-            # Get position, current time and vehicle velocity
-            target_pos = initial_position + mapi(
-                target_goal[0],
-                -target_goal[1],
-                xlim_sup,
-                ylim_sup,
-                xlim_inf,
-                ylim_inf,
-                size,
-                realScale=True,
-            )
-
-        # Compensate to be on rocket center
-        target_pos += np.array(
-            [rocket.get_width() / 2, rocket.get_height() / 2]
-        ) - np.array([target.get_width() / 2, target.get_height() / 2])
-
         tempo = font.render("Time : {:.1f}s".format(timeCount), True, (255, 255, 255))
 
         # velocidade = font.render(
@@ -191,21 +194,59 @@ def animate(
         # screen.blit(velocidade, (5, 35))
 
         # screen.blit(escala, (5, 70))
-        screen.blit(target, target_pos)
         blitRotateCenter(screen, rocket, position, f_gamma(timeCount))
-        # pos_nozzle = (
-        #     position  # + np.array([rocket.get_width() / 2, -rocket.get_height()])
-        # )
-        # blitRotateCenter(screen, nozzle, pos_nozzle, f_gamma(timeCount) + 180)
-        # pos_flame = position + np.array(
-        #     [
-        #         rocket.get_width() / 2 * np.cos(np.deg2rad(f_gamma(timeCount)))
-        #         - rocket.get_height() * np.sin(np.deg2rad(f_gamma(timeCount))),
-        #         rocket.get_width() / 2 * np.sin(np.deg2rad(f_gamma(timeCount)))
-        #         + rocket.get_height() * np.cos(np.deg2rad(f_gamma(timeCount))),
-        #     ]
-        # )
-        # blitRotateCenter(screen, flame, pos_flame, f_gamma(timeCount) + 180)
+
+        # plot the horizon as dots for the position in x and y
+        if state_horizon_list is not None:
+            horizon_index = np.searchsorted(t, timeCount, side="left")
+            if horizon_index > 0:
+                horizon_index -= 1
+
+            for horizon in state_horizon_list:
+                for i in range(len(horizon_list_x[horizon_index])):
+                    horizon_pos = (
+                        initial_position
+                        + mapi(
+                            horizon_list_x[horizon_index][i],
+                            -horizon_list_y[horizon_index][i],
+                            xlim_sup,
+                            ylim_sup,
+                            xlim_inf,
+                            ylim_inf,
+                            size,
+                            realScale=True,
+                        )
+                        + np.array([151 / 2, 0])
+                    )
+
+                    pygame.draw.circle(screen, (255, 0, 0), horizon_pos[:], 2)
+
+                    if i % 8 == 0:
+                        vec_len = 25
+                        arrow_len = 5
+                        # initial_point, length, arrow_length, ei, color, screen
+                        draw_vector(
+                            horizon_pos,
+                            vec_len,
+                            arrow_len,
+                            (
+                                horizon_list_e1bx[horizon_index][i],
+                                -horizon_list_e1by[horizon_index][i],
+                            ),
+                            (0, 255, 0),
+                            screen,
+                        )
+                        draw_vector(
+                            horizon_pos,
+                            vec_len,
+                            arrow_len,
+                            (
+                                horizon_list_e2bx[horizon_index][i],
+                                -horizon_list_e2by[horizon_index][i],
+                            ),
+                            (0, 0, 255),
+                            screen,
+                        )
 
         time_list.append(timeCount)
         x_list.append(f_x(timeCount))
@@ -213,48 +254,45 @@ def animate(
         gamma_list.append(f_gamma(timeCount))
 
         if matplotlib:
-            # retrive control horizons
-            horizon_list_x = []
-            horizon_list_y = []
-            horizon_list_gamma = []
-
-            for horizon in state_horizon_list:
-                horizon_list_x.append(horizon[0, :])
-                horizon_list_y.append(horizon[2, :])
-                horizon_list_gamma.append(horizon[4, :])
-
-            horizon_list_f = []
-            horizon_list_tau = []
-
-            for horizon in control_horizon_list:
-                horizon_list_f.append(horizon[0, :])
-                horizon_list_tau.append(horizon[1, :])
-
             horizon_list_x = np.array(horizon_list_x)
             horizon_list_y = np.array(horizon_list_y)
             horizon_list_gamma = np.array(horizon_list_gamma)
-            horizon_list_f = np.array(horizon_list_f)
-            horizon_list_tau = np.array(horizon_list_tau)
 
             horizon_index = np.searchsorted(t, timeCount, side="left")
 
             if horizon_index > 0:
                 horizon_index -= 1
 
-            t_list = np.linspace(
-                t[horizon_index],
-                t[horizon_index] + N * dt,
-                N + 1,
-                endpoint=True,
-            )
-
             # Plotting the two Matplotlib figures
-            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(6, 6))
+            fig, ax1 = plt.subplots(1, 1, figsize=(6, 9))
             ax1.plot(x_list, y_list)
-            ax1.plot(
+            ax1.scatter(
                 horizon_list_x[horizon_index],
                 horizon_list_y[horizon_index],
+                s=2,
+                color="orange",
             )
+
+            # plot only every 8th vector
+            for ind_plot in range(0, len(horizon_list_x[0]), 8):
+                if ind_plot < len(horizon_list_x[0]):
+                    ax1.quiver(
+                        horizon_list_x[horizon_index][ind_plot],
+                        horizon_list_y[horizon_index][ind_plot],
+                        horizon_list_e1bx[horizon_index][ind_plot],
+                        horizon_list_e1by[horizon_index][ind_plot],
+                        color="r",
+                        scale=15,
+                    )
+                    ax1.quiver(
+                        horizon_list_x[horizon_index][ind_plot],
+                        horizon_list_y[horizon_index][ind_plot],
+                        horizon_list_e2bx[horizon_index][ind_plot],
+                        horizon_list_e2by[horizon_index][ind_plot],
+                        color="b",
+                        scale=15,
+                    )
+
             ax1.set_xlabel("Horizontal Position (m)")
             ax1.set_ylabel("Vertical Position (m)")
             ax1.set_title("Rocket Trajectory")
@@ -262,13 +300,13 @@ def animate(
             ax1.set_ylim([ylim_inf, ylim_sup])
             ax1.axis("equal")
 
-            ax2.plot(time_list, gamma_list)
-            ax2.plot(t_list, np.rad2deg(horizon_list_gamma[horizon_index]))
-            ax2.set_xlabel("Time (s)")
-            ax2.set_ylabel("Yaw angle (°)")
-            ax2.set_title("Rocket yaw angle")
-            ax2.set_ylim([gamma_lin_inf, gamma_lin_sup])
-            fig.tight_layout()
+            # ax2.plot(time_list, gamma_list)
+            # ax2.plot(t_list, np.rad2deg(horizon_list_gamma[horizon_index]))
+            # ax2.set_xlabel("Time (s)")
+            # ax2.set_ylabel("Yaw angle (°)")
+            # ax2.set_title("Rocket yaw angle")
+            # ax2.set_ylim([gamma_lin_inf, gamma_lin_sup])
+            # fig.tight_layout()
 
             # Convert the Matplotlib figure to an image
             canvas = agg.FigureCanvasAgg(fig)
@@ -279,7 +317,7 @@ def animate(
 
             # Create a Pygame surface from the Matplotlib image and blit it onto the screen
             surf = pygame.image.fromstring(raw_data, size_2, "RGB")
-            screen.blit(surf, (int(size[0]) - 600, 100))
+            screen.blit(surf, (int(size[0]) - 600, -100))
 
         pygame.display.flip()
 
