@@ -89,7 +89,7 @@ def animate(
 
     # animation constants
     offset = 0.2 * max(max(x), max(y))
-    dt = 1 / 60 * 3
+    dt = 1 / 60
     target_goal = (30, 30) if target_goal == False else target_goal
 
     if trajectory_params is False:
