@@ -1,116 +1,106 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def diff_flat_traj(x, y, z, total_time, constraints=False, g=9.81, optimize=False):
-    gain = 1.5
-    t = np.linspace(0, total_time, len(x))
-    x_dot = np.gradient(x, t)
+
+def diff_flat_traj(x, y, z, vx, vy, vz, t, constraints=False, g=9.81, optimize=False):
+    x_dot = vx
     x_dot_dot = np.gradient(x_dot, t)
-    
-    y_dot = np.gradient(y, t)
+
+    y_dot = vy
     y_dot_dot = np.gradient(y_dot, t)
-    
-    z_dot = np.gradient(z, t)
+
+    z_dot = vz
     z_dot_dot = np.gradient(z_dot, t)
 
     gamma = np.arctan2(y_dot_dot + g, x_dot_dot)
     gamma_dot = np.gradient(gamma, t)
     gamma_dot_dot = np.gradient(gamma_dot, t)
-    
+
     e1bx = np.cos(gamma)
     e1by = np.sin(gamma)
     e2bx = -np.sin(gamma)
     e2by = np.cos(gamma)
-    
-    if optimize:
-        max_ax = constraints["max_ax"]
-        min_ax = constraints["min_ax"]
-        max_ay = constraints["max_ay"]
-        min_ay = constraints["min_ay"]
-        optimizing = True
-        i = 1
+
+    # if optimize:
+
+    #     (
+    #         t,
+    #         x,
+    #         x_dot,
+    #         x_dot_dot,
+    #         y,
+    #         y_dot,
+    #         y_dot_dot,
+    #         z,
+    #         z_dot,
+    #         z_dot_dot,
+    #         e1bx,
+    #         e1by,
+    #         e2bx,
+    #         e2by,
+    #         gamma_dot,
+    #         gamma_dot_dot,
+    #     ) = apply_bounds(
+    #         t,
+    #         x,
+    #         x_dot,
+    #         x_dot_dot,
+    #         y,
+    #         y_dot,
+    #         y_dot_dot,
+    #         z,
+    #         z_dot,
+    #         z_dot_dot,
+    #         e1bx,
+    #         e1by,
+    #         e2bx,
+    #         e2by,
+    #         gamma_dot,
+    #         gamma_dot_dot,
+    #         constraints,
+    #         g=9.81,
+    #     )
         
-        print("Optimizing trajectory...")
-        print("max_ax: ", max_ax)
-        print("min_ax: ", min_ax)
-        print("max_ay: ", max_ay)
-        print("min_ay: ", min_ay)
-        print()
-        print("ax0: ", x_dot_dot[0])
-        print("ay0: ", y_dot_dot[0])
+        # accelerating to max velocity
+        # accelerating = True
+        # i = 1
+        # dt = 1
+        # time_improved = False
         
-        while optimizing:
-            dt = t[i+1] - t[i]
-            
-            # check if bounds were violated
-            if x_dot_dot[i] > max_ax:
-                temp = dt * gain * (x_dot_dot[i] - max_ax) / max_ax
-                if temp < 1e-2: temp = 1e-2
-                t[i+1:] += temp
+        # while accelerating:           
+        #     # recalculate trajectory
+        #     x_dot = np.gradient(x, t)
+        #     x_dot_dot = np.gradient(x_dot, t)
+        #     y_dot = np.gradient(y, t)
+        #     y_dot_dot = np.gradient(y_dot, t)
                 
-            elif x_dot_dot[i] < min_ax:
-                temp = dt * gain * (x_dot_dot[i] - min_ax) / min_ax
-                if temp < 1e-2: temp = 1e-2
-                t[i+1:] += temp
+        #     # check if contraints are met
+        #     if x_dot[i] > constraints["max_vx"] or x_dot[i] < constraints["min_vx"]:
+        #         t[i:] += dt
+        #         if time_improved:
+        #             i += 1
+        #     elif y_dot[i] > constraints["max_vy"] or y_dot[i] < constraints["min_vy"]:
+        #         t[i:] += dt
+        #         if time_improved:
+        #             i += 1
+        #     elif x_dot_dot[i] > constraints["max_ax"] or x_dot_dot[i] < constraints["min_ax"]:
+        #         t[i:] += dt
+        #         if time_improved:
+        #             i += 1
+        #     elif y_dot_dot[i] > constraints["max_ay"] or y_dot_dot[i] < constraints["min_ay"]:
+        #         t[i:] += dt
+        #         if time_improved:
+        #             i += 1
+        #     else:
+        #         # increase velocity
+        #         t[i:] -= dt
+        #         time_improved = True
+        #         print("time improved")
+
+        #     if i >= len(t):
+        #         accelerating = False
                 
-            elif y_dot_dot[i] > max_ay:
-                temp = dt * gain * (y_dot_dot[i] - max_ay) / max_ay
-                if temp < 1e-2: temp = 1e-2
-                t[i+1:] += temp
-                
-            elif y_dot_dot[i] < min_ay:
-                temp = dt * gain * (y_dot_dot[i] - min_ay) / min_ay
-                if temp < 1e-2: temp = 1e-2
-                t[i+1:] += temp
-                
-            # # accelerate if too slow
-            # elif 0 < x_dot_dot[i] < 0.5 * max_ax:
-            #     temp = dt * gain * (max_ax - x_dot_dot[i]) / max_ax
-            #     if temp < 1e-2: temp = 1e-2
-            #     t[i+1:] -= temp
-                
-            # elif 0.5 * min_ax < x_dot_dot[i] < 0:
-            #     temp = dt * gain * (min_ax - x_dot_dot[i]) / min_ax
-            #     if temp < 1e-2: temp = 1e-2
-            #     t[i+1:] -= temp
-                
-            # elif 0 < y_dot_dot[i] < 0.5 * max_ay:
-            #     temp = dt * gain * (max_ay - y_dot_dot[i]) / max_ay
-            #     if temp < 1e-2: temp = 1e-2
-            #     t[i+1:] -= temp
-                
-            # elif 0.5 * min_ay < y_dot_dot[i] < 0:
-            #     temp = dt * gain * (min_ay - y_dot_dot[i]) / min_ay
-            #     if temp < 1e-2: temp = 1e-2
-            #     t[i+1:] -= temp
-                
-            else:
-                i += 1
-            
-            if i >= len(t) -1:
-                optimizing = False
-            
-            x_dot = np.gradient(x, t)
-            x_dot_dot = np.gradient(x_dot, t)
-            y_dot = np.gradient(y, t)
-            y_dot_dot = np.gradient(y_dot, t)
-            z_dot = np.gradient(z, t)
-            z_dot_dot = np.gradient(z_dot, t)
-            gamma = np.arctan2(y_dot_dot + g, x_dot_dot)
-            gamma_dot = np.gradient(gamma, t)
-            gamma_dot_dot = np.gradient(gamma_dot, t)
-            e1bx = np.cos(gamma)
-            e1by = np.sin(gamma)
-            e2bx = -np.sin(gamma)
-            e2by = np.cos(gamma)
-            
-            # print("i: ", i)
-            # print("t: ", t[i])
-            # print("ax: ", x_dot_dot[i])
-            # print("ay: ", y_dot_dot[i])
-            
-            # input("Press Enter to continue...")
-                
+        #     print(i, len(t))
 
     return (
         t,
@@ -128,7 +118,145 @@ def diff_flat_traj(x, y, z, total_time, constraints=False, g=9.81, optimize=Fals
         e2bx,
         e2by,
         gamma_dot,
-        gamma_dot_dot,)
+        gamma_dot_dot,
+    )
+
+
+def apply_bounds(
+    t,
+    x,
+    x_dot,
+    x_dot_dot,
+    y,
+    y_dot,
+    y_dot_dot,
+    z,
+    z_dot,
+    z_dot_dot,
+    e1bx,
+    e1by,
+    e2bx,
+    e2by,
+    gamma_dot,
+    gamma_dot_dot,
+    constraints,
+    g=9.81,
+):
+
+    gain = 1.5
+    max_vx = constraints["max_vx"]
+    min_vx = constraints["min_vx"]
+    max_vy = constraints["max_vy"]
+    min_vy = constraints["min_vy"]
+    max_ax = constraints["max_ax"]
+    min_ax = constraints["min_ax"]
+    max_ay = constraints["max_ay"]
+    min_ay = constraints["min_ay"]
+    applying_bounds = True
+    i = 0
+
+    print("Optimizing trajectory...")
+    print("max_ax: ", max_ax)
+    print("min_ax: ", min_ax)
+    print("max_ay: ", max_ay)
+    print("min_ay: ", min_ay)
+    print()
+    print("ax0: ", x_dot_dot[0])
+    print("ay0: ", y_dot_dot[0])
+
+    while applying_bounds:
+        if i != len(t) - 1:
+            dt = t[i + 1] - t[i]
+        else:
+            dt = t[i] - t[i - 1]
+
+        # # check if bounds were violated
+        # if x_dot[i] > max_vx:
+        #     temp = dt * gain * (x_dot[i] - max_vx) / max_vx
+        #     if temp < 1e-2:
+        #         temp = 1e-2
+        #     t[i + 1 :] += temp
+
+        # elif x_dot[i] < min_vx:
+        #     temp = dt * gain * (x_dot[i] - min_vx) / min_vx
+        #     if temp < 1e-2:
+        #         temp = 1e-2
+        #     t[i + 1 :] += temp
+
+        # elif y_dot[i] > max_vy:
+        #     temp = dt * gain * (y_dot[i] - max_vy) / max_vy
+        #     if temp < 1e-2:
+        #         temp = 1e-2
+        #     t[i + 1 :] += temp
+
+        # elif y_dot[i] < min_vy:
+        #     temp = dt * gain * (y_dot[i] - min_vy) / min_vy
+        #     if temp < 1e-2:
+        #         temp = 1e-2
+        #     t[i + 1 :] += temp
+
+        if x_dot_dot[i] > max_ax:
+            temp = dt * gain * (x_dot_dot[i] - max_ax) / max_ax
+            if temp < 1e-2:
+                temp = 1e-2
+            t[i + 1 :] += temp
+
+        elif x_dot_dot[i] < min_ax:
+            temp = dt * gain * (x_dot_dot[i] - min_ax) / min_ax
+            if temp < 1e-2:
+                temp = 1e-2
+            t[i + 1 :] += temp
+
+        elif y_dot_dot[i] > max_ay:
+            temp = dt * gain * (y_dot_dot[i] - max_ay) / max_ay
+            if temp < 1e-2:
+                temp = 1e-2
+            t[i + 1 :] += temp
+
+        elif y_dot_dot[i] < min_ay:
+            temp = dt * gain * (y_dot_dot[i] - min_ay) / min_ay
+            if temp < 1e-2:
+                temp = 1e-2
+            t[i + 1 :] += temp
+        else:
+            i += 1
+
+        if i >= len(t):
+            applying_bounds = False
+
+        x_dot = np.gradient(x, t)
+        x_dot_dot = np.gradient(x_dot, t)
+        y_dot = np.gradient(y, t)
+        y_dot_dot = np.gradient(y_dot, t)
+        z_dot = np.gradient(z, t)
+        z_dot_dot = np.gradient(z_dot, t)
+        gamma = np.arctan2(y_dot_dot + g, x_dot_dot)
+        gamma_dot = np.gradient(gamma, t)
+        gamma_dot_dot = np.gradient(gamma_dot, t)
+        e1bx = np.cos(gamma)
+        e1by = np.sin(gamma)
+        e2bx = -np.sin(gamma)
+        e2by = np.cos(gamma)
+
+    return (
+        t,
+        x,
+        x_dot,
+        x_dot_dot,
+        y,
+        y_dot,
+        y_dot_dot,
+        z,
+        z_dot,
+        z_dot_dot,
+        e1bx,
+        e1by,
+        e2bx,
+        e2by,
+        gamma_dot,
+        gamma_dot_dot,
+    )
+
 
 def get_traj_params(states, constraints, plot=False):
     x = states["x"]
@@ -147,9 +275,9 @@ def get_traj_params(states, constraints, plot=False):
     gamma_dot = states["gamma_dot"]
     gamma_dot_dot = states["gamma_dot_dot"]
     t = states["t"]
-    
+
     gamma = np.arctan2(e1by, e1bx)
-    
+
     trajectory = {
         "t": t,
         "x": x,
@@ -170,17 +298,22 @@ def get_traj_params(states, constraints, plot=False):
     }
 
     if plot:
-        plot_trajectory(t, x, vx, ax, y, vy, ay, z, vz, az, gamma, gamma_dot, gamma_dot_dot)
+        plot_trajectory(
+            t, x, vx, ax, y, vy, ay, z, vz, az, gamma, gamma_dot, gamma_dot_dot
+        )
 
     return trajectory
 
-def plot_trajectory(t, x, vx, ax, y, vy, ay, z, vz, az, gamma, gamma_dot, gamma_dot_dot):
+
+def plot_trajectory(
+    t, x, vx, ax, y, vy, ay, z, vz, az, gamma, gamma_dot, gamma_dot_dot
+):
     e1bx = np.cos(gamma)
     e1by = np.sin(gamma)
     e2bx = -np.sin(gamma)
     e2by = np.cos(gamma)
     last_t = t[0]
-    
+
     fig, axs = plt.subplots(3, 2, figsize=(15, 15))
     axs[0, 0].plot(x, y, label="trajectory")
     axs[0, 0].scatter([-100, 100], [0, 0], s=1e-3)

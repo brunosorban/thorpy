@@ -5,23 +5,23 @@ import numpy as np
 
 
 def points_circle(initial_point, height, radius, total_time, num_points):
-    num_ascent_points = num_points // 3  # Number of points for ascent
-    num_circular_points = (num_points * 2) // 3  # Number of points for circular motion
+    num_ascent_points = 3  # Number of points for ascent
+    num_circular_points = num_points - 3  # Number of points for circular motion
 
     t_ascent = np.linspace(
-        0, total_time / 2, num_ascent_points
+        0, total_time / 6, num_ascent_points
     )  # Time points for ascent
     t_circular = np.linspace(
-        total_time / 2, total_time, num_circular_points, endpoint=True
+        total_time / 6, total_time, num_circular_points, endpoint=True
     )  # Time points for circular motion
 
     # Calculate x, y, and z coordinates for ascent
     x_ascent = np.full_like(t_ascent, initial_point[0]) + radius
-    y_ascent = initial_point[1] + (height + radius) * t_ascent / (total_time / 2)
+    y_ascent = initial_point[1] + (height + radius) * t_ascent / (total_time / 6)
     z_ascent = np.zeros_like(y_ascent)
 
     # Calculate x, y, and z coordinates for circular motion
-    theta = 2 * np.pi * (t_circular - total_time / 2) / (total_time / 2)
+    theta = 2 * np.pi * (t_circular - total_time / 6) / (5 * total_time / 6)
     x_circular = x_ascent[-1] + radius * np.cos(theta) - radius
     y_circular = y_ascent[-1] + radius * np.sin(theta)
     z_circular = np.zeros_like(x_circular)

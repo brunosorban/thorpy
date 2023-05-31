@@ -26,6 +26,9 @@ class MPC_controller:
         self.normalization_params_x = normalization_params_x
         self.normalization_params_u = normalization_params_u
         self.trajectory_params = trajectory_params
+        
+        self.epos_list = [0]
+        self.er_list = [0]
 
         if trajectory_params is not None:
             self.follow_trajectory = True
@@ -55,6 +58,7 @@ class MPC_controller:
         x_target = controller_params["x_target"]
 
         Q = controller_params["Q"]
+        self.Q = Q
         Qf = controller_params["Qf"]
         R = controller_params["R"]
 
@@ -481,7 +485,38 @@ class MPC_controller:
             torque.append(u[1, 0])
             t.append(t[-1] + self.dt)
             last_sol = sol
+            
+            # compute actual cost
+            px_target = self.linear_spline(t[-1], self.trajectory_params["t"], self.trajectory_params["x"])
+            py_target = self.linear_spline(t[-1], self.trajectory_params["t"], self.trajectory_params["y"])
+            vx_target = self.linear_spline(t[-1], self.trajectory_params["t"], self.trajectory_params["vx"])
+            vy_target = self.linear_spline(t[-1], self.trajectory_params["t"], self.trajectory_params["vy"])
+            
+            pos_error = np.array(x_list[-1][0:4]) - np.array([px_target, vx_target, py_target, vy_target])
+            self.epos_list.append(self.epos_list[-1] + self.dt * (pos_error.T @ self.Q[0:4, 0:4] @ pos_error))
+            
+            e1bx_target= self.linear_spline(
+                t[-1], self.trajectory_params["t"], self.trajectory_params["e1bx"]
+            )
+            e1by_target= self.linear_spline(
+                t[-1], self.trajectory_params["t"], self.trajectory_params["e1by"]
+            )
+            e2bx_target= self.linear_spline(
+                t[-1], self.trajectory_params["t"], self.trajectory_params["e2bx"]
+            )
+            e2by_target= self.linear_spline(
+                t[-1], self.trajectory_params["t"], self.trajectory_params["e2by"]
+            )
+            
+            er = (
+                0.5 * x_list[-1][4] * e2bx_target
+                + 0.5 * x_list[-1][5] * e2by_target
+                - 0.5 * e1bx_target * x_list[-1][6]
+                - 0.5 * e1by_target * x_list[-1][7]
+            )
+            self.er_list.append(self.er_list[-1] + float(self.dt * (er * self.Q[4, 4] * er)))
 
+            # print("er_list: ", self.er_list)    
             # plot the results
             # self.plot_horizon(t, x_list, u, horizon)
             # input("Press Enter to continue...")
@@ -535,14 +570,14 @@ class MPC_controller:
         ax2.set_title("Thrust vs Time")
         ax2.grid()
 
-        # plot 3: thrust derivative
-        ax3.plot(t[0 : len(t) - 1], thrust_deriv_list)
-        ax3.plot(t, [u_bounds[0][0]] * len(t), "--", color="black")
-        ax3.plot(t, [u_bounds[0][1]] * len(t), "--", color="black")
-        ax3.legend(["$\dot{f}$", "$\dot{f}_{ref}$", "$\dot{f}_{max}$"])
+        # plot 3: epos
+        ax3.plot(t, self.epos_list, label="$e_{pos}$")
+        # ax3.plot(t, [u_bounds[0][0]] * len(t), "--", color="black")
+        # ax3.plot(t, [u_bounds[0][1]] * len(t), "--", color="black")
+        ax3.legend()
         ax3.set_xlabel("Time (s)")
-        ax3.set_ylabel("Thrust derivative (N/s)")
-        ax3.set_title("Thrust derivative vs Time")
+        ax3.set_ylabel("Position error")
+        ax3.set_title("Position error vs Time")
         ax3.grid()
 
         # plot 4: gamma
@@ -568,21 +603,14 @@ class MPC_controller:
         ax5.set_title("$\\delta_{tvc}$ vs Time")
         ax5.grid()
 
-        # plot 5: delta_tvc
-        ax6.plot(t[0 : len(t) - 1], np.rad2deg(omega_ref_deriv_list))
-        ax6.plot(t, [np.rad2deg(u_bounds[1][0])] * len(t), "--", color="black")
-        ax6.plot(t, [np.rad2deg(u_bounds[1][1])] * len(t), "--", color="black")
-        ax6.legend(
-            [
-                "$\\dot{\\omega}_{control}$",
-                "$\\dot{\\omega}_{control_{min}}$",
-                "$\\dot{\\omega}_{control_{max}}$",
-            ],
-            loc="upper right",
-        )
+        # plot 5: er
+        ax6.plot(t, self.er_list, label="$e_{r}$")
+        # ax6.plot(t, [np.rad2deg(u_bounds[1][0])] * len(t), "--", color="black")
+        # ax6.plot(t, [np.rad2deg(u_bounds[1][1])] * len(t), "--", color="black")
+        ax6.legend()
         ax6.set_xlabel("Time (s)")
-        ax6.set_ylabel("$\\dot{\\omega}}$ (degrees)")
-        ax6.set_title("$\\dot{\\omega}}$ vs Time")
+        ax6.set_ylabel("Anglular error")
+        ax6.set_title("Angular error vs Time")
         ax6.grid()
 
         plt.tight_layout()

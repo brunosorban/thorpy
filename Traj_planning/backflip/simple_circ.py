@@ -173,7 +173,7 @@ v = 5  # m/s
 r = 50  # meters
 m = 100  # kg
 
-plot_vel_vectors(*calculate_traj_params(v, r, m)[0:4])
+# plot_vel_vectors(*calculate_traj_params(v, r, m)[0:4])
 
 
 def traj_simple_circle():

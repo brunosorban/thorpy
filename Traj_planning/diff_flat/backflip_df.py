@@ -1,9 +1,10 @@
 import numpy as np
 import sys
-sys.path.append('../')
-sys.path.append('../../')
 
-from Traj_planning.backflip.points_circle import *
+sys.path.append("../")
+sys.path.append("../../")
+
+from Traj_planning.backflip.simple_circ import *
 from Traj_planning.traj_generators.diff_flat_traj_gen import *
 
 # Example usage
@@ -16,16 +17,30 @@ num_points = 500
 ############################## Data ###########################################
 # environment variables
 g = 9.81  # gravity
+v = 20  # m/s
+r = 100  # meters
+m = 100  # kg
 
 # constraints
-max_ax = 15
-min_ax = -15
-max_ay = 15
-min_ay = -15 
+max_vx = 150
+min_vx = -150
+max_vy = 150
+min_vy = -150
 
-x, y, z = points_circle(initial_point, height, radius, total_time, num_points)
+max_ax = 30
+min_ax = -30
+max_ay = 30
+min_ay = -30
+
+x, y, vx, vy, t, e1bx, e1by = calculate_traj_params(v, r, m, g)
+z = np.zeros_like(x)
+vz = np.zeros_like(x)
 
 constraints = {
+    "min_vx": min_vx,
+    "max_vx": max_vx,
+    "min_vy": min_vy,
+    "max_vy": max_vy,
     "min_ax": min_ax,
     "max_ax": max_ax,
     "min_ay": min_ay,
@@ -51,7 +66,10 @@ constraints = {
     e2by,
     gamma_dot,
     gamma_dot_dot,
-) = diff_flat_traj(x, y, z, total_time, constraints=constraints, optimize=True)
+) = diff_flat_traj(x, y, z, vx, vy, vz, t, constraints=constraints, optimize=True)
+
+print(t)
+
 
 target_points = np.array([x, y, z]).T
 target_velocities = np.array([x_dot, y_dot, z_dot]).T

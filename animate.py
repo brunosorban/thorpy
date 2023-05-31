@@ -72,7 +72,6 @@ def animate(
     x,
     y,
     gamma,
-    delta_tvc,
     state_horizon_list,
     control_horizon_list=None,
     N=False,
@@ -87,7 +86,6 @@ def animate(
     f_x = Function(t, x)
     f_y = Function(t, y)
     f_gamma = Function(t, np.rad2deg(gamma))
-    f_delta_tvc_c = Function(t, np.rad2deg(delta_tvc))
 
     # animation constants
     offset = 0.2 * max(max(x), max(y))
@@ -131,24 +129,23 @@ def animate(
     #     rocket, (int(size[0] / 10), int((3840 / 1920) * 151 / 10))
     # )
 
-    if matplotlib:
-        # retrive control horizons
-        horizon_list_x = []
-        horizon_list_y = []
-        horizon_list_gamma = []
-        horizon_list_e1bx = []
-        horizon_list_e1by = []
-        horizon_list_e2bx = []
-        horizon_list_e2by = []
+    # retrive control horizons
+    horizon_list_x = []
+    horizon_list_y = []
+    horizon_list_gamma = []
+    horizon_list_e1bx = []
+    horizon_list_e1by = []
+    horizon_list_e2bx = []
+    horizon_list_e2by = []
 
-        for horizon in state_horizon_list:
-            horizon_list_x.append(horizon[0, :])
-            horizon_list_y.append(horizon[2, :])
-            horizon_list_gamma.append(np.arctan2(horizon[5, :], horizon[4, :]))
-            horizon_list_e1bx.append(horizon[4, :])
-            horizon_list_e1by.append(horizon[5, :])
-            horizon_list_e2bx.append(horizon[6, :])
-            horizon_list_e2by.append(horizon[7, :])
+    for horizon in state_horizon_list:
+        horizon_list_x.append(horizon[0, :])
+        horizon_list_y.append(horizon[2, :])
+        horizon_list_gamma.append(np.arctan2(horizon[5, :], horizon[4, :]))
+        horizon_list_e1bx.append(horizon[4, :])
+        horizon_list_e1by.append(horizon[5, :])
+        horizon_list_e2bx.append(horizon[6, :])
+        horizon_list_e2by.append(horizon[7, :])
 
     # Initialize position vectors
     initial_position = np.array([0, size[1] - 128])
@@ -247,6 +244,61 @@ def animate(
                             (0, 0, 255),
                             screen,
                         )
+
+            # plot the trajectory as dots for the position in x and y
+            t_traj = trajectory_params["t"]
+            x_traj = trajectory_params["x"]
+            y_traj = trajectory_params["y"]
+            e1bx_traj = trajectory_params["e1bx"]
+            e1by_traj = trajectory_params["e1by"]
+            e2bx_traj = trajectory_params["e2bx"]
+            e2by_traj = trajectory_params["e2by"]
+
+            for i in range(len(t_traj)):
+                traj_pos = (
+                    initial_position
+                    + mapi(
+                        x_traj[i],
+                        -y_traj[i],
+                        xlim_sup,
+                        ylim_sup,
+                        xlim_inf,
+                        ylim_inf,
+                        size,
+                        realScale=True,
+                    )
+                    + np.array([151 / 2, 0])
+                )
+
+                pygame.draw.circle(screen, (0, 0, 0), traj_pos[:], 2)
+
+                if i % 8 == 0:
+                    vec_len = 25
+                    arrow_len = 5
+                    # initial_point, length, arrow_length, ei, color, screen
+                    draw_vector(
+                        traj_pos,
+                        vec_len,
+                        arrow_len,
+                        (
+                            e1bx_traj[i],
+                            -e1by_traj[i],
+                        ),
+                        (0, 255, 0),
+                        screen,
+                    )
+                    draw_vector(
+                        traj_pos,
+                        vec_len,
+                        arrow_len,
+                        (
+                            e2bx_traj[i],
+                            -e2by_traj[i],
+                        ),
+                        (0, 0, 255),
+                        screen,
+                    )
+
 
         time_list.append(timeCount)
         x_list.append(f_x(timeCount))

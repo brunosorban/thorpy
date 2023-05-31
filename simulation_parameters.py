@@ -27,14 +27,14 @@ tf = 60  # final time
 
 # state space: [x, x_dot, y, y_dot, gamma, gamma_dot, thrust, delta_tvc]
 # initial_state = [0, 0, 0, 0, np.deg2rad(90), 0, m * g, 0]
-initial_state = [100, 0, 0, 15, 0, 1, -1, 0, 0, 1, -1, 0, 0, m * g]
+initial_state = [200, 0, 0, 35, 0, 1, -1, 0, 0, 1, -1, 0, 0, m * g]
 # target = [30, 0, 30, 0, np.deg2rad(90), 0, 0, 0]
 x_target = None
 max_step = 1e-4
 
 # controller parameters
-T = 2  # time horizon
-N = 40  # Number of control intervals
+T = 3  # time horizon
+N = 60  # Number of control intervals
 
 # controller input bounds
 u_max_f = 2 * m * g  # maxium thrust rate
