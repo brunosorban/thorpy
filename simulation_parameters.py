@@ -27,7 +27,7 @@ tf = 60  # final time
 
 # state space: [x, x_dot, y, y_dot, gamma, gamma_dot, thrust, delta_tvc]
 # initial_state = [0, 0, 0, 0, np.deg2rad(90), 0, m * g, 0]
-initial_state = [200, 0, 0, 35, 0, 1, -1, 0, 0, 1, -1, 0, 0, m * g]
+initial_state = [200, 0, 0, 55, 0, 1, -1, 0, 0, 1, -1, 0, 0, m * g]
 # target = [30, 0, 30, 0, np.deg2rad(90), 0, 0, 0]
 x_target = None
 max_step = 1e-4
@@ -62,8 +62,8 @@ q1 = 15  # position in x cost penalty
 q2 = 20  # velocity in x cost penalty
 q3 = 15  # position in y cost penalty
 q4 = 20  # velocity in y cost penalty
-q5 = 15 * 100  # yaw angle cost penalty
-q6 = 3 * 100  # yaw rate cost penalty
+q5 = 15 * 10000  # yaw angle cost penalty
+q6 = 3 * 10000  # yaw rate cost penalty
 q7 = 1e-15  # thrust cost penalty
 q8 = 1e-15  # thrust vector angle cost penalty
 Qf_gain = 10  # gain of the final cost
@@ -111,6 +111,7 @@ rocket_params = {
     "h": h,
     "radius": radius,
     "C": C,
+    "J": C,
     "K_tvc": K_tvc,
     "T_tvc": T_tvc,
     "l_tvc": l_tvc,
@@ -135,25 +136,3 @@ controller_params = {
     "delta_tvc_bounds": (u_min_delta_tvc_c, u_max_delta_tvc_c),
     "omega_control_bounds": (1, 1),
 }
-
-normalization_params_x = [
-    1 / pos_norm,
-    1 / vel_norm,
-    1 / pos_norm,
-    1 / vel_norm,
-    1 / angle_norm,
-    1 / angle_rate_norm,
-    1 / thrust_norm,
-    1 / angle_norm,
-]
-
-normalization_params_u = [thrust_norm, angle_norm]
-
-# Solution parameters
-# sol_params = {
-#     "t0": t0,
-#     "tf": tf,
-#     "initial_state": initial_state,
-#     "target": target,
-#     "max_step": max_step,
-# }

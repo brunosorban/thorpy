@@ -89,7 +89,7 @@ def animate(
 
     # animation constants
     offset = 0.2 * max(max(x), max(y))
-    dt = 1 / 60
+    dt = 1 / 60 / 3
     target_goal = (30, 30) if target_goal == False else target_goal
 
     if trajectory_params is False:
@@ -218,7 +218,7 @@ def animate(
 
                     pygame.draw.circle(screen, (255, 0, 0), horizon_pos[:], 2)
 
-                    if i % 8 == 0:
+                    if i % 90 == 0:
                         vec_len = 25
                         arrow_len = 5
                         # initial_point, length, arrow_length, ei, color, screen
@@ -272,7 +272,7 @@ def animate(
 
                 pygame.draw.circle(screen, (0, 0, 0), traj_pos[:], 2)
 
-                if i % 8 == 0:
+                if i % 90 == 0:
                     vec_len = 25
                     arrow_len = 5
                     # initial_point, length, arrow_length, ei, color, screen
@@ -298,7 +298,6 @@ def animate(
                         (0, 0, 255),
                         screen,
                     )
-
 
         time_list.append(timeCount)
         x_list.append(f_x(timeCount))

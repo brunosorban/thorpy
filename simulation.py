@@ -40,9 +40,12 @@ from simulation_parameters import *
 # trajectory_params = traj_simple_circle()
 # tf = trajectory_params["t"][-1] + 2 # 0 seconds after the landing
 
-from Traj_planning.diff_flat.backflip_df import traj_points_df_circ
+# from Traj_planning.diff_flat.backflip_df import traj_points_df_circ
+# trajectory_params = traj_points_df_circ(plot=True)
+# tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
 
-trajectory_params = traj_points_df_circ(plot=True)
+from Traj_planning.traj_3ST.circle_3ST import traj_circle_3ST
+trajectory_params = traj_circle_3ST()
 tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
 
 ######################### Creating the controller ##############################
@@ -50,8 +53,6 @@ controller = MPC_controller(
     env_params=env_params,
     rocket_params=rocket_params,
     controller_params=controller_params,
-    normalization_params_x=normalization_params_x,
-    normalization_params_u=normalization_params_u,
     trajectory_params=trajectory_params,
 )
 
@@ -68,18 +69,18 @@ controller.plot_tracking_results(t, x)
 
 
 ################################## Animation ###################################
-# animate(
-#     t,
-#     x=x[:, 0],
-#     y=x[:, 2],
-#     gamma=np.arctan2(x[:, 5], x[:, 4]),
-#     state_horizon_list=state_horizon_list,
-#     control_horizon_list=control_horizon_list,
-#     N=N,
-#     dt=T / N,
-#     target_goal=None,
-#     trajectory_params=trajectory_params,
-#     scale=1,
-#     matplotlib=False,
-#     save=False,
-# )
+animate(
+    t,
+    x=x[:, 0],
+    y=x[:, 2],
+    gamma=np.arctan2(x[:, 5], x[:, 4]),
+    state_horizon_list=state_horizon_list,
+    control_horizon_list=control_horizon_list,
+    N=N,
+    dt=T / N,
+    target_goal=None,
+    trajectory_params=trajectory_params,
+    scale=1,
+    matplotlib=False,
+    save=False,
+)

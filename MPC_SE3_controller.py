@@ -15,18 +15,14 @@ class MPC_controller:
         env_params,
         rocket_params,
         controller_params,
-        normalization_params_x,
-        normalization_params_u,
         trajectory_params=None,
     ):
         # store the parameters
         self.env_params = env_params
         self.rocket_params = rocket_params
         self.controller_params = controller_params
-        self.normalization_params_x = normalization_params_x
-        self.normalization_params_u = normalization_params_u
         self.trajectory_params = trajectory_params
-        
+
         self.epos_list = [0]
         self.er_list = [0]
 
@@ -164,14 +160,6 @@ class MPC_controller:
         self.u = self.opti.variable(2, N)
         self.x_initial = self.opti.parameter(14, 1)
         self.x_target = self.opti.parameter(14, N + 1)
-
-        # self.x = ca.repmat(
-        #     ca.vertcat(*normalization_params_x), 1, N + 1
-        # ) * self.opti.variable(8, N + 1)
-
-        # self.u = ca.repmat(
-        #     ca.vertcat(*normalization_params_u), 1, N
-        # ) * self.opti.variable(2, N)
 
         # define the cost function
         self.obj = 0
@@ -485,38 +473,53 @@ class MPC_controller:
             torque.append(u[1, 0])
             t.append(t[-1] + self.dt)
             last_sol = sol
-            
+
             # compute actual cost
-            px_target = self.linear_spline(t[-1], self.trajectory_params["t"], self.trajectory_params["x"])
-            py_target = self.linear_spline(t[-1], self.trajectory_params["t"], self.trajectory_params["y"])
-            vx_target = self.linear_spline(t[-1], self.trajectory_params["t"], self.trajectory_params["vx"])
-            vy_target = self.linear_spline(t[-1], self.trajectory_params["t"], self.trajectory_params["vy"])
-            
-            pos_error = np.array(x_list[-1][0:4]) - np.array([px_target, vx_target, py_target, vy_target])
-            self.epos_list.append(self.epos_list[-1] + self.dt * (pos_error.T @ self.Q[0:4, 0:4] @ pos_error))
-            
-            e1bx_target= self.linear_spline(
+            px_target = self.linear_spline(
+                t[-1], self.trajectory_params["t"], self.trajectory_params["x"]
+            )
+            py_target = self.linear_spline(
+                t[-1], self.trajectory_params["t"], self.trajectory_params["y"]
+            )
+            vx_target = self.linear_spline(
+                t[-1], self.trajectory_params["t"], self.trajectory_params["vx"]
+            )
+            vy_target = self.linear_spline(
+                t[-1], self.trajectory_params["t"], self.trajectory_params["vy"]
+            )
+
+            pos_error = np.array(x_list[-1][0:4]) - np.array(
+                [px_target, vx_target, py_target, vy_target]
+            )
+            self.epos_list.append(
+                self.epos_list[-1]
+                + self.dt * (pos_error.T @ self.Q[0:4, 0:4] @ pos_error)
+            )
+
+            e1bx_target = self.linear_spline(
                 t[-1], self.trajectory_params["t"], self.trajectory_params["e1bx"]
             )
-            e1by_target= self.linear_spline(
+            e1by_target = self.linear_spline(
                 t[-1], self.trajectory_params["t"], self.trajectory_params["e1by"]
             )
-            e2bx_target= self.linear_spline(
+            e2bx_target = self.linear_spline(
                 t[-1], self.trajectory_params["t"], self.trajectory_params["e2bx"]
             )
-            e2by_target= self.linear_spline(
+            e2by_target = self.linear_spline(
                 t[-1], self.trajectory_params["t"], self.trajectory_params["e2by"]
             )
-            
+
             er = (
                 0.5 * x_list[-1][4] * e2bx_target
                 + 0.5 * x_list[-1][5] * e2by_target
                 - 0.5 * e1bx_target * x_list[-1][6]
                 - 0.5 * e1by_target * x_list[-1][7]
             )
-            self.er_list.append(self.er_list[-1] + float(self.dt * (er * self.Q[4, 4] * er)))
+            self.er_list.append(
+                self.er_list[-1] + float(self.dt * (er * self.Q[4, 4] * er))
+            )
 
-            # print("er_list: ", self.er_list)    
+            # print("er_list: ", self.er_list)
             # plot the results
             # self.plot_horizon(t, x_list, u, horizon)
             # input("Press Enter to continue...")
@@ -645,7 +648,7 @@ class MPC_controller:
         ax3.plot(t, np.rad2deg(gamma), label="gamma")
         ax3.plot(
             self.trajectory_params["t"],
-            np.rad2deg(self.trajectory_params["gamma"]),
+            np.rad2deg(np.arctan2(self.trajectory_params["e1by"], self.trajectory_params["e1bx"])),
             label="gamma_ref",
         )
         ax3.legend()
