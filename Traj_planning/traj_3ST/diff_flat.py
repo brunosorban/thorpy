@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 def get_pos(coefs, t):
@@ -89,8 +88,8 @@ def diff_flat_traj(Px_coeffs, Py_coeffs, Pz_coeffs, t, env_params, rocket_params
         az_o[i] = get_acc(Pz_coeffs[:, idx], t_list[i])
            
     gamma = np.arctan2(ay_o + g, ax_o)   
-    gamma_dot_o = get_derivative(t, gamma)
-    gamma_dot_dot_o = get_derivative(t, gamma_dot_o)
+    gamma_dot_o = get_derivative(t_list, gamma)
+    gamma_dot_dot_o = get_derivative(t_list, gamma_dot_o)
 
     e1bx = np.cos(gamma)
     e1by = np.sin(gamma)
@@ -124,15 +123,10 @@ def diff_flat_traj(Px_coeffs, Py_coeffs, Pz_coeffs, t, env_params, rocket_params
         "e1by": e1by,
         "e2bx": e2bx,
         "e2by": e2by,
+        "gamma": gamma,
         "gamma_dot": gamma_dot_o,
         "gamma_dot_dot": gamma_dot_dot_o,
     }
 
     print("Differential flatness trajectory planning done.")
     return trajectory_params
-    
-    # last_gamma = gamma[0]
-    # for i in range(0, len(gamma)):
-    #     if (gamma[i] - last_gamma) < 0:
-    #         gamma[i:] += 2 * np.pi
-    #     last_gamma = gamma[i]

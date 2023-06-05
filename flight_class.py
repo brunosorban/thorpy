@@ -67,10 +67,8 @@ class Flight:
         #     display("Simulation time: {:.1f} seconds".format(t))
         #     self.time_count += 0.1
 
-        print("AEHO")
         [x, vx, y, vy, gamma, omega] = sol
         [f, tau] = self.controller.update(t, np.array([x, vx, y, vy, gamma, omega]))
-        print("HEY")
         # [f, tau] = [0, 0]
         J = self.controller.J_total
 

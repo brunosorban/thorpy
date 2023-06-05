@@ -8,8 +8,8 @@ sys.path.append("../Traj_planning")
 from simulation_parameters import *
 from Traj_planning.traj_3ST.simple_circ import *
 
-v = 50
-r = 100
+v = 15
+r = 50
 
 # constraints
 max_vx = 150

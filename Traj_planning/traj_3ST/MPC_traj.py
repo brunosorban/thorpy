@@ -8,6 +8,7 @@ def MPC_traj(
     rocket_params,
     controller_params,
     trajectory_params,
+    estimated_states,
 ):
     """
     Function to implement the MPC trajectory generator.
@@ -137,7 +138,7 @@ def MPC_traj(
         tracking_error = x[0:4, k] - x_target[0:4, k]
         obj += ca.mtimes([tracking_error.T, Q[0:4, 0:4], tracking_error])
 
-        # # rotation error
+        # rotation error
         er = (
             0.5 * x[4, k] * x_target[6, k]
             + 0.5 * x[5, k] * x_target[7, k]
@@ -209,32 +210,32 @@ def MPC_traj(
 
     # set target
     for k in range(len(trajectory_params["x"])):
-        x = trajectory_params["x"][k]
-        y = trajectory_params["y"][k]
-        vx = trajectory_params["vx"][k]
-        vy = trajectory_params["vy"][k]
-        e1bx = trajectory_params["e1bx"][k]
-        e1by = trajectory_params["e1by"][k]
-        e2bx = trajectory_params["e2bx"][k]
-        e2by = trajectory_params["e2by"][k]
-        omega = trajectory_params["gamma_dot"][k]
-        thrust = m * g
+        x_targ = trajectory_params["x"][k]
+        y_targ = trajectory_params["y"][k]
+        vx_targ = trajectory_params["vx"][k]
+        vy_targ = trajectory_params["vy"][k]
+        e1bx_targ = trajectory_params["e1bx"][k]
+        e1by_targ = trajectory_params["e1by"][k]
+        e2bx_targ = trajectory_params["e2bx"][k]
+        e2by_targ = trajectory_params["e2by"][k]
+        omega_targ = trajectory_params["gamma_dot"][k]
+        thrust_targ = m * g
         
         current_target = ca.vertcat(
-            x,
-            vx,
-            y,
-            vy,
-            e1bx,
-            e1by,
-            e2bx,
-            e2by,
-            e1bx, # TVC alligned with the rocket axis
-            e1by, # TVC alligned with the rocket axis
-            e2bx, # TVC alligned with the rocket axis
-            e2by, # TVC alligned with the rocket axis
-            omega,
-            thrust,
+            x_targ,
+            vx_targ,
+            y_targ,
+            vy_targ,
+            e1bx_targ,
+            e1by_targ,
+            e2bx_targ,
+            e2by_targ,
+            e1bx_targ, # TVC alligned with the rocket axis
+            e1by_targ, # TVC alligned with the rocket axis
+            e2bx_targ, # TVC alligned with the rocket axis
+            e2by_targ, # TVC alligned with the rocket axis
+            omega_targ,
+            thrust_targ,
         )
         
         opti.set_value(x_target[:, k], current_target)
@@ -243,6 +244,38 @@ def MPC_traj(
 
     # select the desired solver
     opti.solver("ipopt")
+    
+    # print("x =", x)
+    # print("x_est =", estimated_states["x"])
+    
+    # # initial guess
+    # for i in range(N+1):
+    #     # print("i", i, "of", N+1, "initial guess")
+        
+    #     x_est = ca.vertcat(
+    #         estimated_states["x"][i],
+    #         estimated_states["vx"][i],
+    #         estimated_states["y"][i],
+    #         estimated_states["vy"][i],
+    #         estimated_states["e1bx"][i],
+    #         estimated_states["e1by"][i],
+    #         estimated_states["e2bx"][i],
+    #         estimated_states["e2by"][i],
+    #         estimated_states["e1tx"][i],
+    #         estimated_states["e1ty"][i],
+    #         estimated_states["e2tx"][i],
+    #         estimated_states["e2ty"][i],
+    #         estimated_states["gamma_dot"][i],
+    #         estimated_states["thrust"][i],
+    #     )
+    #     u_est = ca.vertcat(
+    #         estimated_states["delta_tvc_dot"][i],
+    #         estimated_states["thrust_dot"][i],
+    #     )
+    #     opti.set_initial(x[:, i], x_est)
+    #     if i < N:
+    #         opti.set_initial(u[:, i], u_est)
+        
     
     # solve the optimal control problem
     sol = opti.solve()

@@ -1,6 +1,3 @@
-import casadi as ca
-
-
 def RK4(fun, x, u, dt):
     k1 = fun(x, u)
     k2 = fun(x + dt / 2 * k1, u)
