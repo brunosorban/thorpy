@@ -89,7 +89,7 @@ def animate(
 
     # animation constants
     offset = 0.2 * max(max(x), max(y))
-    dt = 1 / 60 / 3
+    dt = 1 / 60 * 4
     target_goal = (30, 30) if target_goal == False else target_goal
 
     if trajectory_params is False:
@@ -100,9 +100,9 @@ def animate(
         f_y_traj = Function(trajectory_params["t"], trajectory_params["y"])
 
     # Initialization
-    xlim_inf = abs(min(x))
+    xlim_inf = abs(min(x)) - offset
     xlim_sup = max(x) + offset
-    ylim_inf = abs(min(y))
+    ylim_inf = abs(min(y)) - offset
     ylim_sup = max(y) + offset
     gamma_lin_inf = np.rad2deg(abs(min(gamma))) - 5
     gamma_lin_sup = np.rad2deg(max(gamma)) + 5

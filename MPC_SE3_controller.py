@@ -23,7 +23,7 @@ class MPC_controller:
         self.controller_params = controller_params
         self.trajectory_params = trajectory_params
 
-        self.epos_list = [0]
+        self.epos_list = [np.array([0, 0])]
         self.er_list = [0]
 
         if trajectory_params is not None:
@@ -33,11 +33,7 @@ class MPC_controller:
         g = env_params["g"]
         m = rocket_params["m"]
         C = rocket_params["C"]
-        # K_tvc = rocket_params["K_tvc"]
-        # T_tvc = rocket_params["T_tvc"]
         l_tvc = rocket_params["l_tvc"]
-        # K_thrust = rocket_params["K_thrust"]
-        # T_thrust = rocket_params["T_thrust"]
 
         # controller parameters
         dt = controller_params["dt"]
@@ -80,7 +76,7 @@ class MPC_controller:
         e1ty = ca.SX.sym("e1ty")  # states
         e2tx = ca.SX.sym("e2tx")  # states
         e2ty = ca.SX.sym("e2ty")  # states
-        omega = ca.SX.sym("omega")  # states
+        omega_z = ca.SX.sym("omega")  # states
         thrust = ca.SX.sym("thrust")  # states
 
         # create a vector with variable names
@@ -97,16 +93,16 @@ class MPC_controller:
             e1ty,
             e2tx,
             e2ty,
-            omega,
+            omega_z,
             thrust,
         )
 
         # initializing the control varibles
         thrust_dot = ca.SX.sym("thrust_dot")  # controls
-        omega_control = ca.SX.sym("omega_control")  # controls
+        delta_tvc_dot = ca.SX.sym("delta_tvc_dot")  # controls
 
         # create a vector with variable names
-        u = ca.vertcat(thrust_dot, omega_control)
+        u = ca.vertcat(thrust_dot, delta_tvc_dot)
 
         # define the nonlinear ode
         ode = ca.vertcat(
@@ -114,15 +110,15 @@ class MPC_controller:
             thrust / m * e1tx,  # v_x
             y_dot,  # y
             thrust / m * e1ty - g,  # v_y
-            e2bx * omega,  # e1bx
-            -e1bx * omega,  # e1by
-            e2by * omega,  # e2bx
-            -e1by * omega,  # e2by
-            e2tx * (omega_control + omega),  # e1tx
-            -e1tx * (omega_control + omega),  # e1ty
-            e2ty * (omega_control + omega),  # e2tx
-            -e1ty * (omega_control + omega),  # e2ty
-            thrust * l_tvc * (e1tx * e2bx + e1ty * e2by),  # omega
+            omega_z * e2bx,  # e1bx
+            omega_z * e2by,  # e1by
+            -omega_z * e1bx,  # e2bx
+            -omega_z * e1by,  # e2by
+            (delta_tvc_dot + omega_z) * e2tx,  # e1tx
+            (delta_tvc_dot + omega_z) * e2ty,  # e1ty
+            -(delta_tvc_dot + omega_z) * e1tx,  # e2tx
+            -(delta_tvc_dot + omega_z) * e1ty,  # e2ty
+            thrust * l_tvc * (e1tx * e2bx + e1ty * e2by) / C,  # omega
             thrust_dot,  # thrust
         )
 
@@ -133,7 +129,7 @@ class MPC_controller:
             [ode],
             [
                 "[x, x_dot, y, y_dot, e1bx, e1by, e2bx, e2by, e1tx, e1ty, e2tx, e2ty, omega, thrust]",
-                "[thrust, omega_control]",
+                "[thrust, delta_tvc_dot]",
             ],
             ["ode"],
         )
@@ -147,7 +143,7 @@ class MPC_controller:
             [x_next],
             [
                 "[x, x_dot, y, y_dot, e1bx, e1by, e2bx, e2by, e1tx, e1ty, e2tx, e2ty, omega, thrust]",
-                "[thrust, omega_control]",
+                "[thrust, delta_tvc_dot]",
             ],
             ["x_next"],
         )
@@ -251,19 +247,6 @@ class MPC_controller:
         # hide solution output
         opts = {"ipopt.print_level": 0, "print_time": 0}
         self.opti.solver("ipopt", opts)
-
-    # def vee(self, in_mat):
-    #     """
-    #     Calculates the vee operator for a 3x3 matrix.
-
-    #     Parameters:
-    #         in_mat (array-like): 3x3 matrix.
-
-    #     Returns:
-    #         out_vec (array-like): 3-dimensional vector.
-    #     """
-    #     out_vec = np.array([in_mat[2, 1], in_mat[0, 2], in_mat[1, 0]])
-    #     return out_vec
 
     def calculate_Rd(self, gamma):
         """
@@ -474,27 +457,18 @@ class MPC_controller:
             t.append(t[-1] + self.dt)
             last_sol = sol
 
-            # compute actual cost
+            # compute actual error
             px_target = self.linear_spline(
                 t[-1], self.trajectory_params["t"], self.trajectory_params["x"]
             )
             py_target = self.linear_spline(
                 t[-1], self.trajectory_params["t"], self.trajectory_params["y"]
             )
-            vx_target = self.linear_spline(
-                t[-1], self.trajectory_params["t"], self.trajectory_params["vx"]
-            )
-            vy_target = self.linear_spline(
-                t[-1], self.trajectory_params["t"], self.trajectory_params["vy"]
-            )
 
-            pos_error = np.array(x_list[-1][0:4]) - np.array(
-                [px_target, vx_target, py_target, vy_target]
+            pos_error = np.array([x_list[-1][0], x_list[-1][2]]) - np.array(
+                [px_target, py_target]
             )
-            self.epos_list.append(
-                self.epos_list[-1]
-                + self.dt * (pos_error.T @ self.Q[0:4, 0:4] @ pos_error)
-            )
+            self.epos_list.append(pos_error)
 
             e1bx_target = self.linear_spline(
                 t[-1], self.trajectory_params["t"], self.trajectory_params["e1bx"]
@@ -515,14 +489,7 @@ class MPC_controller:
                 - 0.5 * e1bx_target * x_list[-1][6]
                 - 0.5 * e1by_target * x_list[-1][7]
             )
-            self.er_list.append(
-                self.er_list[-1] + float(self.dt * (er * self.Q[4, 4] * er))
-            )
-
-            # print("er_list: ", self.er_list)
-            # plot the results
-            # self.plot_horizon(t, x_list, u, horizon)
-            # input("Press Enter to continue...")
+            self.er_list.append(er)
 
             if plot_online and t[-1] > self.dt:
                 self.plot_horizon_online(
@@ -574,7 +541,9 @@ class MPC_controller:
         ax2.grid()
 
         # plot 3: epos
-        ax3.plot(t, self.epos_list, label="$e_{pos}$")
+        self.epos_list = np.array(self.epos_list)
+        ax3.plot(t, self.epos_list[:, 0], label="$e_{x}$")
+        ax3.plot(t, self.epos_list[:, 1], label="$e_{y}$")
         # ax3.plot(t, [u_bounds[0][0]] * len(t), "--", color="black")
         # ax3.plot(t, [u_bounds[0][1]] * len(t), "--", color="black")
         ax3.legend()
@@ -648,7 +617,11 @@ class MPC_controller:
         ax3.plot(t, np.rad2deg(gamma), label="gamma")
         ax3.plot(
             self.trajectory_params["t"],
-            np.rad2deg(np.arctan2(self.trajectory_params["e1by"], self.trajectory_params["e1bx"])),
+            np.rad2deg(
+                np.arctan2(
+                    self.trajectory_params["e1by"], self.trajectory_params["e1bx"]
+                )
+            ),
             label="gamma_ref",
         )
         ax3.legend()

@@ -19,7 +19,7 @@ def plot_trajectory(trajectory_params, title="Trajectory"):
     e2by = trajectory_params["e2by"]
     gamma_dot = trajectory_params["gamma_dot"]
     gamma_dot_dot = trajectory_params["gamma_dot_dot"]
-    
+
     gamma = np.arctan2(e1by, e1bx)
     last_t = t[0]
 
@@ -52,7 +52,7 @@ def plot_trajectory(trajectory_params, title="Trajectory"):
                 axs[0, 0].quiver(origin_x, origin_y, e1_x, e1_y, scale=10, color="red")
                 axs[0, 0].quiver(origin_x, origin_y, e2_x, e2_y, scale=10, color="blue")
                 last_t = temp[i]
-                
+
     fig.suptitle(title, fontsize=16)
 
     axs[1, 0].plot(t, x, label="x")

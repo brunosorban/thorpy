@@ -33,7 +33,8 @@ def get_acc(coefs, t):
         + 6 * coefs[3] * t
         + 2 * coefs[4]
     )
-    
+
+
 def get_jerk(coefs, t):
     return (
         120 * coefs[0] * t**3
@@ -66,6 +67,10 @@ def min_snap_traj(states, constraints):
         )
 
     number_of_points = len(time_points)
+
+    if number_of_points < 2:
+        raise ValueError("The number of points must be at least 2")
+
     pol_order = 7  # order of the polynom +1
     g = constraints["g"]
 
@@ -117,7 +122,7 @@ def min_snap_traj(states, constraints):
         ],
         ["jerk"],
     )
-    
+
     F_acc = ca.Function(
         "F_acc",
         [coefs, t],
@@ -194,7 +199,7 @@ def min_snap_traj(states, constraints):
                 F_acc(Pz_coefs[:, k], time_points[k + 1])
                 == F_acc(Pz_coefs[:, k + 1], time_points[k + 1])
             )
-            
+
             # jerk constraints (continuity)
             opti.subject_to(
                 F_jerk(Px_coefs[:, k], time_points[k + 1])
@@ -238,7 +243,7 @@ def min_snap_traj(states, constraints):
         opti.subject_to(F_acc(Py_coefs[:, k - 1], time_points[k]) == states["ay"][k])
     if states["az"][k] != None:
         opti.subject_to(F_acc(Pz_coefs[:, k - 1], time_points[k]) == states["az"][k])
-        
+
     print("Adding bounds...")
 
     # check if the hopper is inside bounds
@@ -283,10 +288,18 @@ def min_snap_traj(states, constraints):
     print("Interpolating trajectory...")
     sol = opti.solve()
     print("Interpolation done!")
-    
-    return (
-        sol.value(Px_coefs),
-        sol.value(Py_coefs),
-        sol.value(Pz_coefs),
-        time_points,
-    )
+
+    if number_of_points == 2:
+        return (
+            np.array([sol.value(Px_coefs)]).T,
+            np.array([sol.value(Py_coefs)]).T,
+            np.array([sol.value(Pz_coefs)]).T,
+            time_points,
+        )
+    else:
+        return (
+            sol.value(Px_coefs),
+            sol.value(Py_coefs),
+            sol.value(Pz_coefs),
+            time_points,
+        )
