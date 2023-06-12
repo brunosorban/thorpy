@@ -43,13 +43,13 @@ def estimate_control(env_params, trajectory_params, rocket_params):
     e2by = trajectory_params["e2by"]
 
     m = rocket_params["m"]
-    J = rocket_params["C"]
+    J_z = rocket_params["J_z"]
     l_tvc = rocket_params["l_tvc"]
 
     g = env_params["g"]
 
     thrust = m * np.sqrt(ax**2 + (ay + g) ** 2)
-    delta_tvc = np.arcsin(J * gamma_dot_dot / (thrust * l_tvc))
+    delta_tvc = np.arcsin(J_z * gamma_dot_dot / (thrust * l_tvc))
 
     thrust_dot = get_derivative(t, thrust)
     delta_tvc_dot = get_derivative(t, delta_tvc)

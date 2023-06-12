@@ -1,4 +1,5 @@
 import numpy as np
+from Traj_planning.traj_3ST.get_gamma_3dot import get_gamma_3dot
 
 
 def get_pos(coefs, t):
@@ -34,6 +35,23 @@ def get_acc(coefs, t):
     )
 
 
+def get_jerk(coefs, t):
+    return (
+        120 * coefs[0] * t**3
+        + 60 * coefs[1] * t**2
+        + 24 * coefs[2] * t
+        + 6 * coefs[3]
+    )
+
+
+def get_snap(coefs, t):
+    return 360 * coefs[0] * t**2 + 120 * coefs[1] * t + 24 * coefs[2]
+
+
+def get_crackle(coefs, t):
+    return 720 * coefs[0] * t + 120 * coefs[1]
+
+
 def get_derivative(t, f):
     """Calculate the derivative of the array f."""
     df = np.zeros_like(f)
@@ -59,7 +77,7 @@ def diff_flat_traj(
     g = env_params["g"]
     m = rocket_params["m"]
     l_tvc = rocket_params["l_tvc"]
-    J = rocket_params["J"]
+    J_z = rocket_params["J_z"]
     dt = controller_params["dt"]
 
     t_list = np.arange(0, t[-1], dt)
@@ -73,6 +91,12 @@ def diff_flat_traj(
     ax_o = np.zeros_like(t_list)
     ay_o = np.zeros_like(t_list)
     az_o = np.zeros_like(t_list)
+    jx_o = np.zeros_like(t_list)
+    jy_o = np.zeros_like(t_list)
+    sx_o = np.zeros_like(t_list)
+    sy_o = np.zeros_like(t_list)
+    cx_o = np.zeros_like(t_list)
+    cy_o = np.zeros_like(t_list)
 
     for i in range(len(t_list)):
         idx = np.searchsorted(t, t_list[i])
@@ -91,34 +115,88 @@ def diff_flat_traj(
         ay_o[i] = get_acc(Py_coeffs[:, idx], t_list[i])
         az_o[i] = get_acc(Pz_coeffs[:, idx], t_list[i])
 
+        jx_o[i] = get_jerk(Px_coeffs[:, idx], t_list[i])
+        jy_o[i] = get_jerk(Py_coeffs[:, idx], t_list[i])
+
+        sx_o[i] = get_snap(Px_coeffs[:, idx], t_list[i])
+        sy_o[i] = get_snap(Py_coeffs[:, idx], t_list[i])
+
+        cx_o[i] = get_crackle(Px_coeffs[:, idx], t_list[i])
+        cy_o[i] = get_crackle(Py_coeffs[:, idx], t_list[i])
+
+    temp_states = {
+        "x_o": x_o,
+        "y_o": y_o,
+        "z_o": z_o,
+        "vx_o": vx_o,
+        "vy_o": vy_o,
+        "vz_o": vz_o,
+        "ax_o": ax_o,
+        "ay_o": ay_o,
+        "az_o": az_o,
+        "jx_o": jx_o,
+        "jy_o": jy_o,
+        "sx_o": sx_o,
+        "sy_o": sy_o,
+        "cx_o": cx_o,
+        "cy_o": cy_o,
+        "g": g,
+    }
+
     gamma = np.arctan2(ay_o + g, ax_o)
-    gamma_dot_o = get_derivative(t_list, gamma)
-    gamma_dot_dot_o = get_derivative(t_list, gamma_dot_o)
+    gamma_dot = (jy_o * ax_o - (ay_o + g) * jx_o) / (ax_o**2 + (ay_o + g) ** 2)
+    gamma_dot_dot = (sy_o * ax_o - (ay_o + g) * sx_o) / (
+        ax_o**2 + (ay_o + g) ** 2
+    ) - (jy_o * ax_o - (ay_o + g) * jx_o) * (
+        2 * ax_o * jx_o + 2 * (ay_o + g) * jy_o
+    ) / (
+        ax_o**2 + (ay_o + g) ** 2
+    ) ** 2
+    gamma_3dot = get_gamma_3dot(temp_states)
 
     e1bx = np.cos(gamma)
     e1by = np.sin(gamma)
     e2bx = -np.sin(gamma)
     e2by = np.cos(gamma)
 
-    x_g = x_o - J / (m * l_tvc) * e1bx
-    y_g = y_o - J / (m * l_tvc) * e1by
+    x_g = x_o - J_z / (m * l_tvc) * e1bx
+    y_g = y_o - J_z / (m * l_tvc) * e1by
     z_g = z_o
 
-    vx_g = vx_o - J / (m * l_tvc) * gamma_dot_o * e2bx
-    vy_g = vy_o - J / (m * l_tvc) * gamma_dot_o * e2by
+    vx_g = vx_o - J_z / (m * l_tvc) * gamma_dot * e2bx
+    vy_g = vy_o - J_z / (m * l_tvc) * gamma_dot * e2by
     vz_g = vz_o
 
     ax_g = (
         ax_o
-        - J / (m * l_tvc) * gamma_dot_dot_o * e2bx
-        + J / (m * l_tvc) * (gamma_dot_o**2) * e1bx
+        - J_z / (m * l_tvc) * gamma_dot_dot * e2bx
+        + J_z / (m * l_tvc) * (gamma_dot**2) * e1bx
     )
     ay_g = (
         ay_o
-        - J / (m * l_tvc) * gamma_dot_dot_o * e2by
-        + J / (m * l_tvc) * (gamma_dot_o**2) * e1by
+        - J_z / (m * l_tvc) * gamma_dot_dot * e2by
+        + J_z / (m * l_tvc) * (gamma_dot**2) * e1by
     )
     az_g = az_o
+
+    # compute the control inputs of the system
+    f1 = np.sqrt(
+        (m * ax_o) ** 2 + (m * (ay_o + g)) ** 2 + -((-J_z * gamma_dot_dot / l_tvc) ** 2)
+    )
+    f2 = -J_z * gamma_dot_dot / l_tvc
+
+    # compute the control inputs dervatives of the system
+    f1_dot = (
+        m**2 * (ax_o * jx_o + (ay_o + g) * jy_o)
+        - J_z**2 * gamma_dot_dot * gamma_3dot / l_tvc**2
+    ) / f1
+    f2_dot = -J_z * gamma_3dot / l_tvc
+
+    delta_tvc = np.arctan2(f2, f1)
+    delta_tvc_dot = (f1 * f2_dot - f2 * f1_dot) / (f1**2 + f2**2)
+
+    f = np.sqrt(f1**2 + f2**2)
+    f_dot = (f1 * f1_dot + f2 * f2_dot) / f
 
     trajectory_params = {
         "t": t_list,
@@ -136,8 +214,17 @@ def diff_flat_traj(
         "e2bx": e2bx,
         "e2by": e2by,
         "gamma": gamma,
-        "gamma_dot": gamma_dot_o,
-        "gamma_dot_dot": gamma_dot_dot_o,
+        "gamma_dot": gamma_dot,
+        "gamma_dot_dot": gamma_dot_dot,
+        "gamma_3dot": gamma_3dot,
+        "f1": f1,
+        "f2": f2,
+        "f1_dot": f1_dot,
+        "f2_dot": f2_dot,
+        "delta_tvc": delta_tvc,
+        "delta_tvc_dot": delta_tvc_dot,
+        "f": f,
+        "f_dot": f_dot,
     }
 
     print("Differential flatness trajectory planning done.")

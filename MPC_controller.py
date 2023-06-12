@@ -33,7 +33,7 @@ class MPC_controller:
         # rocket and environment parameters
         g = env_params["g"]
         m = rocket_params["m"]
-        C = rocket_params["C"]
+        J_z = rocket_params["J_z"]
         # K_tvc = rocket_params["K_tvc"]
         # T_tvc = rocket_params["T_tvc"]
         l_tvc = rocket_params["l_tvc"]
@@ -94,7 +94,7 @@ class MPC_controller:
             y_dot,
             thrust * ca.sin(gamma - delta_tvc) / m - g,
             gamma_dot,
-            -thrust * l_tvc * ca.sin(delta_tvc) / C,
+            -thrust * l_tvc * ca.sin(delta_tvc) / J_z,
             thrust_dot,
             delta_tvc_dot,
         )

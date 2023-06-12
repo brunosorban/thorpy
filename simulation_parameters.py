@@ -27,7 +27,7 @@ tf = 60  # final time
 
 # state space: [x, x_dot, y, y_dot, gamma, gamma_dot, thrust, delta_tvc]
 # initial_state = [0, 0, 0, 0, np.deg2rad(90), 0, m * g, 0]
-initial_state = [0, 0, 0, 40, 0, 1, -1, 0, 0, 1, -1, 0, 0, m * g]
+initial_state = [200, 0, 0, 40, 0, 1, -1, 0, 0, 1, -1, 0, 0, m * g]
 # target = [30, 0, 30, 0, np.deg2rad(90), 0, 0, 0]
 x_target = None
 max_step = 1e-4
@@ -80,7 +80,7 @@ angle_rate_norm = 1  # np.deg2rad(5)  # angle rate normalization
 thrust_norm = 1  # thrust normalization
 
 ###################### Calculated and casadi varibles ##########################
-C = (
+J_z = (
     1 / 12 * m * (h**2 + 3 * radius**2)
 )  # moment of inertia of the hopper perpendicular to the main axis
 
@@ -111,8 +111,7 @@ rocket_params = {
     "m": m,
     "h": h,
     "radius": radius,
-    "C": C,
-    "J": C,
+    "J_z": J_z,
     "K_tvc": K_tvc,
     "T_tvc": T_tvc,
     "l_tvc": l_tvc,

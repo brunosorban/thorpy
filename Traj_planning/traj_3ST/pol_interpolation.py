@@ -43,6 +43,12 @@ def get_jerk(coefs, t):
         + 6 * coefs[3]
     )
 
+def get_snap(coefs, t):
+    return 360 * coefs[0] * t**2 + 120 * coefs[1] * t + 24 * coefs[2]
+
+def get_crackle(coefs, t):
+    return 720 * coefs[0] * t + 120 * coefs[1]
+
 
 def min_snap_traj(states, constraints):
     """This function calculates the trajectory via polynomial interpolation. It
@@ -89,6 +95,8 @@ def min_snap_traj(states, constraints):
     vel = get_vel(coefs, t)
     acc = get_acc(coefs, t)
     jerk = get_jerk(coefs, t)
+    snap = get_snap(coefs, t)
+    crackle = get_crackle(coefs, t)
 
     F_pos = ca.Function(
         "F_pos",
@@ -112,6 +120,17 @@ def min_snap_traj(states, constraints):
         ["velocity"],
     )
 
+    F_acc = ca.Function(
+        "F_acc",
+        [coefs, t],
+        [acc],
+        [
+            "[p0, p1, p2, p3, p4, p5, p6]",
+            "[t]",
+        ],
+        ["acceleration"],
+    )
+
     F_jerk = ca.Function(
         "F_jerk",
         [coefs, t],
@@ -123,15 +142,26 @@ def min_snap_traj(states, constraints):
         ["jerk"],
     )
 
-    F_acc = ca.Function(
-        "F_acc",
+    F_snap = ca.Function(
+        "F_snap",
         [coefs, t],
-        [acc],
+        [snap],
         [
             "[p0, p1, p2, p3, p4, p5, p6]",
             "[t]",
         ],
-        ["acceleration"],
+        ["snap"],
+    )
+
+    F_crackle = ca.Function(
+        "F_crackle",
+        [coefs, t],
+        [crackle],
+        [
+            "[p0, p1, p2, p3, p4, p5, p6]",
+            "[t]",
+        ],
+        ["crackle"],
     )
 
     # building the optimal control problem
@@ -145,11 +175,11 @@ def min_snap_traj(states, constraints):
     # define the cost function
     obj = 0
     for k in range(0, number_of_points - 1):
-        # minimize the jerk
+        # minimize the crackle
         obj += (
-            ca.power(Px_coefs[0, k], 2)
-            + ca.power(Py_coefs[0, k], 2)
-            + ca.power(Pz_coefs[0, k], 2)
+            ca.power(F_crackle(Px_coefs[0, k], time_points[k]), 2)
+            + ca.power(F_crackle(Py_coefs[0, k], time_points[k]), 2)
+            + ca.power(F_crackle(Pz_coefs[0, k], time_points[k]), 2)
         )
 
     opti.minimize(obj)
@@ -213,6 +243,34 @@ def min_snap_traj(states, constraints):
                 F_jerk(Pz_coefs[:, k], time_points[k + 1])
                 == F_jerk(Pz_coefs[:, k + 1], time_points[k + 1])
             )
+            
+            # snap constraints (continuity)
+            opti.subject_to(
+                F_snap(Px_coefs[:, k], time_points[k + 1])
+                == F_snap(Px_coefs[:, k + 1], time_points[k + 1])
+            )
+            opti.subject_to(
+                F_snap(Py_coefs[:, k], time_points[k + 1])
+                == F_snap(Py_coefs[:, k + 1], time_points[k + 1])
+            )
+            opti.subject_to(
+                F_snap(Pz_coefs[:, k], time_points[k + 1])
+                == F_snap(Pz_coefs[:, k + 1], time_points[k + 1])
+            )
+            
+            # # crackle constraints (continuity) -> this is too much
+            # opti.subject_to(
+            #     F_crackle(Px_coefs[:, k], time_points[k + 1])
+            #     == F_crackle(Px_coefs[:, k + 1], time_points[k + 1])
+            # )
+            # opti.subject_to(
+            #     F_crackle(Py_coefs[:, k], time_points[k + 1])
+            #     == F_crackle(Py_coefs[:, k + 1], time_points[k + 1])
+            # )
+            # opti.subject_to(
+            #     F_crackle(Pz_coefs[:, k], time_points[k + 1])
+            #     == F_crackle(Pz_coefs[:, k + 1], time_points[k + 1])
+            # )
 
         # check if velocity and acceleration constraints were given
         if states["vx"][k] != None:
