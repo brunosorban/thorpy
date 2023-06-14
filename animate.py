@@ -88,24 +88,23 @@ def animate(
     f_gamma = Function(t, np.rad2deg(gamma))
 
     # animation constants
-    offset = 0.2 * max(max(x), max(y))
-    dt = 1 / 60 * 4
+    offset = 0.2 * max(max(abs(x)), max(abs(y)))
+    dt = 1 / 60
     target_goal = (30, 30) if target_goal == False else target_goal
 
-    if trajectory_params is False:
-        following_trajectory = False
-    else:
-        following_trajectory = True
-        f_x_traj = Function(trajectory_params["t"], trajectory_params["x"])
-        f_y_traj = Function(trajectory_params["t"], trajectory_params["y"])
-
     # Initialization
-    xlim_inf = abs(min(x)) - offset
+    xlim_inf = min(x)
     xlim_sup = max(x) + offset
-    ylim_inf = abs(min(y)) - offset
+    ylim_inf = min(y)
     ylim_sup = max(y) + offset
-    gamma_lin_inf = np.rad2deg(abs(min(gamma))) - 5
-    gamma_lin_sup = np.rad2deg(max(gamma)) + 5
+    
+    x -= xlim_inf
+    y -= ylim_inf
+    
+    xlim_inf = -offset
+    ylim_inf = 0
+    xlim_sup = max(x) + offset
+    ylim_sup = max(y) + offset
 
     pygame.init()
     pygame.display.init()

@@ -1,53 +1,138 @@
 import casadi as ca
 import numpy as np
 
-
 def get_pos(coefs, t):
     return (
-        coefs[0] * t**6
-        + coefs[1] * t**5
-        + coefs[2] * t**4
-        + coefs[3] * t**3
-        + coefs[4] * t**2
-        + coefs[5] * t
-        + coefs[6]
+        coefs[0] * t ** 7
+        + coefs[1] * t ** 6
+        + coefs[2] * t ** 5
+        + coefs[3] * t ** 4
+        + coefs[4] * t ** 3
+        + coefs[5] * t ** 2
+        + coefs[6] * t
+        + coefs[7]
     )
-
-
+    
 def get_vel(coefs, t):
     return (
-        6 * coefs[0] * t**5
-        + 5 * coefs[1] * t**4
-        + 4 * coefs[2] * t**3
-        + 3 * coefs[3] * t**2
-        + 2 * coefs[4] * t
-        + coefs[5]
+        7 * coefs[0] * t ** 6
+        + 6 * coefs[1] * t ** 5
+        + 5 * coefs[2] * t ** 4
+        + 4 * coefs[3] * t ** 3
+        + 3 * coefs[4] * t ** 2
+        + 2 * coefs[5] * t
+        + coefs[6]
     )
-
-
+    
 def get_acc(coefs, t):
     return (
-        30 * coefs[0] * t**4
-        + 20 * coefs[1] * t**3
-        + 12 * coefs[2] * t**2
-        + 6 * coefs[3] * t
-        + 2 * coefs[4]
+        42 * coefs[0] * t ** 5
+        + 30 * coefs[1] * t ** 4
+        + 20 * coefs[2] * t ** 3
+        + 12 * coefs[3] * t ** 2
+        + 6 * coefs[4] * t
+        + 2 * coefs[5]
     )
-
-
+    
 def get_jerk(coefs, t):
     return (
-        120 * coefs[0] * t**3
-        + 60 * coefs[1] * t**2
-        + 24 * coefs[2] * t
-        + 6 * coefs[3]
+        210 * coefs[0] * t ** 4
+        + 120 * coefs[1] * t ** 3
+        + 60 * coefs[2] * t ** 2
+        + 24 * coefs[3] * t
+        + 6 * coefs[4]
     )
-
+    
 def get_snap(coefs, t):
-    return 360 * coefs[0] * t**2 + 120 * coefs[1] * t + 24 * coefs[2]
-
+    return (
+        840 * coefs[0] * t ** 3
+        + 360 * coefs[1] * t ** 2
+        + 120 * coefs[2] * t
+        + 24 * coefs[3]
+    )
+    
 def get_crackle(coefs, t):
-    return 720 * coefs[0] * t + 120 * coefs[1]
+    return (
+        2520 * coefs[0] * t ** 2
+        + 720 * coefs[1] * t
+        + 120 * coefs[2]
+    )
+    
+def get_pop(coefs, t):
+    return (
+        5040 * coefs[0] * t
+        + 720 * coefs[1]
+    )
+    
+# def get_pos(coefs, t):
+#     return (
+#         coefs[0] * t ** 8
+#         + coefs[1] * t ** 7
+#         + coefs[2] * t ** 6
+#         + coefs[3] * t ** 5
+#         + coefs[4] * t ** 4
+#         + coefs[5] * t ** 3
+#         + coefs[6] * t ** 2
+#         + coefs[7] * t
+#         + coefs[8]
+#     )
+    
+# def get_vel(coefs, t):
+#     return (
+#         56 * coefs[0] * t ** 7
+#         + 42 * coefs[1] * t ** 6
+#         + 30 * coefs[2] * t ** 5
+#         + 20 * coefs[3] * t ** 4
+#         + 12 * coefs[4] * t ** 3
+#         + 6 * coefs[5] * t ** 2
+#         + 2 * coefs[6] * t
+#         + coefs[7]
+#     )
+    
+# def get_acc(coefs, t):
+#     return (
+#         336 * coefs[0] * t ** 6
+#         + 252 * coefs[1] * t ** 5
+#         + 150 * coefs[2] * t ** 4
+#         + 80 * coefs[3] * t ** 3
+#         + 36 * coefs[4] * t ** 2
+#         + 12 * coefs[5] * t
+#         + 2 * coefs[6]
+#     )
+    
+# def get_jerk(coefs, t):
+#     return (
+#         1680 * coefs[0] * t ** 5
+#         + 1260 * coefs[1] * t ** 4
+#         + 600 * coefs[2] * t ** 3
+#         + 240 * coefs[3] * t ** 2
+#         + 72 * coefs[4] * t
+#         + 12 * coefs[5]
+#     )
+    
+# def get_snap(coefs, t):
+#     return (
+#         6720 * coefs[0] * t ** 4
+#         + 5040 * coefs[1] * t ** 3
+#         + 1800 * coefs[2] * t ** 2
+#         + 480 * coefs[3] * t
+#         + 72 * coefs[4]
+#     )
+    
+# def get_crackle(coefs, t):
+#     return (
+#         26880 * coefs[0] * t ** 3
+#         + 15120 * coefs[1] * t ** 2
+#         + 3600 * coefs[2] * t
+#         + 480 * coefs[3]
+#     )
+    
+# def get_pop(coefs, t):
+#     return (
+#         80640 * coefs[0] * t ** 2
+#         + 30240 * coefs[1] * t
+#         + 3600 * coefs[2]
+#     )
 
 
 def min_snap_traj(states, constraints):
@@ -77,7 +162,7 @@ def min_snap_traj(states, constraints):
     if number_of_points < 2:
         raise ValueError("The number of points must be at least 2")
 
-    pol_order = 7  # order of the polynom +1
+    pol_order = 8  # order of the polynom +1
     g = constraints["g"]
 
     # calculate the polynom
@@ -88,22 +173,25 @@ def min_snap_traj(states, constraints):
     p4 = ca.SX.sym("p4")
     p5 = ca.SX.sym("p5")
     p6 = ca.SX.sym("p6")
+    p7 = ca.SX.sym("p7")
+    # p8 = ca.SX.sym("p8")
     t = ca.SX.sym("t")
 
-    coefs = ca.vertcat(p0, p1, p2, p3, p4, p5, p6)
+    coefs = ca.vertcat(p0, p1, p2, p3, p4, p5, p6, p7)
     pos = get_pos(coefs, t)
     vel = get_vel(coefs, t)
     acc = get_acc(coefs, t)
     jerk = get_jerk(coefs, t)
     snap = get_snap(coefs, t)
     crackle = get_crackle(coefs, t)
+    pop = get_pop(coefs, t)
 
     F_pos = ca.Function(
         "F_pos",
         [coefs, t],
         [pos],
         [
-            "[p0, p1, p2, p3, p4, p5, p6]",
+            "[p0, p1, p2, p3, p4, p5, p6, p7, p8]",
             "[t]",
         ],
         ["position"],
@@ -114,7 +202,7 @@ def min_snap_traj(states, constraints):
         [coefs, t],
         [vel],
         [
-            "[p0, p1, p2, p3, p4, p5, p6]",
+            "[p0, p1, p2, p3, p4, p5, p6, p7, p8]",
             "[t]",
         ],
         ["velocity"],
@@ -125,7 +213,7 @@ def min_snap_traj(states, constraints):
         [coefs, t],
         [acc],
         [
-            "[p0, p1, p2, p3, p4, p5, p6]",
+            "[p0, p1, p2, p3, p4, p5, p6, p7, p8]",
             "[t]",
         ],
         ["acceleration"],
@@ -136,7 +224,7 @@ def min_snap_traj(states, constraints):
         [coefs, t],
         [jerk],
         [
-            "[p0, p1, p2, p3, p4, p5, p6]",
+            "[p0, p1, p2, p3, p4, p5, p6, p7, p8]",
             "[t]",
         ],
         ["jerk"],
@@ -147,7 +235,7 @@ def min_snap_traj(states, constraints):
         [coefs, t],
         [snap],
         [
-            "[p0, p1, p2, p3, p4, p5, p6]",
+            "[p0, p1, p2, p3, p4, p5, p6, p7, p8]",
             "[t]",
         ],
         ["snap"],
@@ -158,10 +246,21 @@ def min_snap_traj(states, constraints):
         [coefs, t],
         [crackle],
         [
-            "[p0, p1, p2, p3, p4, p5, p6]",
+            "[p0, p1, p2, p3, p4, p5, p6, p7, p8]",
             "[t]",
         ],
         ["crackle"],
+    )
+
+    F_pop = ca.Function(
+        "F_pop",
+        [coefs, t],
+        [pop],
+        [
+            "[p0, p1, p2, p3, p4, p5, p6, p7, p8]",
+            "[t]",
+        ],
+        ["pop"],
     )
 
     # building the optimal control problem
@@ -258,19 +357,33 @@ def min_snap_traj(states, constraints):
                 == F_snap(Pz_coefs[:, k + 1], time_points[k + 1])
             )
             
-            # # crackle constraints (continuity) -> this is too much
-            # opti.subject_to(
-            #     F_crackle(Px_coefs[:, k], time_points[k + 1])
-            #     == F_crackle(Px_coefs[:, k + 1], time_points[k + 1])
-            # )
-            # opti.subject_to(
-            #     F_crackle(Py_coefs[:, k], time_points[k + 1])
-            #     == F_crackle(Py_coefs[:, k + 1], time_points[k + 1])
-            # )
-            # opti.subject_to(
-            #     F_crackle(Pz_coefs[:, k], time_points[k + 1])
-            #     == F_crackle(Pz_coefs[:, k + 1], time_points[k + 1])
-            # )
+            # crackle constraints (continuity)
+            opti.subject_to(
+                F_crackle(Px_coefs[:, k], time_points[k + 1])
+                == F_crackle(Px_coefs[:, k + 1], time_points[k + 1])
+            )
+            opti.subject_to(
+                F_crackle(Py_coefs[:, k], time_points[k + 1])
+                == F_crackle(Py_coefs[:, k + 1], time_points[k + 1])
+            )
+            opti.subject_to(
+                F_crackle(Pz_coefs[:, k], time_points[k + 1])
+                == F_crackle(Pz_coefs[:, k + 1], time_points[k + 1])
+            )
+            
+            # pop constraints (continuity)
+            opti.subject_to(
+                F_pop(Px_coefs[:, k], time_points[k + 1])
+                == F_pop(Px_coefs[:, k + 1], time_points[k + 1])
+            )
+            opti.subject_to(
+                F_pop(Py_coefs[:, k], time_points[k + 1])
+                == F_pop(Py_coefs[:, k + 1], time_points[k + 1])
+            )
+            opti.subject_to(
+                F_pop(Pz_coefs[:, k], time_points[k + 1])
+                == F_pop(Pz_coefs[:, k + 1], time_points[k + 1])
+            )
 
         # check if velocity and acceleration constraints were given
         if states["vx"][k] != None:

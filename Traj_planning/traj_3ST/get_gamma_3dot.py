@@ -1,52 +1,6 @@
 import numpy as np
 
 
-def get_pos(coefs, t):
-    return (
-        coefs[0] * t**6
-        + coefs[1] * t**5
-        + coefs[2] * t**4
-        + coefs[3] * t**3
-        + coefs[4] * t**2
-        + coefs[5] * t
-        + coefs[6]
-    )
-
-
-def get_vel(coefs, t):
-    return (
-        6 * coefs[0] * t**5
-        + 5 * coefs[1] * t**4
-        + 4 * coefs[2] * t**3
-        + 3 * coefs[3] * t**2
-        + 2 * coefs[4] * t
-        + coefs[5]
-    )
-
-
-def get_acc(coefs, t):
-    return (
-        30 * coefs[0] * t**4
-        + 20 * coefs[1] * t**3
-        + 12 * coefs[2] * t**2
-        + 6 * coefs[3] * t
-        + 2 * coefs[4]
-    )
-
-
-def get_jerk(coefs, t):
-    return (
-        120 * coefs[0] * t**3
-        + 60 * coefs[1] * t**2
-        + 24 * coefs[2] * t
-        + 6 * coefs[3]
-    )
-
-
-def get_snap(coefs, t):
-    return 360 * coefs[0] * t**2 + 120 * coefs[1] * t + 24 * coefs[2]
-
-
 def get_gamma_3dot(states):
     g = states["g"]
     x_dot_dot = states["ax_o"]

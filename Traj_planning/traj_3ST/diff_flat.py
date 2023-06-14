@@ -4,52 +4,136 @@ from Traj_planning.traj_3ST.get_gamma_3dot import get_gamma_3dot
 
 def get_pos(coefs, t):
     return (
-        coefs[0] * t**6
-        + coefs[1] * t**5
-        + coefs[2] * t**4
-        + coefs[3] * t**3
-        + coefs[4] * t**2
-        + coefs[5] * t
-        + coefs[6]
+        coefs[0] * t ** 7
+        + coefs[1] * t ** 6
+        + coefs[2] * t ** 5
+        + coefs[3] * t ** 4
+        + coefs[4] * t ** 3
+        + coefs[5] * t ** 2
+        + coefs[6] * t
+        + coefs[7]
     )
-
-
+    
 def get_vel(coefs, t):
     return (
-        6 * coefs[0] * t**5
-        + 5 * coefs[1] * t**4
-        + 4 * coefs[2] * t**3
-        + 3 * coefs[3] * t**2
-        + 2 * coefs[4] * t
-        + coefs[5]
+        7 * coefs[0] * t ** 6
+        + 6 * coefs[1] * t ** 5
+        + 5 * coefs[2] * t ** 4
+        + 4 * coefs[3] * t ** 3
+        + 3 * coefs[4] * t ** 2
+        + 2 * coefs[5] * t
+        + coefs[6]
     )
-
-
+    
 def get_acc(coefs, t):
     return (
-        30 * coefs[0] * t**4
-        + 20 * coefs[1] * t**3
-        + 12 * coefs[2] * t**2
-        + 6 * coefs[3] * t
-        + 2 * coefs[4]
+        42 * coefs[0] * t ** 5
+        + 30 * coefs[1] * t ** 4
+        + 20 * coefs[2] * t ** 3
+        + 12 * coefs[3] * t ** 2
+        + 6 * coefs[4] * t
+        + 2 * coefs[5]
     )
-
-
+    
 def get_jerk(coefs, t):
     return (
-        120 * coefs[0] * t**3
-        + 60 * coefs[1] * t**2
-        + 24 * coefs[2] * t
-        + 6 * coefs[3]
+        210 * coefs[0] * t ** 4
+        + 120 * coefs[1] * t ** 3
+        + 60 * coefs[2] * t ** 2
+        + 24 * coefs[3] * t
+        + 6 * coefs[4]
+    )
+    
+def get_snap(coefs, t):
+    return (
+        840 * coefs[0] * t ** 3
+        + 360 * coefs[1] * t ** 2
+        + 120 * coefs[2] * t
+        + 24 * coefs[3]
+    )
+    
+def get_crackle(coefs, t):
+    return (
+        2520 * coefs[0] * t ** 2
+        + 720 * coefs[1] * t
+        + 120 * coefs[2]
+    )
+    
+def get_pop(coefs, t):
+    return (
+        5040 * coefs[0] * t
+        + 720 * coefs[1]
     )
 
-
-def get_snap(coefs, t):
-    return 360 * coefs[0] * t**2 + 120 * coefs[1] * t + 24 * coefs[2]
-
-
-def get_crackle(coefs, t):
-    return 720 * coefs[0] * t + 120 * coefs[1]
+# def get_pos(coefs, t):
+#     return (
+#         coefs[0] * t ** 8
+#         + coefs[1] * t ** 7
+#         + coefs[2] * t ** 6
+#         + coefs[3] * t ** 5
+#         + coefs[4] * t ** 4
+#         + coefs[5] * t ** 3
+#         + coefs[6] * t ** 2
+#         + coefs[7] * t
+#         + coefs[8]
+#     )
+    
+# def get_vel(coefs, t):
+#     return (
+#         56 * coefs[0] * t ** 7
+#         + 42 * coefs[1] * t ** 6
+#         + 30 * coefs[2] * t ** 5
+#         + 20 * coefs[3] * t ** 4
+#         + 12 * coefs[4] * t ** 3
+#         + 6 * coefs[5] * t ** 2
+#         + 2 * coefs[6] * t
+#         + coefs[7]
+#     )
+    
+# def get_acc(coefs, t):
+#     return (
+#         336 * coefs[0] * t ** 6
+#         + 252 * coefs[1] * t ** 5
+#         + 150 * coefs[2] * t ** 4
+#         + 80 * coefs[3] * t ** 3
+#         + 36 * coefs[4] * t ** 2
+#         + 12 * coefs[5] * t
+#         + 2 * coefs[6]
+#     )
+    
+# def get_jerk(coefs, t):
+#     return (
+#         1680 * coefs[0] * t ** 5
+#         + 1260 * coefs[1] * t ** 4
+#         + 600 * coefs[2] * t ** 3
+#         + 240 * coefs[3] * t ** 2
+#         + 72 * coefs[4] * t
+#         + 12 * coefs[5]
+#     )
+    
+# def get_snap(coefs, t):
+#     return (
+#         6720 * coefs[0] * t ** 4
+#         + 5040 * coefs[1] * t ** 3
+#         + 1800 * coefs[2] * t ** 2
+#         + 480 * coefs[3] * t
+#         + 72 * coefs[4]
+#     )
+    
+# def get_crackle(coefs, t):
+#     return (
+#         26880 * coefs[0] * t ** 3
+#         + 15120 * coefs[1] * t ** 2
+#         + 3600 * coefs[2] * t
+#         + 480 * coefs[3]
+#     )
+    
+# def get_pop(coefs, t):
+#     return (
+#         80640 * coefs[0] * t ** 2
+#         + 30240 * coefs[1] * t
+#         + 3600 * coefs[2]
+#     )
 
 
 def get_derivative(t, f):
