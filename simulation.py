@@ -5,7 +5,7 @@ sys.path.append("../")
 sys.path.append("../Traj_planning")
 
 # import Function as ft
-from flight_class import *
+# from flight_class import *
 import casadi as ca
 from MPC_SE3_controller import MPC_controller
 from animate import *
@@ -14,17 +14,17 @@ from simulation_parameters import *
 
 ########################## Trajectory generation ###############################
 
-# from Traj_planning.traj_3ST.go_up_3ST import traj_go_up_3ST
+# from Traj_planning.examples.go_up_3ST import traj_go_up_3ST
 # trajectory_params = traj_go_up_3ST()
 # tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
 
-from Traj_planning.traj_3ST.hopper_3ST import traj_hopper_3ST
-trajectory_params = traj_hopper_3ST()
-tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
-
-# from Traj_planning.traj_3ST.circle_3ST import traj_circle_3ST
-# trajectory_params = traj_circle_3ST()
+# from Traj_planning.examples.hopper_3ST import traj_hopper_3ST
+# trajectory_params = traj_hopper_3ST()
 # tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
+
+from Traj_planning.examples.circle_3ST import traj_circle_3ST
+trajectory_params = traj_circle_3ST()
+tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
 
 ######################### Creating the controller ##############################
 controller = MPC_controller(
@@ -60,5 +60,5 @@ controller.plot_tracking_results(t, x)
 #     trajectory_params=trajectory_params,
 #     scale=1,
 #     matplotlib=False,
-#     save=True,
+#     save=False,
 # )

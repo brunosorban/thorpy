@@ -6,7 +6,7 @@ sys.path.append("../")
 sys.path.append("../Traj_planning")
 
 from simulation_parameters import *
-from Traj_planning.traj_3ST.simple_circ import *
+from Traj_planning.examples.simple_circ import *
 
 # constraints
 max_vx = 150

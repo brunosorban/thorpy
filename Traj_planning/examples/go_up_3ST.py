@@ -6,10 +6,10 @@ sys.path.append("../")
 sys.path.append("../Traj_planning")
 
 from simulation_parameters import *
-from Traj_planning.traj_3ST.simple_circ import *
+from Traj_planning.examples.simple_circ import *
 
-v = 40
-r = 100
+v = 15
+r = 50
 
 # constraints
 max_vx = 150
@@ -26,8 +26,18 @@ min_ay = -30
 max_az = 30
 min_az = -30
 
-x, y, vx, vy, t, e1bx, e1by = calculate_traj_params(v, r, m, g)
-z = np.zeros_like(x)
+target_points = np.array(
+    [
+        [0, 0, 0],
+        [0, 100, 0],
+    ]
+)
+
+gamma_points_deg = np.array([90, 90])
+target_velocities = np.array([[0, 0, 0], [0, 0, 0]])  # m/s
+target_accelerations = np.array([[0, 0, 0], [0, 0, 0]])  # m/s^2
+time_points = np.array([0, 10])  # time list
+dt = 0.01  # time step
 
 constraints = {
     "min_vx": min_vx,
@@ -45,24 +55,21 @@ constraints = {
     "g": g,
 }
 
-none_vec = np.array([None] * len(x))
-# none_vec[0] = 0
-
 states = {
-    "t": t,
-    "x": x,
-    "y": y,
-    "z": z,
-    "vx": none_vec,
-    "vy": none_vec,
-    "vz": none_vec,
-    "ax": none_vec,
-    "ay": none_vec,
-    "az": none_vec,
+    "t": time_points,
+    "x": target_points[:, 0],
+    "y": target_points[:, 1],
+    "z": target_points[:, 2],
+    "vx": target_velocities[:, 0],
+    "vy": target_velocities[:, 1],
+    "vz": target_velocities[:, 2],
+    "ax": target_accelerations[:, 0],
+    "ay": target_accelerations[:, 1],
+    "az": target_accelerations[:, 2],
 }
 
 
-def traj_circle_3ST():
+def traj_go_up_3ST():
     traj_params = trajenerator_3ST(
         states, constraints, env_params, rocket_params, controller_params
     )

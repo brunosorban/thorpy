@@ -1,9 +1,9 @@
 import json
 from Traj_planning.traj_3ST.pol_interpolation import *
 from Traj_planning.traj_3ST.diff_flat import *
-from Traj_planning.traj_3ST.MPC_traj import *
+from Traj_planning.old.MPC_traj import *
 from Traj_planning.traj_3ST.plot_traj import *
-from Traj_planning.traj_3ST.estimate_control import *
+from Traj_planning.old.estimate_control import *
 
 
 def trajenerator_3ST(states, constraints, env_params, rocket_params, controller_params):
