@@ -1,7 +1,4 @@
-import numpy as np
-
-
-def get_gamma_3dot(states):
+def compute_gamma_3dot(states):
     g = states["g"]
     x_dot_dot = states["ax_o"]
     y_dot_dot = states["ay_o"]

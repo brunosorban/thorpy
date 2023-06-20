@@ -5,11 +5,11 @@ from Traj_planning.traj_3ST.traj_generator_3ST import *
 sys.path.append("../")
 sys.path.append("../Traj_planning")
 
-from simulation_parameters import *
+from parameters import *
 from Traj_planning.examples.simple_circ import *
 
-v = 40
-r = 100
+v = 10  # 40 works
+r = 100  # with 100
 
 # constraints
 max_vx = 150
@@ -46,7 +46,7 @@ constraints = {
 }
 
 none_vec = np.array([None] * len(x))
-# none_vec[0] = 0
+none_vec[0] = 0
 
 states = {
     "t": t,
@@ -59,6 +59,7 @@ states = {
     "ax": none_vec,
     "ay": none_vec,
     "az": none_vec,
+    "gamma_dot": none_vec,
 }
 
 

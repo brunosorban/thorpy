@@ -39,6 +39,7 @@ N = int(T * freq)  # Number of control intervals
 
 # controller input bounds
 u_max_f = 2 * m * g  # maxium thrust rate
+# u_min_f = -u_max_f  # maxium thrust rate
 u_min_f = 0.35 * u_max_f  # should be 30% to 40% of the max thrust
 u_max_delta_tvc_c = np.deg2rad(10)  # maxium thrust vector angle
 u_min_delta_tvc_c = -np.deg2rad(10)  # minium thrust vector angle
@@ -52,10 +53,10 @@ u_max_f_deriv = u_max_f / (
     stab_time_criterion * T_thrust
 )  # u_max_f / T_thrust # maxium thrust rate
 u_min_f_deriv = -u_max_f_deriv  # should be 30% to 40% of the max thrust
-u_max_delta_tvc_c_deriv = np.deg2rad(10) / (
+u_max_delta_tvc_c_deriv = u_max_delta_tvc_c / (
     stab_time_criterion * T_tvc
 )  # maxium thrust vector angle
-u_min_delta_tvc_c_deriv = -np.deg2rad(10) / (
+u_min_delta_tvc_c_deriv = -u_max_delta_tvc_c / (
     stab_time_criterion * T_tvc
 )  # minium thrust vector angle
 

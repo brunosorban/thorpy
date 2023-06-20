@@ -5,7 +5,7 @@ from Traj_planning.traj_3ST.traj_generator_3ST import *
 sys.path.append("../")
 sys.path.append("../Traj_planning")
 
-from simulation_parameters import *
+from parameters import *
 from Traj_planning.examples.simple_circ import *
 
 v = 15
@@ -19,12 +19,12 @@ min_vy = -150
 max_vz = 150
 min_vz = -150
 
-max_ax = 30
-min_ax = -30
-max_ay = 30
-min_ay = -30
-max_az = 30
-min_az = -30
+max_ax = 2 * g
+min_ax = -2 * g
+max_ay = 2 * g
+min_ay = -0.3 * g
+max_az = 2 * g
+min_az = -2 * g
 
 target_points = np.array(
     [
@@ -34,9 +34,10 @@ target_points = np.array(
 )
 
 gamma_points_deg = np.array([90, 90])
+gamma_dot_points = np.array([0, 0])
 target_velocities = np.array([[0, 0, 0], [0, 0, 0]])  # m/s
 target_accelerations = np.array([[0, 0, 0], [0, 0, 0]])  # m/s^2
-time_points = np.array([0, 10])  # time list
+time_points = np.array([0, 15])  # time list
 dt = 0.01  # time step
 
 constraints = {
@@ -66,6 +67,7 @@ states = {
     "ax": target_accelerations[:, 0],
     "ay": target_accelerations[:, 1],
     "az": target_accelerations[:, 2],
+    "gamma_dot": gamma_dot_points,
 }
 
 

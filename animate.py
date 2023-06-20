@@ -97,10 +97,10 @@ def animate(
     xlim_sup = max(x) + offset
     ylim_inf = min(y)
     ylim_sup = max(y) + offset
-    
+
     x -= xlim_inf
     y -= ylim_inf
-    
+
     xlim_inf = -offset
     ylim_inf = 0
     xlim_sup = max(x) + offset

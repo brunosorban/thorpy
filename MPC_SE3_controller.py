@@ -118,7 +118,7 @@ class MPC_controller:
             (delta_tvc_dot + omega_z) * e2ty,  # e1ty
             -(delta_tvc_dot + omega_z) * e1tx,  # e2tx
             -(delta_tvc_dot + omega_z) * e1ty,  # e2ty
-            thrust * l_tvc * (e1tx * e2bx + e1ty * e2by) / J_z,  # omega
+            -thrust * l_tvc * (e1tx * e2bx + e1ty * e2by) / J_z,  # omega
             thrust_dot,  # thrust
         )
 
@@ -216,19 +216,19 @@ class MPC_controller:
                 self.opti.subject_to(self.x[:, k + 1] == F(self.x[:, k], self.u[:, k]))
 
                 # apply bounds to the inputs
-                # self.opti.subject_to(self.u[0, k] >= u_bounds[0][0])
-                # self.opti.subject_to(self.u[0, k] <= u_bounds[0][1])
-                # self.opti.subject_to(self.u[1, k] >= u_bounds[1][0])
-                # self.opti.subject_to(self.u[1, k] <= u_bounds[1][1])
+                self.opti.subject_to(self.u[0, k] >= u_bounds[0][0])
+                self.opti.subject_to(self.u[0, k] <= u_bounds[0][1])
+                self.opti.subject_to(self.u[1, k] >= u_bounds[1][0])
+                self.opti.subject_to(self.u[1, k] <= u_bounds[1][1])
 
-            # # apply bounds to the states
+            # apply bounds to the states
             # gamma = self.x[4, k]
             # self.opti.subject_to(self.x[4, k] >= gamma_bounds[0])
             # self.opti.subject_to(self.x[4, k] <= gamma_bounds[1])
 
-            # thrust = self.x[6, k]
-            # self.opti.subject_to(self.x[13, k] >= thrust_bounds[0])
-            # self.opti.subject_to(self.x[13, k] <= thrust_bounds[1])
+            thrust = self.x[6, k]
+            self.opti.subject_to(self.x[13, k] >= thrust_bounds[0])
+            self.opti.subject_to(self.x[13, k] <= thrust_bounds[1])
 
             # delta_tvc = self.x[7, k]
             # self.opti.subject_to(self.x[7, k] >= delta_tvc_bounds[0])
@@ -423,13 +423,25 @@ class MPC_controller:
             if t[-1] == 0:
                 sol = self.opti.solve()
             else:
-                self.opti.set_initial(self.x, last_sol.value(self.x))
-                self.opti.set_initial(self.u, last_sol.value(self.u))
+                # initial_guess = np.array(state_horizon_list)
+                # print(initial_guess[-1])\
+                self.opti.set_initial(self.x, state_horizon_list[-1])
+                self.opti.set_initial(self.u, control_horizon_list[-1])
                 sol = self.opti.solve()
 
             # retrieve the results
             u = sol.value(self.u)
             horizon = sol.value(self.x)
+
+            # normalization of the angular parameters
+            for i in range(4, 12, 2):
+                for j in range(len(horizon)):
+                    horizon[i][j] = horizon[i][j] / np.linalg.norm(
+                        [horizon[i][j], horizon[i + 1][j]]
+                    )
+                    horizon[i + 1][j] = horizon[i + 1][j] / np.linalg.norm(
+                        [horizon[i][j], horizon[i + 1][j]]
+                    )
 
             # save the resutls
             x_list.append(
@@ -450,12 +462,12 @@ class MPC_controller:
                     horizon[13][1],
                 ]
             )
+
             state_horizon_list.append(horizon)
             control_horizon_list.append(u)
             thrust.append(u[0, 0])
             torque.append(u[1, 0])
             t.append(t[-1] + self.dt)
-            last_sol = sol
 
             # compute actual error
             px_target = self.linear_spline(
@@ -528,7 +540,7 @@ class MPC_controller:
         delta_tvc_bounds = self.controller_params["delta_tvc_bounds"]
 
         gamma = np.angle(x[:, 4] + 1j * x[:, 5])
-        tvc_angle = np.angle(x[:, 8] + 1j * x[:, 9] - (x[:, 4] + 1j * x[:, 5]))
+        tvc_angle = np.angle(x[:, 8] + 1j * x[:, 9]) - gamma
 
         # plot 2: thrust
         ax2.plot(t, x[:, 13])

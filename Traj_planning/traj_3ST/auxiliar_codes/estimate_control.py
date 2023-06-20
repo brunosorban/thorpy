@@ -1,18 +1,32 @@
 import numpy as np
-import matplotlib.pyplot as plt
+from copy import deepcopy
 from Traj_planning.traj_3ST.auxiliar_codes.compute_gamma_3dot import compute_gamma_3dot
-from Traj_planning.traj_3ST.auxiliar_codes.coeffs2derivatives import *
+from Traj_planning.traj_3ST.auxiliar_codes.get_f1f2 import get_f1f2, get_f1f2_dot
+from Traj_planning.traj_3ST.auxiliar_codes.coeffs2derivatives import (
+    get_pos,
+    get_vel,
+    get_acc,
+    get_jerk,
+    get_snap,
+    get_crackle,
+)
 
 
-def diff_flat_traj(
+def estimate_control(
     Px_coeffs, Py_coeffs, Pz_coeffs, t, env_params, rocket_params, controller_params
 ):
-    print("Starting differential flatness trajectory planning...")
+    # estimate the trajectory parameters for the 2D case
+    print("Estimating the trajectory parameters...")
+
     g = env_params["g"]
     m = rocket_params["m"]
     l_tvc = rocket_params["l_tvc"]
     J_z = rocket_params["J_z"]
-    dt = controller_params["dt"]
+    # dt = controller_params["dt"]
+    dt = 1e-3
+
+    params = deepcopy(rocket_params)
+    params["g"] = g
 
     t_list = np.arange(0, t[-1], dt)
 
@@ -31,6 +45,10 @@ def diff_flat_traj(
     sy_o = np.zeros_like(t_list)
     cx_o = np.zeros_like(t_list)
     cy_o = np.zeros_like(t_list)
+    f1_o = np.zeros_like(t_list)
+    f2_o = np.zeros_like(t_list)
+    f1_dot_o = np.zeros_like(t_list)
+    f2_dot_o = np.zeros_like(t_list)
 
     for i in range(len(t_list)):
         idx = np.searchsorted(t, t_list[i])
@@ -88,61 +106,47 @@ def diff_flat_traj(
     ) ** 2
     gamma_3dot = compute_gamma_3dot(temp_states)
 
+    # estimate control
+    for i in range(len(t_list)):
+        idx = np.searchsorted(t, t_list[i])
+        if idx > 0:
+            idx -= 1
+
+        f1_o[i], f2_o[i] = get_f1f2(
+            t_list[i], Px_coeffs[:, idx], Py_coeffs[:, idx], params
+        )
+        f1_dot_o[i], f2_dot_o[i] = get_f1f2_dot(
+            t_list[i], Px_coeffs[:, idx], Py_coeffs[:, idx], params
+        )
+
+        f_o = np.sqrt(f1_o**2 + f2_o**2)
+        f_dot_o = (f1_o * f1_dot_o + f2_o * f2_dot_o) / f_o
+
+        # for the delta_tvc
+        delta_tvc_o = np.arctan2(f2_o, f1_o)
+        delta_tvc_dot_o = (f1_o * f2_dot_o - f2_o * f1_dot_o) / (f1_o**2 + f2_o**2)
+
     e1bx = np.cos(gamma)
     e1by = np.sin(gamma)
     e2bx = -np.sin(gamma)
     e2by = np.cos(gamma)
 
-    x_g = x_o - J_z / (m * l_tvc) * e1bx
-    y_g = y_o - J_z / (m * l_tvc) * e1by
-    z_g = z_o
+    e1tx = np.cos(gamma + delta_tvc_o)
+    e1ty = np.sin(gamma + delta_tvc_o)
+    e2tx = -np.sin(gamma + delta_tvc_o)
+    e2ty = np.cos(gamma + delta_tvc_o)
 
-    vx_g = vx_o - J_z / (m * l_tvc) * gamma_dot * e2bx
-    vy_g = vy_o - J_z / (m * l_tvc) * gamma_dot * e2by
-    vz_g = vz_o
-
-    ax_g = (
-        ax_o
-        - J_z / (m * l_tvc) * gamma_dot_dot * e2bx
-        + J_z / (m * l_tvc) * (gamma_dot**2) * e1bx
-    )
-    ay_g = (
-        ay_o
-        - J_z / (m * l_tvc) * gamma_dot_dot * e2by
-        + J_z / (m * l_tvc) * (gamma_dot**2) * e1by
-    )
-    az_g = az_o
-
-    # compute the control inputs of the system
-    f1 = np.sqrt(
-        (m * ax_o) ** 2 + (m * (ay_o + g)) ** 2 + -((-J_z * gamma_dot_dot / l_tvc) ** 2)
-    )
-    f2 = -J_z * gamma_dot_dot / l_tvc
-
-    # compute the control inputs dervatives of the system
-    f1_dot = (
-        m**2 * (ax_o * jx_o + (ay_o + g) * jy_o)
-        - J_z**2 * gamma_dot_dot * gamma_3dot / l_tvc**2
-    ) / f1
-    f2_dot = -J_z * gamma_3dot / l_tvc
-
-    delta_tvc = np.arctan2(f2, f1)
-    delta_tvc_dot = (f1 * f2_dot - f2 * f1_dot) / (f1**2 + f2**2)
-
-    f = np.sqrt(f1**2 + f2**2)
-    f_dot = (f1 * f1_dot + f2 * f2_dot) / f
-
-    trajectory_params = {
+    estimated_states = {
         "t": t_list,
-        "x": x_g,
-        "y": y_g,
-        "z": z_g,
-        "vx": vx_g,
-        "vy": vy_g,
-        "vz": vz_g,
-        "ax": ax_g,
-        "ay": ay_g,
-        "az": az_g,
+        "x": x_o,
+        "y": y_o,
+        "z": z_o,
+        "vx": vx_o,
+        "vy": vy_o,
+        "vz": vz_o,
+        "ax": ax_o,
+        "ay": ay_o,
+        "az": az_o,
         "e1bx": e1bx,
         "e1by": e1by,
         "e2bx": e2bx,
@@ -151,15 +155,20 @@ def diff_flat_traj(
         "gamma_dot": gamma_dot,
         "gamma_dot_dot": gamma_dot_dot,
         "gamma_3dot": gamma_3dot,
-        "f1": f1,
-        "f2": f2,
-        "f1_dot": f1_dot,
-        "f2_dot": f2_dot,
-        "delta_tvc": delta_tvc,
-        "delta_tvc_dot": delta_tvc_dot,
-        "f": f,
-        "f_dot": f_dot,
+        "f1": f1_o,
+        "f2": f2_o,
+        "f1_dot": f1_dot_o,
+        "f2_dot": f2_dot_o,
+        "delta_tvc": delta_tvc_o,
+        "delta_tvc_dot": delta_tvc_dot_o,
+        "f": f_o,
+        "f_dot": f_dot_o,
+        "e1tx": e1tx,
+        "e1ty": e1ty,
+        "e2tx": e2tx,
+        "e2ty": e2ty,
     }
 
-    print("Differential flatness trajectory planning done.")
-    return trajectory_params
+    # print("Trajectory parameters estimated.")
+
+    return estimated_states

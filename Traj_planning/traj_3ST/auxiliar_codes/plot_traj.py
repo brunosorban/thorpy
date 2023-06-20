@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def plot_trajectory(trajectory_params, title="Trajectory"):
+def plot_trajectory(states, trajectory_params, title="Trajectory"):
     t = trajectory_params["t"]
     x = trajectory_params["x"]
     vx = trajectory_params["vx"]
@@ -26,7 +26,7 @@ def plot_trajectory(trajectory_params, title="Trajectory"):
     fig, axs = plt.subplots(3, 2, figsize=(15, 15))
     axs[0, 0].plot(x, y, label="trajectory")
     axs[0, 0].scatter([-100, 100], [0, 0], s=1e-3)
-    # axs[0, 0].plot(states["x"], states["y"], "o", label="target points")
+    axs[0, 0].plot(states["x"], states["y"], "o", label="target points")
     axs[0, 0].set_xlabel("Horizontal Position (m)")
     axs[0, 0].set_ylabel("Vertical Position (m)")
     axs[0, 0].set_title("Trajectory")
@@ -57,8 +57,8 @@ def plot_trajectory(trajectory_params, title="Trajectory"):
 
     axs[1, 0].plot(t, x, label="x")
     axs[1, 0].plot(t, y, label="y")
-    # axs[1, 0].plot(t, states["x"], "o", label="$x_{ref}$")
-    # axs[1, 0].plot(t, states["y"], "o", label="$y_{ref}$")
+    # axs[1, 0].scatter(t, states["x"], "o", label="$x_{ref}$")
+    # axs[1, 0].scatter(t, states["y"], "o", label="$y_{ref}$")
     axs[1, 0].set_xlabel("Time (s)")
     axs[1, 0].set_ylabel("Position (m)")
     axs[1, 0].set_title("Position vs Time")

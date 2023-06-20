@@ -59,8 +59,17 @@ def calculate_traj_params(v, r, m, g=9.8):
     x.append(2 * r)
     y.append(0)
     vx.append(0)
-    vy.append(0.8 * v)
+    vy.append(0)
     t.append(0)
+    e1bx.append(0)
+    e1by.append(1)
+
+    # intermediate point
+    x.append(2 * r)
+    y.append(0.8**2 * h)
+    vx.append(0)
+    vy.append(0.8 * v)
+    t.append(1.6 * h / v)
     e1bx.append(0)
     e1by.append(1)
 
@@ -68,7 +77,7 @@ def calculate_traj_params(v, r, m, g=9.8):
     y.append(h)
     vx.append(0)
     vy.append(v)
-    t.append(h / v)
+    t.append(2 * h / v)
     e1bx.append(0)
     e1by.append(1)
 

@@ -1,141 +1,12 @@
 import casadi as ca
 import numpy as np
-
-def get_pos(coefs, t):
-    return (
-        coefs[0] * t ** 7
-        + coefs[1] * t ** 6
-        + coefs[2] * t ** 5
-        + coefs[3] * t ** 4
-        + coefs[4] * t ** 3
-        + coefs[5] * t ** 2
-        + coefs[6] * t
-        + coefs[7]
-    )
-    
-def get_vel(coefs, t):
-    return (
-        7 * coefs[0] * t ** 6
-        + 6 * coefs[1] * t ** 5
-        + 5 * coefs[2] * t ** 4
-        + 4 * coefs[3] * t ** 3
-        + 3 * coefs[4] * t ** 2
-        + 2 * coefs[5] * t
-        + coefs[6]
-    )
-    
-def get_acc(coefs, t):
-    return (
-        42 * coefs[0] * t ** 5
-        + 30 * coefs[1] * t ** 4
-        + 20 * coefs[2] * t ** 3
-        + 12 * coefs[3] * t ** 2
-        + 6 * coefs[4] * t
-        + 2 * coefs[5]
-    )
-    
-def get_jerk(coefs, t):
-    return (
-        210 * coefs[0] * t ** 4
-        + 120 * coefs[1] * t ** 3
-        + 60 * coefs[2] * t ** 2
-        + 24 * coefs[3] * t
-        + 6 * coefs[4]
-    )
-    
-def get_snap(coefs, t):
-    return (
-        840 * coefs[0] * t ** 3
-        + 360 * coefs[1] * t ** 2
-        + 120 * coefs[2] * t
-        + 24 * coefs[3]
-    )
-    
-def get_crackle(coefs, t):
-    return (
-        2520 * coefs[0] * t ** 2
-        + 720 * coefs[1] * t
-        + 120 * coefs[2]
-    )
-    
-def get_pop(coefs, t):
-    return (
-        5040 * coefs[0] * t
-        + 720 * coefs[1]
-    )
-    
-# def get_pos(coefs, t):
-#     return (
-#         coefs[0] * t ** 8
-#         + coefs[1] * t ** 7
-#         + coefs[2] * t ** 6
-#         + coefs[3] * t ** 5
-#         + coefs[4] * t ** 4
-#         + coefs[5] * t ** 3
-#         + coefs[6] * t ** 2
-#         + coefs[7] * t
-#         + coefs[8]
-#     )
-    
-# def get_vel(coefs, t):
-#     return (
-#         56 * coefs[0] * t ** 7
-#         + 42 * coefs[1] * t ** 6
-#         + 30 * coefs[2] * t ** 5
-#         + 20 * coefs[3] * t ** 4
-#         + 12 * coefs[4] * t ** 3
-#         + 6 * coefs[5] * t ** 2
-#         + 2 * coefs[6] * t
-#         + coefs[7]
-#     )
-    
-# def get_acc(coefs, t):
-#     return (
-#         336 * coefs[0] * t ** 6
-#         + 252 * coefs[1] * t ** 5
-#         + 150 * coefs[2] * t ** 4
-#         + 80 * coefs[3] * t ** 3
-#         + 36 * coefs[4] * t ** 2
-#         + 12 * coefs[5] * t
-#         + 2 * coefs[6]
-#     )
-    
-# def get_jerk(coefs, t):
-#     return (
-#         1680 * coefs[0] * t ** 5
-#         + 1260 * coefs[1] * t ** 4
-#         + 600 * coefs[2] * t ** 3
-#         + 240 * coefs[3] * t ** 2
-#         + 72 * coefs[4] * t
-#         + 12 * coefs[5]
-#     )
-    
-# def get_snap(coefs, t):
-#     return (
-#         6720 * coefs[0] * t ** 4
-#         + 5040 * coefs[1] * t ** 3
-#         + 1800 * coefs[2] * t ** 2
-#         + 480 * coefs[3] * t
-#         + 72 * coefs[4]
-#     )
-    
-# def get_crackle(coefs, t):
-#     return (
-#         26880 * coefs[0] * t ** 3
-#         + 15120 * coefs[1] * t ** 2
-#         + 3600 * coefs[2] * t
-#         + 480 * coefs[3]
-#     )
-    
-# def get_pop(coefs, t):
-#     return (
-#         80640 * coefs[0] * t ** 2
-#         + 30240 * coefs[1] * t
-#         + 3600 * coefs[2]
-#     )
+import copy
+from Traj_planning.traj_3ST.auxiliar_codes.estimate_coeffs import estimate_coeffs
+from Traj_planning.traj_3ST.auxiliar_codes.get_f1f2 import get_f1f2, get_f1f2_dot
+from Traj_planning.traj_3ST.auxiliar_codes.coeffs2derivatives import *
 
 
-def min_snap_traj(states, constraints):
+def min_snap_traj(states, constraints, rocket_params, control_params):
     """This function calculates the trajectory via polynomial interpolation. It
     uses the minimum snap as cost function to be minimized, together with time.
 
@@ -162,7 +33,7 @@ def min_snap_traj(states, constraints):
     if number_of_points < 2:
         raise ValueError("The number of points must be at least 2")
 
-    pol_order = 8  # order of the polynom +1
+    pol_order = 9  # order of the polynom +1
     g = constraints["g"]
 
     # calculate the polynom
@@ -174,10 +45,11 @@ def min_snap_traj(states, constraints):
     p5 = ca.SX.sym("p5")
     p6 = ca.SX.sym("p6")
     p7 = ca.SX.sym("p7")
-    # p8 = ca.SX.sym("p8")
+    p8 = ca.SX.sym("p8")
+    # p9 = ca.SX.sym("p9")
     t = ca.SX.sym("t")
 
-    coefs = ca.vertcat(p0, p1, p2, p3, p4, p5, p6, p7)
+    coefs = ca.vertcat(p0, p1, p2, p3, p4, p5, p6, p7, p8)
     pos = get_pos(coefs, t)
     vel = get_vel(coefs, t)
     acc = get_acc(coefs, t)
@@ -263,6 +135,9 @@ def min_snap_traj(states, constraints):
         ["pop"],
     )
 
+    params = copy.deepcopy(rocket_params)
+    params["g"] = g
+
     # building the optimal control problem
     opti = ca.Opti()
 
@@ -270,18 +145,6 @@ def min_snap_traj(states, constraints):
     Px_coefs = opti.variable(pol_order, number_of_points - 1)
     Py_coefs = opti.variable(pol_order, number_of_points - 1)
     Pz_coefs = opti.variable(pol_order, number_of_points - 1)
-
-    # define the cost function
-    obj = 0
-    for k in range(0, number_of_points - 1):
-        # minimize the crackle
-        obj += (
-            ca.power(F_crackle(Px_coefs[0, k], time_points[k]), 2)
-            + ca.power(F_crackle(Py_coefs[0, k], time_points[k]), 2)
-            + ca.power(F_crackle(Pz_coefs[0, k], time_points[k]), 2)
-        )
-
-    opti.minimize(obj)
 
     # set the contraints
     print("number of points (per axis): ", number_of_points)
@@ -342,7 +205,7 @@ def min_snap_traj(states, constraints):
                 F_jerk(Pz_coefs[:, k], time_points[k + 1])
                 == F_jerk(Pz_coefs[:, k + 1], time_points[k + 1])
             )
-            
+
             # snap constraints (continuity)
             opti.subject_to(
                 F_snap(Px_coefs[:, k], time_points[k + 1])
@@ -356,7 +219,7 @@ def min_snap_traj(states, constraints):
                 F_snap(Pz_coefs[:, k], time_points[k + 1])
                 == F_snap(Pz_coefs[:, k + 1], time_points[k + 1])
             )
-            
+
             # crackle constraints (continuity)
             opti.subject_to(
                 F_crackle(Px_coefs[:, k], time_points[k + 1])
@@ -370,20 +233,20 @@ def min_snap_traj(states, constraints):
                 F_crackle(Pz_coefs[:, k], time_points[k + 1])
                 == F_crackle(Pz_coefs[:, k + 1], time_points[k + 1])
             )
-            
-            # pop constraints (continuity)
-            opti.subject_to(
-                F_pop(Px_coefs[:, k], time_points[k + 1])
-                == F_pop(Px_coefs[:, k + 1], time_points[k + 1])
-            )
-            opti.subject_to(
-                F_pop(Py_coefs[:, k], time_points[k + 1])
-                == F_pop(Py_coefs[:, k + 1], time_points[k + 1])
-            )
-            opti.subject_to(
-                F_pop(Pz_coefs[:, k], time_points[k + 1])
-                == F_pop(Pz_coefs[:, k + 1], time_points[k + 1])
-            )
+
+            # # pop constraints (continuity)
+            # opti.subject_to(
+            #     F_pop(Px_coefs[:, k], time_points[k + 1])
+            #     == F_pop(Px_coefs[:, k + 1], time_points[k + 1])
+            # )
+            # opti.subject_to(
+            #     F_pop(Py_coefs[:, k], time_points[k + 1])
+            #     == F_pop(Py_coefs[:, k + 1], time_points[k + 1])
+            # )
+            # opti.subject_to(
+            #     F_pop(Pz_coefs[:, k], time_points[k + 1])
+            #     == F_pop(Pz_coefs[:, k + 1], time_points[k + 1])
+            # )
 
         # check if velocity and acceleration constraints were given
         if states["vx"][k] != None:
@@ -398,63 +261,153 @@ def min_snap_traj(states, constraints):
             opti.subject_to(F_acc(Py_coefs[:, k], time_points[k]) == states["ay"][k])
         if states["az"][k] != None:
             opti.subject_to(F_acc(Pz_coefs[:, k], time_points[k]) == states["az"][k])
+        if states["gamma_dot"][k] != None:
+            gamma_dot = (
+                F_jerk(Py_coefs, time_points[k]) * F_acc(Px_coefs[:, k], time_points[k])
+                - (F_acc(Py_coefs[:, k], time_points[k]) + g)
+                * F_jerk(Px_coefs[:, k], time_points[k])
+            ) / (
+                F_acc(Px_coefs[:, k], time_points[k]) ** 2
+                + (F_acc(Py_coefs[:, k], time_points[k]) + g) ** 2
+            )
+            opti.subject_to(gamma_dot == states["gamma_dot"][k])
 
     # velocity and acceleration contraints at final point
     # check if velocity and acceleration constraints were given
-    k += 1
-    if states["vx"][k] != None:
-        opti.subject_to(F_vel(Px_coefs[:, k - 1], time_points[k]) == states["vx"][k])
-    if states["vy"][k] != None:
-        opti.subject_to(F_vel(Py_coefs[:, k - 1], time_points[k]) == states["vy"][k])
-    if states["vz"][k] != None:
-        opti.subject_to(F_vel(Pz_coefs[:, k - 1], time_points[k]) == states["vz"][k])
-    if states["ax"][k] != None:
-        opti.subject_to(F_acc(Px_coefs[:, k - 1], time_points[k]) == states["ax"][k])
-    if states["ay"][k] != None:
-        opti.subject_to(F_acc(Py_coefs[:, k - 1], time_points[k]) == states["ay"][k])
-    if states["az"][k] != None:
-        opti.subject_to(F_acc(Pz_coefs[:, k - 1], time_points[k]) == states["az"][k])
+    if states["vx"][k + 1] != None:
+        opti.subject_to(
+            F_vel(Px_coefs[:, k], time_points[k + 1]) == states["vx"][k + 1]
+        )
+    if states["vy"][k + 1] != None:
+        opti.subject_to(
+            F_vel(Py_coefs[:, k], time_points[k + 1]) == states["vy"][k + 1]
+        )
+    if states["vz"][k + 1] != None:
+        opti.subject_to(
+            F_vel(Pz_coefs[:, k], time_points[k + 1]) == states["vz"][k + 1]
+        )
+    if states["ax"][k + 1] != None:
+        opti.subject_to(
+            F_acc(Px_coefs[:, k], time_points[k + 1]) == states["ax"][k + 1]
+        )
+    if states["ay"][k + 1] != None:
+        opti.subject_to(
+            F_acc(Py_coefs[:, k], time_points[k + 1]) == states["ay"][k + 1]
+        )
+    if states["az"][k + 1] != None:
+        opti.subject_to(
+            F_acc(Pz_coefs[:, k], time_points[k + 1]) == states["az"][k + 1]
+        )
+    if states["gamma_dot"][k + 1] != None:
+        gamma_dot = (
+            F_jerk(Py_coefs, time_points[k + 1])
+            * F_acc(Px_coefs[:, k], time_points[k + 1])
+            - (F_acc(Py_coefs[:, k], time_points[k + 1]) + g)
+            * F_jerk(Px_coefs[:, k], time_points[k + 1])
+        ) / (
+            F_acc(Px_coefs[:, k], time_points[k + 1]) ** 2
+            + (F_acc(Py_coefs[:, k], time_points[k + 1]) + g) ** 2
+        )
+        opti.subject_to(gamma_dot == states["gamma_dot"][k + 1])
 
     print("Adding bounds...")
 
-    # check if the hopper is inside bounds
+    # define the cost function
+    obj = 0
+
+    eval_number = 20  # number of points to evaluate the cost and constrints per segment
+
+    # define the cost function and check if the hopper is inside bounds
     for i in range(number_of_points - 1):
-        dt = (time_points[i + 1] - time_points[i]) / 100
-        for j in range(100):
-            cur_time = time_points[i] + j * dt
+        dt = (time_points[i + 1] - time_points[i]) / eval_number
+        for j in range(eval_number):
+            cur_time = time_points[i] + j * dt  # current time
 
-            v = ca.vertcat(
-                F_vel(Px_coefs[:, i], cur_time),
-                F_vel(Py_coefs[:, i], cur_time),
-                F_vel(Py_coefs[:, i], cur_time),
+            # minimize the crackle
+            obj += (
+                ca.power(F_crackle(Px_coefs[0, i], cur_time), 2)
+                + ca.power(F_crackle(Py_coefs[0, i], cur_time), 2)
+                + ca.power(F_crackle(Pz_coefs[0, i], cur_time), 2)
             )
-            opti.subject_to(v[0] > constraints["min_vx"])
-            opti.subject_to(v[0] < constraints["max_vx"])
-            opti.subject_to(v[1] > constraints["min_vy"])
-            opti.subject_to(v[1] < constraints["max_vy"])
-            opti.subject_to(v[2] > constraints["min_vz"])
-            opti.subject_to(v[2] < constraints["max_vz"])
 
-            a = ca.vertcat(
-                F_acc(Px_coefs[:, i], cur_time),
-                F_acc(Py_coefs[:, i], cur_time),
-                F_acc(Pz_coefs[:, i], cur_time),
-            )
-            opti.subject_to(a[0] > constraints["min_ax"])
-            opti.subject_to(a[0] < constraints["max_ax"])
-            opti.subject_to(a[1] > constraints["min_ay"])
-            opti.subject_to(a[1] < constraints["max_ay"])
-            opti.subject_to(a[2] > constraints["min_az"])
-            opti.subject_to(a[2] < constraints["max_az"])
+            # v_cur = ca.vertcat(
+            #     F_vel(Px_coefs[:, i], cur_time),
+            #     F_vel(Py_coefs[:, i], cur_time),
+            #     F_vel(Py_coefs[:, i], cur_time),
+            # )
+            # opti.subject_to(v_cur[0] > constraints["min_vx"])
+            # opti.subject_to(v_cur[0] < constraints["max_vx"])
+            # opti.subject_to(v_cur[1] > constraints["min_vy"])
+            # opti.subject_to(v_cur[1] < constraints["max_vy"])
+            # opti.subject_to(v_cur[2] > constraints["min_vz"])
+            # opti.subject_to(v_cur[2] < constraints["max_vz"])
 
+            # a_cur = ca.vertcat(
+            #     F_acc(Px_coefs[:, i], cur_time),
+            #     F_acc(Py_coefs[:, i], cur_time),
+            #     F_acc(Pz_coefs[:, i], cur_time),
+            # )
+            # opti.subject_to(a_cur[0] > constraints["min_ax"])
+            # opti.subject_to(a_cur[0] < constraints["max_ax"])
+            # opti.subject_to(a_cur[1] > constraints["min_ay"])
+            # opti.subject_to(a_cur[1] < constraints["max_ay"])
+            # opti.subject_to(a_cur[2] > constraints["min_az"])
+            # opti.subject_to(a_cur[2] < constraints["max_az"])
+
+            # set maximum and minimum values for control inputs
+            # for the force
+            # f1_cur, f2_cur = get_f1f2(cur_time, Px_coefs, Py_coefs, params)
+            # f1_dot_cur, f2_dot_cur = get_f1f2_dot(cur_time, Px_coefs, Py_coefs, params)
+
+            # f_cur = ca.sqrt(f1_cur**2 + f2_cur**2)
+            # f_cur = ca.sqrt(f2_cur**2)
+            # f_dot_cur = (f1_cur * f1_dot_cur + f2_cur * f2_dot_cur) / f_cur
+
+            # opti.subject_to(f_cur < control_params["thrust_bounds"][1])
+            # opti.subject_to(f_cur > control_params["thrust_bounds"][0])
+            # opti.subject_to(f_dot_cur < control_params["u_bounds"][0][1])
+            # opti.subject_to(f_dot_cur > control_params["u_bounds"][0][0])
+
+            # # for the delta_tvc
+            # delta_tvc_cur = ca.arctan2(f2_cur, f1_cur)
+            # delta_tvc_dot_cur = (f1_cur * f2_dot_cur - f2_cur * f1_dot_cur) / (
+            #     f1_cur**2 + f2_cur**2
+            # )
+
+            # opti.subject_to(delta_tvc_cur < control_params["delta_tvc_bounds"][1])
+            # opti.subject_to(delta_tvc_cur > control_params["delta_tvc_bounds"][0])
+            # opti.subject_to(delta_tvc_dot_cur < control_params["u_bounds"][1][1])
+            # opti.subject_to(delta_tvc_dot_cur > control_params["u_bounds"][1][0])
+
+    opti.minimize(obj)
     # select the desired solver
     # hide solution output
     opts = {"ipopt.print_level": 0, "print_time": 0}
     opti.solver("ipopt")  # , opts)
 
-    opti.set_initial(Px_coefs, np.ones((pol_order, number_of_points - 1)))
-    opti.set_initial(Py_coefs, np.ones((pol_order, number_of_points - 1)))
-    opti.set_initial(Pz_coefs, np.ones((pol_order, number_of_points - 1)))
+    # opti.set_initial(Px_coefs, np.ones((pol_order, number_of_points - 1)))
+    # opti.set_initial(Py_coefs, np.ones((pol_order, number_of_points - 1)))
+    # opti.set_initial(Pz_coefs, np.ones((pol_order, number_of_points - 1)))
+
+    for i in range(len(time_points) - 1):
+        opti.set_initial(
+            Px_coefs[:, i],
+            estimate_coeffs(
+                time_points[i : i + 2], [states["x"][i], states["x"][i + 1]]
+            ),
+        )
+        opti.set_initial(
+            Py_coefs[:, i],
+            estimate_coeffs(
+                time_points[i : i + 2], [states["y"][i], states["y"][i + 1]]
+            ),
+        )
+        opti.set_initial(
+            Pz_coefs[:, i],
+            estimate_coeffs(
+                time_points[i : i + 2], [states["z"][i], states["z"][i + 1]]
+            ),
+        )
 
     print("Interpolating trajectory...")
     sol = opti.solve()
