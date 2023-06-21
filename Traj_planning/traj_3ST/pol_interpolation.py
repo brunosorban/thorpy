@@ -145,6 +145,10 @@ def min_snap_traj(states, constraints, rocket_params, control_params):
     Px_coefs = opti.variable(pol_order, number_of_points - 1)
     Py_coefs = opti.variable(pol_order, number_of_points - 1)
     Pz_coefs = opti.variable(pol_order, number_of_points - 1)
+    
+    # define the cost function
+    # it will be the sum of the crackle and position error as soft constraints
+    obj = 0 
 
     # set the contraints
     print("number of points (per axis): ", number_of_points)
@@ -154,16 +158,30 @@ def min_snap_traj(states, constraints, rocket_params, control_params):
         # print()
         # print("k = ", k, " of ", number_of_points - 2, " time = ", time_points[k])
         # initial postion constraints
-        opti.subject_to(F_pos(Px_coefs[:, k], time_points[k]) == states["x"][k])
-        opti.subject_to(F_pos(Py_coefs[:, k], time_points[k]) == states["y"][k])
-        opti.subject_to(F_pos(Pz_coefs[:, k], time_points[k]) == states["z"][k])
+        obj += ca.power(F_pos(Px_coefs[:, k], time_points[k]) - states["x"][k], 2)
+        obj += ca.power(F_pos(Py_coefs[:, k], time_points[k]) - states["y"][k], 2)
+        obj += ca.power(F_pos(Pz_coefs[:, k], time_points[k]) - states["z"][k], 2)
 
         # final postion constraints
-        opti.subject_to(F_pos(Px_coefs[:, k], time_points[k + 1]) == states["x"][k + 1])
-        opti.subject_to(F_pos(Py_coefs[:, k], time_points[k + 1]) == states["y"][k + 1])
-        opti.subject_to(F_pos(Pz_coefs[:, k], time_points[k + 1]) == states["z"][k + 1])
+        obj += ca.power(F_pos(Px_coefs[:, k], time_points[k + 1]) - states["x"][k + 1], 2)
+        obj += ca.power(F_pos(Py_coefs[:, k], time_points[k + 1]) - states["y"][k + 1], 2)
+        obj += ca.power(F_pos(Pz_coefs[:, k], time_points[k + 1]) - states["z"][k + 1], 2)
 
         if k < number_of_points - 2:
+            # position constraints (continuity)
+            opti.subject_to(
+                F_pos(Px_coefs[:, k], time_points[k + 1])
+                == F_pos(Px_coefs[:, k + 1], time_points[k + 1])
+            )
+            opti.subject_to(
+                F_pos(Py_coefs[:, k], time_points[k + 1])
+                == F_pos(Py_coefs[:, k + 1], time_points[k + 1])
+            )
+            opti.subject_to(
+                F_pos(Pz_coefs[:, k], time_points[k + 1])
+                == F_pos(Pz_coefs[:, k + 1], time_points[k + 1])
+            )
+            
             # velocity constraints (continuity)
             opti.subject_to(
                 F_vel(Px_coefs[:, k], time_points[k + 1])
@@ -312,9 +330,6 @@ def min_snap_traj(states, constraints, rocket_params, control_params):
 
     print("Adding bounds...")
 
-    # define the cost function
-    obj = 0
-
     eval_number = 20  # number of points to evaluate the cost and constrints per segment
 
     # define the cost function and check if the hopper is inside bounds
@@ -329,6 +344,8 @@ def min_snap_traj(states, constraints, rocket_params, control_params):
                 + ca.power(F_crackle(Py_coefs[0, i], cur_time), 2)
                 + ca.power(F_crackle(Pz_coefs[0, i], cur_time), 2)
             )
+            
+            # opti.subject_to(F_pos(Py_coefs[:, i], cur_time) >= 0)
 
             # v_cur = ca.vertcat(
             #     F_vel(Px_coefs[:, i], cur_time),

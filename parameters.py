@@ -137,3 +137,5 @@ controller_params = {
     "delta_tvc_bounds": (u_min_delta_tvc_c, u_max_delta_tvc_c),
     "omega_control_bounds": (1, 1),
 }
+
+print(J_z)

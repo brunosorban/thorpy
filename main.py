@@ -18,9 +18,12 @@ from parameters import *
 # trajectory_params = traj_go_up_3ST()
 # tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
 
-from Traj_planning.examples.hopper_3ST import traj_hopper_3ST
+# from Traj_planning.examples.hopper_3ST import traj_hopper_3ST
+# trajectory_params = traj_hopper_3ST()
+# tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
 
-trajectory_params = traj_hopper_3ST()
+from Traj_planning.examples.M_3ST import traj_M_3ST
+trajectory_params = traj_M_3ST()
 tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
 
 # from Traj_planning.examples.circle_3ST import traj_circle_3ST
