@@ -1,5 +1,6 @@
 import json
-from Traj_planning.traj_3ST.pol_interpolation import *
+# from Traj_planning.traj_3ST.pol_interpolation import *
+from Traj_planning.traj_3ST.new_pol_interpolation import *
 from Traj_planning.traj_3ST.diff_flat import *
 from Traj_planning.old.MPC_traj import *
 from Traj_planning.traj_3ST.auxiliar_codes.plot_traj import *

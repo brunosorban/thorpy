@@ -47,14 +47,15 @@ constraints = {
 
 none_vec = np.array([None] * len(x))
 none_vec[0] = 0
+none_vec[-1] = 0
 
 states = {
     "t": t,
     "x": x,
     "y": y,
     "z": z,
-    "vx": none_vec,
-    "vy": none_vec,
+    "vx": vx,
+    "vy": vy,
     "vz": none_vec,
     "ax": none_vec,
     "ay": none_vec,

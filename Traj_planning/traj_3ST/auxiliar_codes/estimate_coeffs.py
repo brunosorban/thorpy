@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def estimate_coeffs(time, points, n=8):
+def estimate_coeffs(time, points, n=12):
     """Estimate coefficients of a polynomial of nth order. n is calculated based on the number of points.
 
     Args:
