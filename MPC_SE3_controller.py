@@ -406,7 +406,8 @@ class MPC_controller:
             self.fig, (
                 (self.ax1, self.ax2, self.ax3),
                 (self.ax4, self.ax5, self.ax6),
-            ) = plt.subplots(2, 3, figsize=(15, 10))
+                (self.ax7, self.ax8, self.ax9),
+            ) = plt.subplots(3, 3, figsize=(15, 10))
             plt.ion()
 
         print("Solving...")
@@ -533,7 +534,7 @@ class MPC_controller:
         ax1.grid()
 
         thrust_deriv_list = u[0]
-        omega_ref_deriv_list = u[1]
+        delta_tvc_dot_list = u[1]
         u_bounds = self.controller_params["u_bounds"]
         gamma_bounds = self.controller_params["gamma_bounds"]
         thrust_bounds = self.controller_params["thrust_bounds"]
@@ -665,16 +666,27 @@ class MPC_controller:
         ax5.set_xlim([t[0], t[-1]])
         ax5.grid()
 
-        ax6.plot(t, np.rad2deg(x[:, 12]), label="gamma_dot")
-        ax6.plot(
-            self.trajectory_params["t"],
-            np.rad2deg(self.trajectory_params["gamma_dot"]),
-            label="gamma_dot_ref",
-        )
+        # ax6.plot(t, np.rad2deg(x[:, 12]), label="gamma_dot")
+        # ax6.plot(
+        #     self.trajectory_params["t"],
+        #     np.rad2deg(self.trajectory_params["gamma_dot"]),
+        #     label="gamma_dot_ref",
+        # )
+        # ax6.legend()
+        # ax6.set_xlabel("Time (s)")
+        # ax6.set_ylabel("Gamma angular velocity (deg/s)")
+        # ax6.set_title("Gamma angular velocity vs Time")
+        # ax6.set_xlim([t[0], t[-1]])
+        # ax6.grid()
+        
+        ax6.plot(t, x[:, 4], label="$e_{1bx}$")
+        ax6.plot(t, x[:, 5], label="$e_{1by}$")
+        ax6.plot(t, x[:, 6], label="$e_{2bx}$")
+        ax6.plot(t, x[:, 7], label="$e_{2by}$")
         ax6.legend()
         ax6.set_xlabel("Time (s)")
-        ax6.set_ylabel("Gamma angular velocity (deg/s)")
-        ax6.set_title("Gamma angular velocity vs Time")
+        ax6.set_ylabel("Orientation parameters (-)")
+        ax6.set_title("Orientation parameters vs Time")
         ax6.set_xlim([t[0], t[-1]])
         ax6.grid()
 
@@ -689,6 +701,9 @@ class MPC_controller:
         self.ax4.clear()
         self.ax5.clear()
         self.ax6.clear()
+        self.ax7.clear()
+        self.ax8.clear()
+        self.ax9.clear()
 
         N = self.controller_params["N"]
         t_list = np.linspace(t[-2], t[-2] + N * self.dt, N + 1, endpoint=True)
@@ -696,17 +711,17 @@ class MPC_controller:
         horizon = np.array(horizon)
 
         thrust_deriv_list = u[0]
-        omega_ref_deriv_list = u[1]
+        delta_tvc_dot_list = u[1]
         u_bounds = self.controller_params["u_bounds"]
         gamma_bounds = self.controller_params["gamma_bounds"]
         thrust_bounds = self.controller_params["thrust_bounds"]
         delta_tvc_bounds = self.controller_params["delta_tvc_bounds"]
         last_thrust_deriv_list = last_u[0]
-        last_omega_ref_deriv_list = last_u[1]
+        last_delta_tvc_dot_list = last_u[1]
 
         # Plot the new data
-        self.ax1.scatter(np.array(x)[:, 0], np.array(x)[:, 2])
-        self.ax1.scatter(horizon[0, :], horizon[2, :])
+        self.ax1.scatter(np.array(x)[:, 0], np.array(x)[:, 2], s=5)
+        self.ax1.scatter(horizon[0, :], horizon[2, :], s=5)
         self.ax1.legend(["$xy$", "$xy_{hor}$"])
         self.ax1.set_xlabel("x position (m)")
         self.ax1.set_ylabel("y position (m)")
@@ -714,32 +729,34 @@ class MPC_controller:
         self.ax1.axis("equal")
         self.ax1.grid()
 
-        self.ax2.scatter(t, np.array(x)[:, 13])
-        self.ax2.scatter(t_list, horizon[13, :])
+        self.ax2.scatter(t, np.array(x)[:, 13], s=5)
+        self.ax2.scatter(t_list, horizon[13, :], s=5)
         self.ax2.plot(t_full, [thrust_bounds[0]] * len(t_full), "--", color="black")
         self.ax2.plot(t_full, [thrust_bounds[1]] * len(t_full), "--", color="black")
-        self.ax2.legend(["$f$", "$f_{ref}$", "$f_{min}$", "$f_{max}$"])
+        self.ax2.legend(["$f$", "$f_{ref}$"])
         self.ax2.set_xlabel("Time (s)")
         self.ax2.set_ylabel("Thrust (N)")
         self.ax2.set_title("Thrust vs Time")
         self.ax2.grid()
 
-        self.ax3.scatter(t[: len(t) - 1], last_thrust_deriv_list)
-        self.ax3.scatter(t_list[: len(t_list) - 1], thrust_deriv_list)
+        self.ax3.scatter(t[: len(t) - 1], last_thrust_deriv_list, s=5)
+        self.ax3.scatter(t_list[: len(t_list) - 1], thrust_deriv_list, s=5)
         self.ax3.plot(t_full, [u_bounds[0][0]] * len(t_full), "--", color="black")
         self.ax3.plot(t_full, [u_bounds[0][1]] * len(t_full), "--", color="black")
         self.ax3.legend(
-            ["$\\dot{f}$", "$\\dot{f}_{ref}$", "$\\dot{f}_{min}$", "$\\dot{f}_{max}$"]
+            ["$\\dot{f}$", "$\\dot{f}_{ref}$"]
         )
         self.ax3.set_xlabel("Time (s)")
         self.ax3.set_ylabel("Thrust derivative (N/s)")
         self.ax3.set_title("Thrust derivative vs Time")
         self.ax3.grid()
 
+        gamma = np.arctan2(np.array(x)[:, 5], np.array(x)[:, 4])
+        gamma_horizon = np.arctan2(horizon[5, :], horizon[4, :])
         self.ax4.scatter(
-            t, np.rad2deg(np.arctan2(np.array(x)[:, 5], np.array(x)[:, 4]))
+            t, np.rad2deg(gamma), s=5
         )
-        self.ax4.scatter(t_list, np.rad2deg(np.arctan2(horizon[5, :], horizon[4, :])))
+        self.ax4.scatter(t_list, np.rad2deg(gamma_horizon), s=5)
         # self.ax4.plot(
         #     t_full, [np.rad2deg(gamma_bounds[0])] * len(t_full), "--", color="black"
         # )
@@ -747,15 +764,17 @@ class MPC_controller:
         #     t_full, [np.rad2deg(gamma_bounds[1])] * len(t_full), "--", color="black"
         # )
         self.ax4.legend(
-            ["$gamma$", "$gamma_{hor}$"]  # , "$\\gamma_{min}$", "$\\gamma_{max}$"]
+            ["$\\gamma$", "$\\gamma_{hor}$"]  # , "$\\gamma_{min}$", "$\\gamma_{max}$"]
         )
         self.ax4.set_xlabel("Time (s)")
-        self.ax4.set_ylabel("Angle (degrees)")
-        self.ax4.set_title("Angle vs Time")
+        self.ax4.set_ylabel("Gamma (degrees)")
+        self.ax4.set_title("Gamma vs Time")
         self.ax4.grid()
 
-        self.ax5.scatter(t, np.rad2deg(np.array(x)[:, 12]))
-        self.ax5.scatter(t_list, np.rad2deg(horizon[12, :]))
+        delta_tvc = np.arctan2(np.array(x)[:, 9], np.array(x)[:, 8]) - gamma
+        delta_tvc_horizon = np.arctan2(horizon[9, :], horizon[8, :]) - gamma_horizon
+        self.ax5.scatter(t, np.rad2deg(delta_tvc), s=5)
+        self.ax5.scatter(t_list, np.rad2deg(delta_tvc_horizon), s=5)
         self.ax5.plot(
             t_full, [np.rad2deg(delta_tvc_bounds[0])] * len(t_full), "--", color="black"
         )
@@ -764,21 +783,18 @@ class MPC_controller:
         )
         self.ax5.legend(
             [
-                "$\\omega_{}$",
-                "$\\omega_{horizon}$",
-                "$\\omega_{ref}$",
-                "$\\omega_{min}$",
-                "$\\omega_{max}$",
+                "$\\delta_{tvc}$",
+                "$\\delta_{tvc_{horizon}}$",
             ],
             loc="upper right",
         )
         self.ax5.set_xlabel("Time (s)")
-        self.ax5.set_ylabel("$\\omega_{}$ (degrees)")
-        self.ax5.set_title("$\\omega_{}$ vs Time")
+        self.ax5.set_ylabel("$\\delta_{tvc}$ (degrees)")
+        self.ax5.set_title("$\\delta_{tvc}$ vs Time")
         self.ax5.grid()
 
-        self.ax6.scatter(t[: len(t) - 1], np.rad2deg(last_omega_ref_deriv_list))
-        self.ax6.scatter(t_list[: len(t_list) - 1], np.rad2deg(omega_ref_deriv_list))
+        self.ax6.scatter(t[: len(t) - 1], np.rad2deg(last_delta_tvc_dot_list), s=5)
+        self.ax6.scatter(t_list[: len(t_list) - 1], np.rad2deg(delta_tvc_dot_list), s=5)
         self.ax6.plot(
             t_full, [np.rad2deg(u_bounds[1][0])] * len(t_full), "--", color="black"
         )
@@ -787,17 +803,45 @@ class MPC_controller:
         )
         self.ax6.legend(
             [
-                "$\\dot{\\omega}$",
-                "$\\dot{\\omega}_{horizon}$",
-                "$\\dot{\\omega}_{min}$",
-                "$\\dot{\\omega}_{max}$",
+                "$\\dot{\\delta_{tvc}}$",
+                "$\\dot{\\delta_{tvc}}_{horizon}$",
             ],
             loc="upper right",
         )
         self.ax6.set_xlabel("Time (s)")
-        self.ax6.set_ylabel("$\\dot{\\omega}$ (degrees)")
-        self.ax6.set_title("$\\dot{\\omega}$ vs Time")
+        self.ax6.set_ylabel("$\\dot{\\delta_{tvc}}$ (degrees)")
+        self.ax6.set_title("$\\dot{\\delta_{tvc}}$ vs Time")
         self.ax6.grid()
+        
+        self.ax7.scatter(t, np.array(x)[:, 5], s=5)
+        self.ax7.scatter(t_list, horizon[5, :], s=5)
+        self.ax7.plot(t_full, [1] * len(t_full), "--", color="black")
+        self.ax7.plot(t_full, [-1] * len(t_full), "--", color="black")
+        self.ax7.legend(["$e_{1bx} / e_{2by}$", "$e_{1bx_hor}$"])
+        self.ax7.set_xlabel("Time (s)")
+        self.ax7.set_ylabel("Orientation parameter (-)")
+        self.ax7.set_title("Orientation parameter vs Time")
+        self.ax7.grid()
+        
+        self.ax8.scatter(t, np.array(x)[:, 6], s=5)
+        self.ax8.scatter(t_list, horizon[6, :], s=5)
+        self.ax8.plot(t_full, [1] * len(t_full), "--", color="black")
+        self.ax8.plot(t_full, [-1] * len(t_full), "--", color="black")
+        self.ax8.legend(["$e_{1by}$", "$e_{1by_hor}$"])
+        self.ax8.set_xlabel("Time (s)")
+        self.ax8.set_ylabel("Orientation parameter (-)")
+        self.ax8.set_title("Orientation parameter vs Time")
+        self.ax8.grid()
+        
+        self.ax9.scatter(t, np.array(x)[:, 7], s=5)
+        self.ax9.scatter(t_list, horizon[7, :], s=5)
+        self.ax8.plot(t_full, [1] * len(t_full), "--", color="black")
+        self.ax8.plot(t_full, [-1] * len(t_full), "--", color="black")
+        self.ax9.legend(["$e_{2bx}$", "$e_{2bx_hor}$"])
+        self.ax9.set_xlabel("Time (s)")
+        self.ax9.set_ylabel("Orientation parameter (-)")
+        self.ax9.set_title("Orientation parameter vs Time")
+        self.ax9.grid()
 
         # Redraw the plot and flush the events
         self.fig.canvas.draw()
