@@ -34,9 +34,9 @@ target_points = np.array(
 )
 
 # gamma_points_deg = np.array([90, 90, 90, 90])
-gamma_dot_points = np.array([0, None, None, None, 0])
+gamma_dot_points = np.array([0, None, None, None, None])
 target_velocities = np.array(
-    [[0, 0, 0], [None, None, None], [None, None, None], [None, None, None], [0, 0, 0]]
+    [[0, 0, 0], [None, None, None], [None, 0, None], [None, None, None], [0, 0, 0]]
 )  # m/s
 target_accelerations = np.array(
     [[0, 0, 0], [None, None, None], [None, None, None], [None, None, None], [0, 0, 0]]

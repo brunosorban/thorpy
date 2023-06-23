@@ -42,7 +42,7 @@ class MPC_controller:
         u_bounds = controller_params["u_bounds"]
         # gamma_bounds = controller_params["gamma_bounds"]
         thrust_bounds = controller_params["thrust_bounds"]
-        # delta_tvc_bounds = controller_params["delta_tvc_bounds"]
+        delta_tvc_bounds = controller_params["delta_tvc_bounds"]
 
         # state parameters
         t0_val = controller_params["t0"]
@@ -230,9 +230,9 @@ class MPC_controller:
             self.opti.subject_to(self.x[13, k] >= thrust_bounds[0])
             self.opti.subject_to(self.x[13, k] <= thrust_bounds[1])
 
-            # delta_tvc = self.x[7, k]
-            # self.opti.subject_to(self.x[7, k] >= delta_tvc_bounds[0])
-            # self.opti.subject_to(self.x[7, k] <= delta_tvc_bounds[1])
+            delta_tvc = self.x[7, k]
+            self.opti.subject_to(self.x[7, k] >= delta_tvc_bounds[0])
+            self.opti.subject_to(self.x[7, k] <= delta_tvc_bounds[1])
 
         # set target
         if self.follow_trajectory:
