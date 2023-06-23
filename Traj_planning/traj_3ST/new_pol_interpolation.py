@@ -148,9 +148,9 @@ def min_snap_traj(states, constraints, rocket_params, control_params):
     Px_coefs = opti.variable(pol_order, number_of_points - 1)
     Py_coefs = opti.variable(pol_order, number_of_points - 1)
     Pz_coefs = opti.variable(pol_order, number_of_points - 1)
+    time = opti.variable(number_of_points)
     
-    # define the cost function
-    # it will be the sum of the crackle and position error as soft constraints
+    # define cost function
     obj = 0 
 
     # set the contraints
@@ -159,94 +159,163 @@ def min_snap_traj(states, constraints, rocket_params, control_params):
     print("Adding constraints...")
     
     # treat t=0 as a special case - only position and velocity can be set
-    opti.subject_to(F_pos(Px_coefs[:, 0], time_points[0]) == states["x"][0])
-    opti.subject_to(F_pos(Py_coefs[:, 0], time_points[0]) == states["y"][0])
-    opti.subject_to(F_pos(Pz_coefs[:, 0], time_points[0]) == states["z"][0])
+    opti.subject_to(F_pos(Px_coefs[:, 0], time[0]) == states["x"][0])
+    opti.subject_to(F_pos(Py_coefs[:, 0], time[0]) == states["y"][0])
+    opti.subject_to(F_pos(Pz_coefs[:, 0], time[0]) == states["z"][0])
     
-    opti.subject_to(F_vel(Px_coefs[:, 0], time_points[0]) == states["vx"][0])
-    opti.subject_to(F_vel(Py_coefs[:, 0], time_points[0]) == states["vy"][0])
-    opti.subject_to(F_vel(Pz_coefs[:, 0], time_points[0]) == states["vz"][0])
+    opti.subject_to(F_vel(Px_coefs[:, 0], time[0]) == states["vx"][0])
+    opti.subject_to(F_vel(Py_coefs[:, 0], time[0]) == states["vy"][0])
+    opti.subject_to(F_vel(Pz_coefs[:, 0], time[0]) == states["vz"][0])
     
-    opti.subject_to(F_acc(Px_coefs[:, 0], time_points[0]) == 0)
-    opti.subject_to(F_acc(Py_coefs[:, 0], time_points[0]) == 0)
-    opti.subject_to(F_acc(Pz_coefs[:, 0], time_points[0]) == 0)
+    opti.subject_to(F_acc(Px_coefs[:, 0], time[0]) == 0)
+    opti.subject_to(F_acc(Py_coefs[:, 0], time[0]) == 0)
+    opti.subject_to(F_acc(Pz_coefs[:, 0], time[0]) == 0)
     
-    opti.subject_to(F_jerk(Px_coefs[:, 0], time_points[0]) == 0)
-    opti.subject_to(F_jerk(Py_coefs[:, 0], time_points[0]) == 0)
-    opti.subject_to(F_jerk(Pz_coefs[:, 0], time_points[0]) == 0)
+    opti.subject_to(F_jerk(Px_coefs[:, 0], time[0]) == 0)
+    opti.subject_to(F_jerk(Py_coefs[:, 0], time[0]) == 0)
+    opti.subject_to(F_jerk(Pz_coefs[:, 0], time[0]) == 0)
     
-    opti.subject_to(F_snap(Px_coefs[:, 0], time_points[0]) == 0)
-    opti.subject_to(F_snap(Py_coefs[:, 0], time_points[0]) == 0)
-    opti.subject_to(F_snap(Pz_coefs[:, 0], time_points[0]) == 0)
+    opti.subject_to(F_snap(Px_coefs[:, 0], time[0]) == 0)
+    opti.subject_to(F_snap(Py_coefs[:, 0], time[0]) == 0)
+    opti.subject_to(F_snap(Pz_coefs[:, 0], time[0]) == 0)
     
-    opti.subject_to(F_crackle(Px_coefs[:, 0], time_points[0]) == 0)
-    opti.subject_to(F_crackle(Py_coefs[:, 0], time_points[0]) == 0)
-    opti.subject_to(F_crackle(Pz_coefs[:, 0], time_points[0]) == 0)
+    opti.subject_to(F_crackle(Px_coefs[:, 0], time[0]) == 0)
+    opti.subject_to(F_crackle(Py_coefs[:, 0], time[0]) == 0)
+    opti.subject_to(F_crackle(Pz_coefs[:, 0], time[0]) == 0)
        
     # treat middle points
     for i in range(1, number_of_points - 1):
         # add the position constraints
-        opti.subject_to(F_pos(Px_coefs[:, i-1], time_points[i]) == states["x"][i])
-        opti.subject_to(F_pos(Px_coefs[:, i], time_points[i]) == states["x"][i])
+        opti.subject_to(F_pos(Px_coefs[:, i-1], time[i]) == states["x"][i])
+        opti.subject_to(F_pos(Px_coefs[:, i], time[i]) == states["x"][i])
         
-        opti.subject_to(F_pos(Py_coefs[:, i-1], time_points[i]) == states["y"][i])
-        opti.subject_to(F_pos(Py_coefs[:, i], time_points[i]) == states["y"][i])
+        opti.subject_to(F_pos(Py_coefs[:, i-1], time[i]) == states["y"][i])
+        opti.subject_to(F_pos(Py_coefs[:, i], time[i]) == states["y"][i])
         
-        opti.subject_to(F_pos(Pz_coefs[:, -1], time_points[i]) == states["z"][i])
-        opti.subject_to(F_pos(Pz_coefs[:, i], time_points[i]) == states["z"][i])
+        opti.subject_to(F_pos(Pz_coefs[:, -1], time[i]) == states["z"][i])
+        opti.subject_to(F_pos(Pz_coefs[:, i], time[i]) == states["z"][i])
         
         # add the velocity continuity constraints
-        opti.subject_to(F_vel(Px_coefs[:, i-1], time_points[i]) == F_vel(Px_coefs[:, i], time_points[i]))
-        opti.subject_to(F_vel(Py_coefs[:, i-1], time_points[i]) == F_vel(Py_coefs[:, i], time_points[i]))
-        opti.subject_to(F_vel(Pz_coefs[:, i-1], time_points[i]) == F_vel(Pz_coefs[:, i], time_points[i]))
+        opti.subject_to(F_vel(Px_coefs[:, i-1], time[i]) == F_vel(Px_coefs[:, i], time[i]))
+        opti.subject_to(F_vel(Py_coefs[:, i-1], time[i]) == F_vel(Py_coefs[:, i], time[i]))
+        opti.subject_to(F_vel(Pz_coefs[:, i-1], time[i]) == F_vel(Pz_coefs[:, i], time[i]))
         
         # add the acceleration continuity constraints
-        opti.subject_to(F_acc(Px_coefs[:, i-1], time_points[i]) == F_acc(Px_coefs[:, i], time_points[i]))
-        opti.subject_to(F_acc(Py_coefs[:, i-1], time_points[i]) == F_acc(Py_coefs[:, i], time_points[i]))
-        opti.subject_to(F_acc(Pz_coefs[:, i-1], time_points[i]) == F_acc(Pz_coefs[:, i], time_points[i]))
+        opti.subject_to(F_acc(Px_coefs[:, i-1], time[i]) == F_acc(Px_coefs[:, i], time[i]))
+        opti.subject_to(F_acc(Py_coefs[:, i-1], time[i]) == F_acc(Py_coefs[:, i], time[i]))
+        opti.subject_to(F_acc(Pz_coefs[:, i-1], time[i]) == F_acc(Pz_coefs[:, i], time[i]))
         
         # add the jerk continuity constraints
-        opti.subject_to(F_jerk(Px_coefs[:, i-1], time_points[i]) == F_jerk(Px_coefs[:, i], time_points[i]))
-        opti.subject_to(F_jerk(Py_coefs[:, i-1], time_points[i]) == F_jerk(Py_coefs[:, i], time_points[i]))
-        opti.subject_to(F_jerk(Pz_coefs[:, i-1], time_points[i]) == F_jerk(Pz_coefs[:, i], time_points[i]))
+        opti.subject_to(F_jerk(Px_coefs[:, i-1], time[i]) == F_jerk(Px_coefs[:, i], time[i]))
+        opti.subject_to(F_jerk(Py_coefs[:, i-1], time[i]) == F_jerk(Py_coefs[:, i], time[i]))
+        opti.subject_to(F_jerk(Pz_coefs[:, i-1], time[i]) == F_jerk(Pz_coefs[:, i], time[i]))
         
         # add the snap continuity constraints
-        opti.subject_to(F_snap(Px_coefs[:, i-1], time_points[i]) == F_snap(Px_coefs[:, i], time_points[i]))
-        opti.subject_to(F_snap(Py_coefs[:, i-1], time_points[i]) == F_snap(Py_coefs[:, i], time_points[i]))
-        opti.subject_to(F_snap(Pz_coefs[:, i-1], time_points[i]) == F_snap(Pz_coefs[:, i], time_points[i]))
+        opti.subject_to(F_snap(Px_coefs[:, i-1], time[i]) == F_snap(Px_coefs[:, i], time[i]))
+        opti.subject_to(F_snap(Py_coefs[:, i-1], time[i]) == F_snap(Py_coefs[:, i], time[i]))
+        opti.subject_to(F_snap(Pz_coefs[:, i-1], time[i]) == F_snap(Pz_coefs[:, i], time[i]))
         
         # add the crackle continuity constraints
-        opti.subject_to(F_crackle(Px_coefs[:, i-1], time_points[i]) == F_crackle(Px_coefs[:, i], time_points[i]))
-        opti.subject_to(F_crackle(Py_coefs[:, i-1], time_points[i]) == F_crackle(Py_coefs[:, i], time_points[i]))
-        opti.subject_to(F_crackle(Pz_coefs[:, i-1], time_points[i]) == F_crackle(Pz_coefs[:, i], time_points[i]))
+        opti.subject_to(F_crackle(Px_coefs[:, i-1], time[i]) == F_crackle(Px_coefs[:, i], time[i]))
+        opti.subject_to(F_crackle(Py_coefs[:, i-1], time[i]) == F_crackle(Py_coefs[:, i], time[i]))
+        opti.subject_to(F_crackle(Pz_coefs[:, i-1], time[i]) == F_crackle(Pz_coefs[:, i], time[i]))
         
     # treat t=tf as a special case - only position and velocity can be set
-    opti.subject_to(F_pos(Px_coefs[:, -1], time_points[-1]) == states["x"][-1])
-    opti.subject_to(F_pos(Py_coefs[:, -1], time_points[-1]) == states["y"][-1])
-    opti.subject_to(F_pos(Pz_coefs[:, -1], time_points[-1]) == states["z"][-1])   
+    opti.subject_to(F_pos(Px_coefs[:, -1], time[-1]) == states["x"][-1])
+    opti.subject_to(F_pos(Py_coefs[:, -1], time[-1]) == states["y"][-1])
+    opti.subject_to(F_pos(Pz_coefs[:, -1], time[-1]) == states["z"][-1])   
     
-    opti.subject_to(F_vel(Px_coefs[:, -1], time_points[-1]) == states["vx"][-1])
-    opti.subject_to(F_vel(Py_coefs[:, -1], time_points[-1]) == states["vy"][-1])
-    opti.subject_to(F_vel(Pz_coefs[:, -1], time_points[-1]) == states["vz"][-1])
+    opti.subject_to(F_vel(Px_coefs[:, -1], time[-1]) == states["vx"][-1])
+    opti.subject_to(F_vel(Py_coefs[:, -1], time[-1]) == states["vy"][-1])
+    opti.subject_to(F_vel(Pz_coefs[:, -1], time[-1]) == states["vz"][-1])
     
-    opti.subject_to(F_acc(Px_coefs[:, -1], time_points[-1]) == 0)
-    opti.subject_to(F_acc(Py_coefs[:, -1], time_points[-1]) == 0)
-    opti.subject_to(F_acc(Pz_coefs[:, -1], time_points[-1]) == 0)
+    opti.subject_to(F_acc(Px_coefs[:, -1], time[-1]) == 0)
+    opti.subject_to(F_acc(Py_coefs[:, -1], time[-1]) == 0)
+    opti.subject_to(F_acc(Pz_coefs[:, -1], time[-1]) == 0)
     
-    opti.subject_to(F_jerk(Px_coefs[:, -1], time_points[-1]) == 0)
-    opti.subject_to(F_jerk(Py_coefs[:, -1], time_points[-1]) == 0)
-    opti.subject_to(F_jerk(Pz_coefs[:, -1], time_points[-1]) == 0)
+    opti.subject_to(F_jerk(Px_coefs[:, -1], time[-1]) == 0)
+    opti.subject_to(F_jerk(Py_coefs[:, -1], time[-1]) == 0)
+    opti.subject_to(F_jerk(Pz_coefs[:, -1], time[-1]) == 0)
     
-    opti.subject_to(F_snap(Px_coefs[:, -1], time_points[-1]) == 0)
-    opti.subject_to(F_snap(Py_coefs[:, -1], time_points[-1]) == 0)
-    opti.subject_to(F_snap(Pz_coefs[:, -1], time_points[-1]) == 0)
+    opti.subject_to(F_snap(Px_coefs[:, -1], time[-1]) == 0)
+    opti.subject_to(F_snap(Py_coefs[:, -1], time[-1]) == 0)
+    opti.subject_to(F_snap(Pz_coefs[:, -1], time[-1]) == 0)
     
-    opti.subject_to(F_crackle(Px_coefs[:, -1], time_points[-1]) == 0)
-    opti.subject_to(F_crackle(Py_coefs[:, -1], time_points[-1]) == 0)
-    opti.subject_to(F_crackle(Pz_coefs[:, -1], time_points[-1]) == 0)
+    opti.subject_to(F_crackle(Px_coefs[:, -1], time[-1]) == 0)
+    opti.subject_to(F_crackle(Py_coefs[:, -1], time[-1]) == 0)
+    opti.subject_to(F_crackle(Pz_coefs[:, -1], time[-1]) == 0)
     
-    # define cost function
-    obj = 0 # TODO: add cost function for time
+    # add force constraints
+    print("Adding bounds...")
+
+    eval_number = 20  # number of points to evaluate the cost and constrints per segment
+
+    # define the cost function and check if the hopper is inside bounds
+    for i in range(number_of_points - 1):
+        dt = (time[i + 1] - time[i]) / eval_number
+        for j in range(eval_number):
+            cur_time = time[i] + j * dt  # current time
+
+            # v_cur = ca.vertcat(
+            #     F_vel(Px_coefs[:, i], cur_time),
+            #     F_vel(Py_coefs[:, i], cur_time),
+            #     F_vel(Py_coefs[:, i], cur_time),
+            # )
+            # opti.subject_to(v_cur[0] > constraints["min_vx"])
+            # opti.subject_to(v_cur[0] < constraints["max_vx"])
+            # opti.subject_to(v_cur[1] > constraints["min_vy"])
+            # opti.subject_to(v_cur[1] < constraints["max_vy"])
+            # opti.subject_to(v_cur[2] > constraints["min_vz"])
+            # opti.subject_to(v_cur[2] < constraints["max_vz"])
+
+            # a_cur = ca.vertcat(
+            #     F_acc(Px_coefs[:, i], cur_time),
+            #     F_acc(Py_coefs[:, i], cur_time),
+            #     F_acc(Pz_coefs[:, i], cur_time),
+            # )
+            # opti.subject_to(a_cur[0] > constraints["min_ax"])
+            # opti.subject_to(a_cur[0] < constraints["max_ax"])
+            # opti.subject_to(a_cur[1] > constraints["min_ay"])
+            # opti.subject_to(a_cur[1] < constraints["max_ay"])
+            # opti.subject_to(a_cur[2] > constraints["min_az"])
+            # opti.subject_to(a_cur[2] < constraints["max_az"])
+
+            # # set maximum and minimum values for control inputs for the force
+            # f1_cur, f2_cur = get_f1f2(cur_time, Px_coefs, Py_coefs, params)
+            # f1_dot_cur, f2_dot_cur = get_f1f2_dot(cur_time, Px_coefs, Py_coefs, params)
+
+            # f_cur = ca.sqrt(f1_cur**2 + f2_cur**2)
+            # f_cur = ca.sqrt(f2_cur**2)
+            # f_dot_cur = (f1_cur * f1_dot_cur + f2_cur * f2_dot_cur) / f_cur
+
+            # opti.subject_to(f_cur < control_params["thrust_bounds"][1])
+            # opti.subject_to(f_cur > control_params["thrust_bounds"][0])
+            # opti.subject_to(f_dot_cur < control_params["u_bounds"][0][1])
+            # opti.subject_to(f_dot_cur > control_params["u_bounds"][0][0])
+
+            # # for the delta_tvc
+            # delta_tvc_cur = ca.arctan2(f2_cur, f1_cur)
+            # delta_tvc_dot_cur = (f1_cur * f2_dot_cur - f2_cur * f1_dot_cur) / (
+            #     f1_cur**2 + f2_cur**2
+            # )
+
+            # opti.subject_to(delta_tvc_cur < control_params["delta_tvc_bounds"][1])
+            # opti.subject_to(delta_tvc_cur > control_params["delta_tvc_bounds"][0])
+            # opti.subject_to(delta_tvc_dot_cur < control_params["u_bounds"][1][1])
+            # opti.subject_to(delta_tvc_dot_cur > control_params["u_bounds"][1][0])
+    
+    # add time constraints
+    opti.subject_to(time[0] == time_points[0])
+    
+    # add time continuity constraints
+    for i in range(1, number_of_points):
+        # opti.subject_to(time[i] >= time[i-1])
+        opti.set_initial(time[i], time_points[i])
+        opti.subject_to(time[i] == time_points[i])
+        opti.subject_to(time[i] > 0)
+            
+    obj += time[-1]
+        
     
     # define the optimization problem
     opti.minimize(obj)
