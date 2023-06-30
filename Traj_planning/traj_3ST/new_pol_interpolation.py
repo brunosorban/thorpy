@@ -220,6 +220,30 @@ def min_snap_traj(states, constraints, rocket_params, control_params):
         opti.subject_to(F_crackle(Py_coefs[:, i-1], time[i]) == F_crackle(Py_coefs[:, i], time[i]))
         opti.subject_to(F_crackle(Pz_coefs[:, i-1], time[i]) == F_crackle(Pz_coefs[:, i], time[i]))
         
+        # check if velocity and acceleration constraints were given
+        if states["vx"][i] != None:
+            opti.subject_to(F_vel(Px_coefs[:, i], time_points[i]) == states["vx"][i])
+        if states["vy"][i] != None:
+            opti.subject_to(F_vel(Py_coefs[:, i], time_points[i]) == states["vy"][i])
+        if states["vz"][i] != None:
+            opti.subject_to(F_vel(Px_coefs[:, i], time_points[i]) == states["vz"][i])
+        if states["ax"][i] != None:
+            opti.subject_to(F_acc(Px_coefs[:, i], time_points[i]) == states["ax"][i])
+        if states["ay"][i] != None:
+            opti.subject_to(F_acc(Py_coefs[:, i], time_points[i]) == states["ay"][i])
+        if states["az"][i] != None:
+            opti.subject_to(F_acc(Pz_coefs[:, i], time_points[i]) == states["az"][i])
+        if states["gamma_dot"][i] != None:
+            gamma_dot = (
+                F_jerk(Py_coefs, time_points[i]) * F_acc(Px_coefs[:, i], time_points[i])
+                - (F_acc(Py_coefs[:, i], time_points[i]) + g)
+                * F_jerk(Px_coefs[:, i], time_points[i])
+            ) / (
+                F_acc(Px_coefs[:, i], time_points[i]) ** 2
+                + (F_acc(Py_coefs[:, i], time_points[i]) + g) ** 2
+            )
+            opti.subject_to(gamma_dot == states["gamma_dot"][i])
+        
     # treat t=tf as a special case - only position and velocity can be set
     opti.subject_to(F_pos(Px_coefs[:, -1], time[-1]) == states["x"][-1])
     opti.subject_to(F_pos(Py_coefs[:, -1], time[-1]) == states["y"][-1])
@@ -245,10 +269,48 @@ def min_snap_traj(states, constraints, rocket_params, control_params):
     opti.subject_to(F_crackle(Py_coefs[:, -1], time[-1]) == 0)
     opti.subject_to(F_crackle(Pz_coefs[:, -1], time[-1]) == 0)
     
+    # velocity and acceleration contraints at final point
+    # check if velocity and acceleration constraints were given
+    if states["vx"][i + 1] != None:
+        opti.subject_to(
+            F_vel(Px_coefs[:, i], time_points[i + 1]) == states["vx"][i + 1]
+        )
+    if states["vy"][i + 1] != None:
+        opti.subject_to(
+            F_vel(Py_coefs[:, i], time_points[i + 1]) == states["vy"][i + 1]
+        )
+    if states["vz"][i + 1] != None:
+        opti.subject_to(
+            F_vel(Pz_coefs[:, i], time_points[i + 1]) == states["vz"][i + 1]
+        )
+    if states["ax"][i + 1] != None:
+        opti.subject_to(
+            F_acc(Px_coefs[:, i], time_points[i + 1]) == states["ax"][i + 1]
+        )
+    if states["ay"][i + 1] != None:
+        opti.subject_to(
+            F_acc(Py_coefs[:, i], time_points[i + 1]) == states["ay"][i + 1]
+        )
+    if states["az"][i + 1] != None:
+        opti.subject_to(
+            F_acc(Pz_coefs[:, i], time_points[i + 1]) == states["az"][i + 1]
+        )
+    if states["gamma_dot"][i + 1] != None:
+        gamma_dot = (
+            F_jerk(Py_coefs, time_points[i + 1])
+            * F_acc(Px_coefs[:, i], time_points[i + 1])
+            - (F_acc(Py_coefs[:, i], time_points[i + 1]) + g)
+            * F_jerk(Px_coefs[:, i], time_points[i + 1])
+        ) / (
+            F_acc(Px_coefs[:, i], time_points[i + 1]) ** 2
+            + (F_acc(Py_coefs[:, i], time_points[i + 1]) + g) ** 2
+        )
+        opti.subject_to(gamma_dot == states["gamma_dot"][i + 1])
+    
     # add force constraints
     print("Adding bounds...")
 
-    eval_number = 20  # number of points to evaluate the cost and constrints per segment
+    eval_number = 30  # number of points to evaluate the cost and constrints per segment
 
     # define the cost function and check if the hopper is inside bounds
     for i in range(number_of_points - 1):
@@ -256,6 +318,15 @@ def min_snap_traj(states, constraints, rocket_params, control_params):
         for j in range(eval_number):
             cur_time = time[i] + j * dt  # current time
 
+            # posx_cur = F_pos(Px_coefs[:, i], cur_time)
+            # opti.subject_to(posx_cur >= -400)
+            # opti.subject_to(posx_cur <= 1200)
+            
+            # posy_cur = F_pos(Py_coefs[:, i], cur_time)
+            # opti.subject_to(posy_cur >= -100)
+            # opti.subject_to(posy_cur <= 600)
+      
+            
             # v_cur = ca.vertcat(
             #     F_vel(Px_coefs[:, i], cur_time),
             #     F_vel(Py_coefs[:, i], cur_time),

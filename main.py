@@ -21,6 +21,11 @@ from parameters import *
 # from Traj_planning.examples.hopper_3ST import traj_hopper_3ST
 # trajectory_params = traj_hopper_3ST()
 # tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
+# # tf = 21
+
+from Traj_planning.examples.M_3ST import traj_M_3ST
+trajectory_params = traj_M_3ST()
+tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
 
 from Traj_planning.examples.M_3ST import traj_M_3ST
 trajectory_params = traj_M_3ST()
@@ -64,5 +69,5 @@ controller.plot_tracking_results(t, x)
 #     trajectory_params=trajectory_params,
 #     scale=1,
 #     matplotlib=False,
-#     save=True,
+#     save=False,
 # )
