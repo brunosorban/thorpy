@@ -27,6 +27,10 @@ from Traj_planning.examples.M_3ST import traj_M_3ST
 trajectory_params = traj_M_3ST()
 tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
 
+from Traj_planning.examples.M_3ST import traj_M_3ST
+trajectory_params = traj_M_3ST()
+tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
+
 # from Traj_planning.examples.circle_3ST import traj_circle_3ST
 # trajectory_params = traj_circle_3ST()
 # tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
