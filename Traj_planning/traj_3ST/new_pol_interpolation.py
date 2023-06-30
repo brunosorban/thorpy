@@ -33,7 +33,7 @@ def min_snap_traj(states, constraints, rocket_params, control_params):
     if number_of_points < 2:
         raise ValueError("The number of points must be at least 2")
 
-    pol_order = 13  # order of the polynom +1
+    pol_order = 12  # order of the polynom +1
     g = constraints["g"]
 
     # calculate the polynom
@@ -49,10 +49,10 @@ def min_snap_traj(states, constraints, rocket_params, control_params):
     p9 = ca.SX.sym("p9")
     p10 = ca.SX.sym("p10")
     p11 = ca.SX.sym("p11")
-    p12 = ca.SX.sym("p12")
+    # p12 = ca.SX.sym("p12")
     t = ca.SX.sym("t")
 
-    coefs = ca.vertcat(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12)
+    coefs = ca.vertcat(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11)
     pos = get_pos(coefs, t)
     vel = get_vel(coefs, t)
     acc = get_acc(coefs, t)
@@ -268,17 +268,17 @@ def min_snap_traj(states, constraints, rocket_params, control_params):
             # opti.subject_to(v_cur[2] > constraints["min_vz"])
             # opti.subject_to(v_cur[2] < constraints["max_vz"])
 
-            # a_cur = ca.vertcat(
-            #     F_acc(Px_coefs[:, i], cur_time),
-            #     F_acc(Py_coefs[:, i], cur_time),
-            #     F_acc(Pz_coefs[:, i], cur_time),
-            # )
-            # opti.subject_to(a_cur[0] > constraints["min_ax"])
-            # opti.subject_to(a_cur[0] < constraints["max_ax"])
-            # opti.subject_to(a_cur[1] > constraints["min_ay"])
-            # opti.subject_to(a_cur[1] < constraints["max_ay"])
-            # opti.subject_to(a_cur[2] > constraints["min_az"])
-            # opti.subject_to(a_cur[2] < constraints["max_az"])
+            a_cur = ca.vertcat(
+                F_acc(Px_coefs[:, i], cur_time),
+                F_acc(Py_coefs[:, i], cur_time),
+                F_acc(Pz_coefs[:, i], cur_time),
+            )
+            opti.subject_to(a_cur[0] > constraints["min_ax"])
+            opti.subject_to(a_cur[0] < constraints["max_ax"])
+            opti.subject_to(a_cur[1] > constraints["min_ay"])
+            opti.subject_to(a_cur[1] < constraints["max_ay"])
+            opti.subject_to(a_cur[2] > constraints["min_az"])
+            opti.subject_to(a_cur[2] < constraints["max_az"])
 
             # # set maximum and minimum values for control inputs for the force
             # f1_cur, f2_cur = get_f1f2(cur_time, Px_coefs, Py_coefs, params)
