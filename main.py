@@ -4,12 +4,12 @@ import numpy as np
 sys.path.append("../")
 sys.path.append("../Traj_planning")
 
-# import Function as ft
-# from flight_class import *
+from Flight import *
 import casadi as ca
 from MPC_SE3_controller import MPC_controller
 from animate import *
 from parameters import *
+from Environment import Environment
 from Traj_planning.examples.go_up_3ST import traj_go_up_3ST
 from Traj_planning.examples.hopper_3ST import traj_hopper_3ST
 from Traj_planning.examples.M_3ST import traj_M_3ST
@@ -22,6 +22,7 @@ from Traj_planning.examples.circle_3ST import traj_circle_3ST
 
 trajectory_params = traj_hopper_3ST()
 tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
+# tf = 17.7
 
 # trajectory_params = traj_M_3ST()
 # tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
@@ -38,15 +39,24 @@ controller = MPC_controller(
 )
 
 
+######################### Creating the environment #############################
+env = Environment(env_params)
+
+
 ################################## Simulation ##################################
-t, x, u, state_horizon_list, control_horizon_list = controller.simulate_inside(
-    tf, plot_online=False
+flight = Flight(rocket_params,
+                env,
+                controller,
+                initial_solution=initial_state,
+                max_time=tf,
+                max_step=1e-3,
 )
 
+flight.solve_system()
+flight.post_process()
 
 ################################## Plotting ####################################
-controller.plot_simulation(t, x, u)
-controller.plot_tracking_results(t, x)
+flight.xy()
 
 
 ################################## Animation ###################################

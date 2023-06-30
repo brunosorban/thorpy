@@ -62,6 +62,11 @@ class MPC_controller:
         self.J_total_list = []
         self.horizon_list = []
         self.last_time_control = -self.dt
+        self.thrust = []  # each line contains a control input
+        self.torque = []  # each line contains a control input
+        self.state_horizon_list = []
+        self.control_horizon_list = []
+        self.t = []
 
         # initializing the state varibles
         x = ca.SX.sym("x")  # states
@@ -288,27 +293,6 @@ class MPC_controller:
 
         return y_source[position - 1] + (dy / dx) * (x - x_source[position - 1])
 
-    def update(self, t, x):
-        if t - self.last_time_control >= self.dt:  # update if time has reached
-            # Calculate the control output
-            self.current_state = x  # store current state
-
-            self.opti.set_value(self.x_initial, x)
-
-            # solve the optimal control problem
-            sol = self.opti.solve()
-            self.horizon_list.append((t, sol.value(self.x)))
-            # print(sol.value(self.u))
-
-            self.out = np.array(sol.value(self.u))[:, 0]
-
-            # add the cost payed on this solution
-            self.J_total += sol.value(self.obj)
-            self.J_total_list.append((t, self.J_total))
-            self.last_time_control = t  # update last time it was controlled
-        print("Controller output =", self.out)
-        return self.out
-
     def update_traj(self, time):
         # trajectory_params = [x, x_dot, y, y_dot, gamma, gamma_dot, thrust, delta_tvc]
         px = self.trajectory_params["x"]
@@ -391,6 +375,89 @@ class MPC_controller:
         )
         self.update_target(target)
 
+    def update(self, t, x):
+        if t - self.last_time_control >= self.dt:  # update if time has reached
+            # if in trajectory mode, update the target
+            if self.follow_trajectory:
+                self.update_traj(t)
+
+            # update and solve the optimal control problem
+            self.opti.set_value(self.x_initial, x)
+
+            # solve the optimal control problem
+            if t == 0:
+                sol = self.opti.solve()
+            else:
+                # retrieve the results from the previous iteration
+                self.opti.set_initial(self.x, self.state_horizon_list[-1])
+                self.opti.set_initial(self.u, self.control_horizon_list[-1])
+                sol = self.opti.solve()
+
+            # retrieve the results
+            u = sol.value(self.u)
+            horizon = sol.value(self.x)
+            
+            self.out = np.array(sol.value(self.u))[:, 0]
+            self.last_time_control = t  # update last time it was controlled
+
+            # normalization of the angular parameters
+            for i in range(4, 12, 2):
+                for j in range(len(horizon)):
+                    horizon[i][j] = horizon[i][j] / np.linalg.norm(
+                        [horizon[i][j], horizon[i + 1][j]]
+                    )
+                    horizon[i + 1][j] = horizon[i + 1][j] / np.linalg.norm(
+                        [horizon[i][j], horizon[i + 1][j]]
+                    )
+
+            # save the resutls
+            self.state_horizon_list.append(horizon)
+            self.control_horizon_list.append(u)
+            self.thrust.append(u[0, 0])
+            self.torque.append(u[1, 0])
+            self.t.append(t + self.dt)
+
+            # compute actual error
+            px_target = self.linear_spline(
+                t, self.trajectory_params["t"], self.trajectory_params["x"]
+            )
+            py_target = self.linear_spline(
+                t, self.trajectory_params["t"], self.trajectory_params["y"]
+            )
+
+            pos_error = np.array([x[0], x[2]]) - np.array(
+                [px_target, py_target]
+            )
+            self.epos_list.append(pos_error)
+
+            e1bx_target = self.linear_spline(
+                t, self.trajectory_params["t"], self.trajectory_params["e1bx"]
+            )
+            e1by_target = self.linear_spline(
+                t, self.trajectory_params["t"], self.trajectory_params["e1by"]
+            )
+            e2bx_target = self.linear_spline(
+                t, self.trajectory_params["t"], self.trajectory_params["e2bx"]
+            )
+            e2by_target = self.linear_spline(
+                t, self.trajectory_params["t"], self.trajectory_params["e2by"]
+            )
+
+            er = (
+                0.5 * x[4] * e2bx_target
+                + 0.5 * x[5] * e2by_target
+                - 0.5 * e1bx_target * x[6]
+                - 0.5 * e1by_target * x[7]
+            )
+            self.er_list.append(er)
+
+            # # add the cost payed on this solution
+            # self.J_total += sol.value(self.obj)
+            # self.J_total_list.append((t, self.J_total))
+            
+            print("t = ", t, "s", "    out = ", self.out)
+        return self.out
+    
     def simulate_inside(self, sim_time, plot_online=False):
         print("Starting simulation")
         t = [0]
@@ -420,7 +487,6 @@ class MPC_controller:
             self.opti.set_value(self.x_initial, x_list[-1])
 
             # solve the optimal control problem
-
             if t[-1] == 0:
                 sol = self.opti.solve()
             else:

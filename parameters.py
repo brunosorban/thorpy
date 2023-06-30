@@ -8,7 +8,6 @@ g = 9.81  # gravity
 
 # rocket variables
 m = 100  # mass of the hopper
-# mf = 50  # final mass of the hopper
 h = 2  # height of the hopper
 radius = 0.25  # radius of the hopper
 l_tvc = 0.5  # distance from the center of mass to the TVC
@@ -26,9 +25,7 @@ t0 = 0  # initial time
 tf = 60  # final time
 
 # state space: [x, x_dot, y, y_dot, gamma, gamma_dot, thrust, delta_tvc]
-# initial_state = [0, 0, 0, 0, np.deg2rad(90), 0, m * g, 0]
 initial_state = [0, 0, 0, 0, 0, 1, -1, 0, 0, 1, -1, 0, 0, m * g]
-# target = [30, 0, 30, 0, np.deg2rad(90), 0, 0, 0]
 x_target = None
 max_step = 1e-4
 
@@ -39,7 +36,6 @@ N = int(T * freq)  # Number of control intervals
 
 # controller input bounds
 u_max_f = 2 * m * g  # maxium thrust rate
-# u_min_f = -u_max_f  # maxium thrust rate
 u_min_f = 0.35 * u_max_f  # should be 30% to 40% of the max thrust
 u_max_delta_tvc_c = np.deg2rad(15)  # maxium thrust vector angle
 u_min_delta_tvc_c = -np.deg2rad(15)  # minium thrust vector angle
@@ -85,7 +81,6 @@ J_z = (
 # initial state
 t0_val = 0  # initial time
 x0_val = ca.vertcat(*initial_state)  # initial state in casadi varible
-# x_target = ca.vertcat(*target)  # target state in casadi varible
 
 Q = ca.diag([q1, q2, q3, q4, q5, q6, q7, q8])  # cost matrix
 Qf = Qf_gain * Q  # final cost matrix
@@ -134,5 +129,3 @@ controller_params = {
     "delta_tvc_bounds": (u_min_delta_tvc_c, u_max_delta_tvc_c),
     "omega_control_bounds": (1, 1),
 }
-
-print(J_z)
