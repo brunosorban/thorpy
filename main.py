@@ -10,28 +10,22 @@ import casadi as ca
 from MPC_SE3_controller import MPC_controller
 from animate import *
 from parameters import *
-
+from Traj_planning.examples.go_up_3ST import traj_go_up_3ST
+from Traj_planning.examples.hopper_3ST import traj_hopper_3ST
+from Traj_planning.examples.M_3ST import traj_M_3ST
+from Traj_planning.examples.circle_3ST import traj_circle_3ST
 
 ########################## Trajectory generation ###############################
 
-# from Traj_planning.examples.go_up_3ST import traj_go_up_3ST
 # trajectory_params = traj_go_up_3ST()
 # tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
 
-# from Traj_planning.examples.hopper_3ST import traj_hopper_3ST
-# trajectory_params = traj_hopper_3ST()
+trajectory_params = traj_hopper_3ST()
+tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
+
+# trajectory_params = traj_M_3ST()
 # tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
-# # tf = 21
 
-from Traj_planning.examples.M_3ST import traj_M_3ST
-trajectory_params = traj_M_3ST()
-tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
-
-from Traj_planning.examples.M_3ST import traj_M_3ST
-trajectory_params = traj_M_3ST()
-tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
-
-# from Traj_planning.examples.circle_3ST import traj_circle_3ST
 # trajectory_params = traj_circle_3ST()
 # tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
 
@@ -69,5 +63,5 @@ controller.plot_tracking_results(t, x)
 #     trajectory_params=trajectory_params,
 #     scale=1,
 #     matplotlib=False,
-#     save=False,
+#     save=True,
 # )
