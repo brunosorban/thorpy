@@ -42,7 +42,7 @@ target_velocities = np.array(
 target_accelerations = np.array(
     [[0, 0, 0], [None, None, None], [None, None, None], [None, None, None], [0, 0, 0]]
 )  # m/s^2
-time_points = 6 * np.array([0, 1, 2, 3, 4])  # time list
+time_points = 5 * np.array([0, 1, 2, 3, 4])  # time list
 dt = 0.01  # time step
 
 constraints = {

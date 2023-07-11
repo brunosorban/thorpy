@@ -22,11 +22,8 @@ def trajenerator_3ST(states, constraints, env_params, rocket_params, controller_
         trajectory_parameters (dict): Dictionary containing the trajectory parameters.
     """
     # interpolate polinomials for minimum snap trajectory
-    states_x = deepcopy(states)
-    constraints_x = deepcopy(constraints)
-
     Px_coeffs, Py_coeffs, Pz_coeffs, t = coupled_pol_interpolation(
-        states, constraints, rocket_params, controller_params
+        states, constraints, rocket_params, controller_params, env_params
     )
 
     # calculate gamma using differential flatness
@@ -34,6 +31,6 @@ def trajenerator_3ST(states, constraints, env_params, rocket_params, controller_
         Px_coeffs, Py_coeffs, Pz_coeffs, t, env_params, rocket_params, controller_params
     )
 
-    plot_trajectory(states, trajectory_params, "Diff flat trajectory")
+    plot_trajectory(states, trajectory_params, controller_params, "Diff flat trajectory")
 
     return trajectory_params

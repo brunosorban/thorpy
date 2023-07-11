@@ -37,8 +37,8 @@ N = int(T * freq)  # Number of control intervals
 # controller input bounds
 u_max_f = 2 * m * g  # maxium thrust rate
 u_min_f = 0.3 * u_max_f  # should be 30% to 40% of the max thrust
-u_max_delta_tvc_c = np.deg2rad(15)  # maxium thrust vector angle
-u_min_delta_tvc_c = -np.deg2rad(15)  # minium thrust vector angle
+u_max_delta_tvc_c = np.deg2rad(5)  # maxium thrust vector angle
+u_min_delta_tvc_c = -np.deg2rad(5)  # minium thrust vector angle
 
 # state bounds
 gamma_max = np.deg2rad(30) + initial_state[4]  # maxium yaw angle

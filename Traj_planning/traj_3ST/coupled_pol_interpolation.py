@@ -10,12 +10,12 @@ parent_folder = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(parent_folder, ".."))
 
 from Traj_planning.traj_3ST.auxiliar_codes.coeffs2derivatives import *
-from Traj_planning.traj_3ST.auxiliar_codes.estimate_coeffs import estimate_coeffs
 from Traj_planning.traj_3ST.auxiliar_codes.pol_processor import *
 from Traj_planning.traj_3ST.unc_pol_interpolation import *
+from Traj_planning.traj_3ST.auxiliar_codes.new_get_f1f2 import *
 
 
-def coupled_pol_interpolation(states, contraints, rocket_params, controller_params):
+def coupled_pol_interpolation(states, contraints, rocket_params, controller_params, env_params):
     """
     This function interpolates the polynomials between the points
     """
@@ -43,7 +43,9 @@ def coupled_pol_interpolation(states, contraints, rocket_params, controller_para
     min_ax = contraints["min_ax"]
     min_ay = contraints["min_ay"]
     min_az = contraints["min_az"]
-
+    
+    params = deepcopy(rocket_params)
+    params["g"] = env_params["g"]
 
     pol_order = 12  # order of the polynom (pol_order+1 coefficients)
 
@@ -185,25 +187,77 @@ def coupled_pol_interpolation(states, contraints, rocket_params, controller_para
             obj += F_jerk(pol_coeffs_y[:, i], j * dt) ** 2
             obj += F_jerk(pol_coeffs_z[:, i], j * dt) ** 2
 
-            # add absolute velocity constraints
-            opti.subject_to(F_vel(pol_coeffs_x[:, i], j * dt) / dt_interval <= max_vx)
-            opti.subject_to(F_vel(pol_coeffs_x[:, i], j * dt) / dt_interval >= min_vx)
+            vel = ca.vertcat(
+                F_vel(pol_coeffs_x[:, i], j * dt) / dt_interval,
+                F_vel(pol_coeffs_y[:, i], j * dt) / dt_interval,
+                F_vel(pol_coeffs_z[:, i], j * dt) / dt_interval
+            )
             
-            opti.subject_to(F_vel(pol_coeffs_y[:, i], j * dt) / dt_interval <= max_vy)
-            opti.subject_to(F_vel(pol_coeffs_y[:, i], j * dt) / dt_interval >= min_vy)
+            acc = ca.vertcat(
+                F_acc(pol_coeffs_x[:, i], j * dt) / dt_interval**2,
+                F_acc(pol_coeffs_y[:, i], j * dt) / dt_interval**2,
+                F_acc(pol_coeffs_z[:, i], j * dt) / dt_interval**2
+            )
             
-            opti.subject_to(F_vel(pol_coeffs_z[:, i], j * dt) / dt_interval <= max_vz)
-            opti.subject_to(F_vel(pol_coeffs_z[:, i], j * dt) / dt_interval >= min_vz)
+            jerk = ca.vertcat(
+                F_jerk(pol_coeffs_x[:, i], j * dt) / dt_interval**3,
+                F_jerk(pol_coeffs_y[:, i], j * dt) / dt_interval**3,
+                F_jerk(pol_coeffs_z[:, i], j * dt) / dt_interval**3
+            )
+            
+            snap = ca.vertcat(
+                F_snap(pol_coeffs_x[:, i], j * dt) / dt_interval**4,
+                F_snap(pol_coeffs_y[:, i], j * dt) / dt_interval**4,
+                F_snap(pol_coeffs_z[:, i], j * dt) / dt_interval**4
+            )
+            
+            crackle = ca.vertcat(
+                F_crackle(pol_coeffs_x[:, i], j * dt) / dt_interval**4,
+                F_crackle(pol_coeffs_y[:, i], j * dt) / dt_interval**4,
+                F_crackle(pol_coeffs_z[:, i], j * dt) / dt_interval**4
+            )
+            
+            f1, f2 = get_f1f2(acc[0], acc[1], jerk[0], jerk[1], snap[0], snap[1], params)
+            f = ca.sqrt(f1**2 + f2**2)
+            
+            f1_dot, f2_dot = get_f1f2_dot(acc[0], acc[1], jerk[0], jerk[1], snap[0], snap[1], crackle[0], crackle[1], params)
+            f_dot = f_dot = (f1 * f1_dot + f2 * f2_dot) / f
+            
+            opti.subject_to(f1 >= controller_params["thrust_bounds"][0])
+            opti.subject_to(f1 <= controller_params["thrust_bounds"][1])
+            
+            # it is assumed that f1 > 0
+            opti.subject_to(f2 >= -ca.sin(controller_params["delta_tvc_bounds"][1]) * f1)
+            opti.subject_to(f2 <= ca.sin(controller_params["delta_tvc_bounds"][1]) * f1)
+            
+            # opti.subject_to(f2 >= -ca.sin(controller_params["delta_tvc_bounds"][1]) * controller_params["thrust_bounds"][1])
+            # opti.subject_to(f2 <=  ca.sin(controller_params["delta_tvc_bounds"][1]) * controller_params["thrust_bounds"][1])
+            
+            opti.subject_to(f >= controller_params["thrust_bounds"][0])
+            opti.subject_to(f <= controller_params["thrust_bounds"][1])
+            
+            opti.subject_to(f1_dot >= controller_params["u_bounds"][0][0])
+            opti.subject_to(f1_dot <= controller_params["u_bounds"][0][1])
+            
+            # # add absolute velocity constraints
+            # opti.subject_to(F_vel(pol_coeffs_x[:, i], j * dt) / dt_interval <= max_vx)
+            # opti.subject_to(F_vel(pol_coeffs_x[:, i], j * dt) / dt_interval >= min_vx)
+            
+            # opti.subject_to(F_vel(pol_coeffs_y[:, i], j * dt) / dt_interval <= max_vy)
+            # opti.subject_to(F_vel(pol_coeffs_y[:, i], j * dt) / dt_interval >= min_vy)
+            
+            # opti.subject_to(F_vel(pol_coeffs_z[:, i], j * dt) / dt_interval <= max_vz)
+            # opti.subject_to(F_vel(pol_coeffs_z[:, i], j * dt) / dt_interval >= min_vz)
 
-            # add absolute acceleration constraints
-            opti.subject_to(F_acc(pol_coeffs_x[:, i], j * dt) / dt_interval**2 <= max_ax)
-            opti.subject_to(F_acc(pol_coeffs_x[:, i], j * dt) / dt_interval**2 >= min_ax)
+            # # add absolute acceleration constraints
+            # opti.subject_to(F_acc(pol_coeffs_x[:, i], j * dt) / dt_interval**2 <= max_ax)
+            # opti.subject_to(F_acc(pol_coeffs_x[:, i], j * dt) / dt_interval**2 >= min_ax)
 
-            opti.subject_to(F_acc(pol_coeffs_y[:, i], j * dt) / dt_interval**2 <= max_ay)
-            opti.subject_to(F_acc(pol_coeffs_y[:, i], j * dt) / dt_interval**2 >= min_ay)
+            # opti.subject_to(F_acc(pol_coeffs_y[:, i], j * dt) / dt_interval**2 <= max_ay)
+            # opti.subject_to(F_acc(pol_coeffs_y[:, i], j * dt) / dt_interval**2 >= min_ay)
             
-            opti.subject_to(F_acc(pol_coeffs_z[:, i], j * dt) / dt_interval**2 <= max_az)
-            opti.subject_to(F_acc(pol_coeffs_z[:, i], j * dt) / dt_interval**2 >= min_az)
+            # opti.subject_to(F_acc(pol_coeffs_z[:, i], j * dt) / dt_interval**2 <= max_az)
+            # opti.subject_to(F_acc(pol_coeffs_z[:, i], j * dt) / dt_interval**2 >= min_az)
 
         # obj += pol_coeffs[pol_order, i]**2
 
