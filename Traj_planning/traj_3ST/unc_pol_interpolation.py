@@ -2,7 +2,6 @@ import casadi as ca
 import sys
 import os
 
-
 # Get the parent folder path
 parent_folder = os.path.dirname(os.path.abspath(__file__))
 
@@ -11,10 +10,8 @@ sys.path.append(os.path.join(parent_folder, ".."))
 
 from Traj_planning.traj_3ST.auxiliar_codes.coeffs2derivatives import *
 from Traj_planning.traj_3ST.auxiliar_codes.estimate_coeffs import estimate_coeffs
-from Traj_planning.traj_3ST.auxiliar_codes.pol_processor import *
-from Traj_planning.traj_3ST.unc_pol_interpolation import *
 
-def pol_interpolation(states, contraints):
+def unconstrained_pol_interpolation(states):
     """
     This function interpolates the polynomials between the points
     """
@@ -24,11 +21,6 @@ def pol_interpolation(states, contraints):
     #######################################
     time_points = states["t"]
     position_points = states["pos"]
-    
-    max_v = contraints["max_v"]
-    min_v = contraints["min_v"]
-    max_a = contraints["max_a"]
-    min_a = contraints["min_a"]
     
     pol_order = 12  # order of the polynom (pol_order+1 coefficients)
 
@@ -59,12 +51,6 @@ def pol_interpolation(states, contraints):
     jerk = get_jerk(coefs, t)
     snap = get_snap(coefs, t)
     crackle = get_crackle(coefs, t)
-
-    # vel = ca.jacobian(pos, t)
-    # acc = ca.jacobian(vel, t)
-    # jerk = ca.jacobian(acc, t)
-    # snap = ca.jacobian(jerk, t)
-    # crackle = ca.jacobian(snap, t)
     
     F_pos = ca.Function("F_pos", [coefs, t], [pos], ["[p0:p3]", "[t]"], ["position"])
     F_vel = ca.Function("F_vel", [coefs, t], [vel], ["[p0:p3]", "[t]"], ["velocity"])
@@ -121,52 +107,36 @@ def pol_interpolation(states, contraints):
     
     num_intervals = 100
     for i in range(number_of_points - 1): # for each polinomial
-        dt_interval = (time_points[i+1] - time_points[i])
         dt = 1 / num_intervals
         
         for j in range(num_intervals):
             # update the cost function
-            obj += F_jerk(pol_coeffs[:, i], j * dt)**2
-                
-            # add velocity constraints
-            opti.subject_to(F_vel(pol_coeffs[:, i], j * dt) / dt_interval <= max_v)
-            opti.subject_to(F_vel(pol_coeffs[:, i], j * dt) / dt_interval >= min_v)
-            
-            # add acceleration constraints
-            opti.subject_to(F_acc(pol_coeffs[:, i], j * dt) / dt_interval**2 <= max_a)
-            opti.subject_to(F_acc(pol_coeffs[:, i], j * dt) / dt_interval**2 >= min_a)
-            
-        # obj += pol_coeffs[pol_order, i]**2
-        
+            obj += (F_jerk(pol_coeffs[:, i], j * dt)**2)      
     
     # add final cost
-    obj += F_jerk(pol_coeffs[:, i], 1)**2
+    obj += (F_jerk(pol_coeffs[:, i], 1)**2)
 
     # define the optimization problem
     opti.minimize(obj)
-    
-    # initialize the polinomial coefficients
-    initial_guess, _ = unconstrained_pol_interpolation(states)
-    opti.set_initial(pol_coeffs, initial_guess)
         
-    # configure the solver
-    ipopt_options = {
-        "verbose": False,
-        "ipopt.tol": 1e-8,
-        "ipopt.acceptable_tol": 1e-8,
-        "ipopt.max_iter": 500,
-        "ipopt.warm_start_init_point": "yes",
-        "ipopt.print_level": 5,
-        "print_time": False,
-    }
-    
     # select the desired solver
     opti.solver("ipopt")#, ipopt_options)
 
-    print("Interpolating trajectory...")
+    # initialize the polinomial coefficients
+    for i in range(len(time_points) - 1):
+        opti.set_initial(
+            pol_coeffs[:, i],
+            estimate_coeffs(
+                [0, 1],
+                [states["pos"][i], states["pos"][i + 1]],
+                pol_order,
+            ),
+        )
+
+    print("Interpolating unconstrained trajectory...")
     sol = opti.solve()
     print("Interpolation done!")
     print("Solution: \n", sol.value(pol_coeffs))
+    print()
 
     return sol.value(pol_coeffs), time_points
-    # return initial_guess, time_points

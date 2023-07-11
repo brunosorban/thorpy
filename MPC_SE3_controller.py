@@ -396,7 +396,7 @@ class MPC_controller:
             # retrieve the results
             u = sol.value(self.u)
             horizon = sol.value(self.x)
-            
+
             self.out = np.array(sol.value(self.u))[:, 0]
             self.last_time_control = t  # update last time it was controlled
 
@@ -425,9 +425,7 @@ class MPC_controller:
                 t, self.trajectory_params["t"], self.trajectory_params["y"]
             )
 
-            pos_error = np.array([x[0], x[2]]) - np.array(
-                [px_target, py_target]
-            )
+            pos_error = np.array([x[0], x[2]]) - np.array([px_target, py_target])
             self.epos_list.append(pos_error)
 
             e1bx_target = self.linear_spline(
@@ -454,10 +452,10 @@ class MPC_controller:
             # # add the cost payed on this solution
             # self.J_total += sol.value(self.obj)
             # self.J_total_list.append((t, self.J_total))
-            
+
             print("t = ", t, "s", "    out = ", self.out)
         return self.out
-    
+
     def simulate_inside(self, sim_time, plot_online=False):
         print("Starting simulation")
         t = [0]
@@ -744,7 +742,7 @@ class MPC_controller:
         # ax6.set_title("Gamma angular velocity vs Time")
         # ax6.set_xlim([t[0], t[-1]])
         # ax6.grid()
-        
+
         ax6.plot(t, x[:, 4], label="$e_{1bx}$")
         ax6.plot(t, x[:, 5], label="$e_{1by}$")
         ax6.plot(t, x[:, 6], label="$e_{2bx}$")
@@ -809,9 +807,7 @@ class MPC_controller:
         self.ax3.scatter(t_list[: len(t_list) - 1], thrust_deriv_list, s=5)
         self.ax3.plot(t_full, [u_bounds[0][0]] * len(t_full), "--", color="black")
         self.ax3.plot(t_full, [u_bounds[0][1]] * len(t_full), "--", color="black")
-        self.ax3.legend(
-            ["$\\dot{f}$", "$\\dot{f}_{ref}$"]
-        )
+        self.ax3.legend(["$\\dot{f}$", "$\\dot{f}_{ref}$"])
         self.ax3.set_xlabel("Time (s)")
         self.ax3.set_ylabel("Thrust derivative (N/s)")
         self.ax3.set_title("Thrust derivative vs Time")
@@ -819,9 +815,7 @@ class MPC_controller:
 
         gamma = np.arctan2(np.array(x)[:, 5], np.array(x)[:, 4])
         gamma_horizon = np.arctan2(horizon[5, :], horizon[4, :])
-        self.ax4.scatter(
-            t, np.rad2deg(gamma), s=5
-        )
+        self.ax4.scatter(t, np.rad2deg(gamma), s=5)
         self.ax4.scatter(t_list, np.rad2deg(gamma_horizon), s=5)
         # self.ax4.plot(
         #     t_full, [np.rad2deg(gamma_bounds[0])] * len(t_full), "--", color="black"
@@ -878,7 +872,7 @@ class MPC_controller:
         self.ax6.set_ylabel("$\\dot{\\delta_{tvc}}$ (degrees)")
         self.ax6.set_title("$\\dot{\\delta_{tvc}}$ vs Time")
         self.ax6.grid()
-        
+
         self.ax7.scatter(t, np.array(x)[:, 5], s=5)
         self.ax7.scatter(t_list, horizon[5, :], s=5)
         self.ax7.plot(t_full, [1] * len(t_full), "--", color="black")
@@ -888,7 +882,7 @@ class MPC_controller:
         self.ax7.set_ylabel("Orientation parameter (-)")
         self.ax7.set_title("Orientation parameter vs Time")
         self.ax7.grid()
-        
+
         self.ax8.scatter(t, np.array(x)[:, 6], s=5)
         self.ax8.scatter(t_list, horizon[6, :], s=5)
         self.ax8.plot(t_full, [1] * len(t_full), "--", color="black")
@@ -898,11 +892,11 @@ class MPC_controller:
         self.ax8.set_ylabel("Orientation parameter (-)")
         self.ax8.set_title("Orientation parameter vs Time")
         self.ax8.grid()
-        
+
         self.ax9.scatter(t, np.array(x)[:, 7], s=5)
         self.ax9.scatter(t_list, horizon[7, :], s=5)
-        self.ax8.plot(t_full, [1] * len(t_full), "--", color="black")
-        self.ax8.plot(t_full, [-1] * len(t_full), "--", color="black")
+        self.ax9.plot(t_full, [1] * len(t_full), "--", color="black")
+        self.ax9.plot(t_full, [-1] * len(t_full), "--", color="black")
         self.ax9.legend(["$e_{2bx}$", "$e_{2bx_hor}$"])
         self.ax9.set_xlabel("Time (s)")
         self.ax9.set_ylabel("Orientation parameter (-)")

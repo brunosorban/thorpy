@@ -44,12 +44,13 @@ env = Environment(env_params)
 
 
 ################################## Simulation ##################################
-flight = Flight(rocket_params,
-                env,
-                controller,
-                initial_solution=initial_state,
-                max_time=tf,
-                max_step=1e-3,
+flight = Flight(
+    rocket_params,
+    env,
+    controller,
+    initial_solution=initial_state,
+    max_time=tf,
+    max_step=1e-3,
 )
 
 flight.solve_system()

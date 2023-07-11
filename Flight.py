@@ -27,7 +27,24 @@ class Flight:
 
         self.max_time = max_time
         self.initial_solution = (
-            [0, 0, 0, 0, 0, 1, -1, 0, 0, 1, -1, 0, 0, rocket_params["m"] * environment.g] if initial_solution is None else initial_solution
+            [
+                0,
+                0,
+                0,
+                0,
+                0,
+                1,
+                -1,
+                0,
+                0,
+                1,
+                -1,
+                0,
+                0,
+                rocket_params["m"] * environment.g,
+            ]
+            if initial_solution is None
+            else initial_solution
         )
         self.t0 = 0
         self.atol = atol
@@ -67,23 +84,43 @@ class Flight:
         #     display("Simulation time: {:.1f} seconds".format(t))
         #     self.time_count += 0.1
 
-        [x, vx, y, vy, e1bx, e1by, e2bx, e2by, e1tx, e1ty, e2tx, e2ty, omega_z, thrust] = sol
+        [
+            x,
+            vx,
+            y,
+            vy,
+            e1bx,
+            e1by,
+            e2bx,
+            e2by,
+            e1tx,
+            e1ty,
+            e2tx,
+            e2ty,
+            omega_z,
+            thrust,
+        ] = sol
         f_dot, delta_tvc_dot = self.controller.update(t, sol)
-        
-        f1 = vx,  # x
-        f2 = thrust / self.rocket_params["m"] * e1tx,  # v_x
-        f3 = vy,  # y
-        f4 = thrust / self.rocket_params["m"] * e1ty - self.environment.g,  # v_y
-        f5 = omega_z * e2bx,  # e1bx
-        f6 = omega_z * e2by,  # e1by
-        f7 = -omega_z * e1bx,  # e2bx
-        f8 = -omega_z * e1by,  # e2by
-        f9 = (delta_tvc_dot + omega_z) * e2tx,  # e1tx
-        f10 = (delta_tvc_dot + omega_z) * e2ty,  # e1ty
-        f11 = -(delta_tvc_dot + omega_z) * e1tx,  # e2tx
-        f12 = -(delta_tvc_dot + omega_z) * e1ty,  # e2ty
-        f13 = -thrust * self.rocket_params["l_tvc"] * (e1tx * e2bx + e1ty * e2by) / self.rocket_params["J_z"],  # omega
-        f14 = f_dot,  # f
+
+        f1 = (vx,)  # x
+        f2 = (thrust / self.rocket_params["m"] * e1tx,)  # v_x
+        f3 = (vy,)  # y
+        f4 = (thrust / self.rocket_params["m"] * e1ty - self.environment.g,)  # v_y
+        f5 = (omega_z * e2bx,)  # e1bx
+        f6 = (omega_z * e2by,)  # e1by
+        f7 = (-omega_z * e1bx,)  # e2bx
+        f8 = (-omega_z * e1by,)  # e2by
+        f9 = ((delta_tvc_dot + omega_z) * e2tx,)  # e1tx
+        f10 = ((delta_tvc_dot + omega_z) * e2ty,)  # e1ty
+        f11 = (-(delta_tvc_dot + omega_z) * e1tx,)  # e2tx
+        f12 = (-(delta_tvc_dot + omega_z) * e1ty,)  # e2ty
+        f13 = (
+            -thrust
+            * self.rocket_params["l_tvc"]
+            * (e1tx * e2bx + e1ty * e2by)
+            / self.rocket_params["J_z"],
+        )  # omega
+        f14 = (f_dot,)  # f
 
         uDot = [f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14]
 
@@ -107,7 +144,7 @@ class Flight:
         self.thrust.append(thrust)
         self.thrust_dot.append(f_dot)
         self.delta_tvc_dot.append(delta_tvc_dot)
-        
+
         return uDot
 
     def solve_system(self):
@@ -137,7 +174,7 @@ class Flight:
         # Create function objects from the retrieved data
         gamma = np.arctan2(self.e1by, self.e1bx)
         delta_tvc = np.arctan2(self.e2ty, self.e2tx) - gamma
-        
+
         self.r = Function(
             self.time,
             np.sqrt(np.array(self.x) ** 2 + np.array(self.y) ** 2),
@@ -307,5 +344,3 @@ class Flight:
             ylabel="TVC angle derivative (degrees/s)",
             name="delta_tvc_dot",
         )
-        
-        

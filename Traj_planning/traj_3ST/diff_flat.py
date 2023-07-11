@@ -1,12 +1,26 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from Traj_planning.traj_3ST.auxiliar_codes.compute_gamma_3dot import compute_gamma_3dot
-from Traj_planning.traj_3ST.auxiliar_codes.coeffs2derivatives import *
-
+from Traj_planning.traj_3ST.auxiliar_codes.pol_processor import *
 
 def diff_flat_traj(
     Px_coeffs, Py_coeffs, Pz_coeffs, t, env_params, rocket_params, controller_params
 ):
+    """This function computes the trajectory parameters for the 2D case using differential flatness.
+
+    Args:
+        Px_coeffs (list): List of coefficients for the x position.
+        Py_coeffs (list): List of coefficients for the y position.
+        Pz_coeffs (List): List of coefficients for the z position.
+        t (list): List of time points.
+        env_params (dict): Dictionary containing the environment parameters. Currently only g is used.
+        rocket_params (dict): Dictionary containing the rocket parameters. Currently only m, l_tvc and J_z are used.
+        controller_params (dict): List of controller parameters. Currently only dt is used.
+
+    Returns:
+        trajectory_params (dict): Dictionary containing the trajectory parameters.
+    """
+
     print("Starting differential flatness trajectory planning...")
     g = env_params["g"]
     m = rocket_params["m"]
@@ -31,32 +45,34 @@ def diff_flat_traj(
     sy_o = np.zeros_like(t_list)
     cx_o = np.zeros_like(t_list)
     cy_o = np.zeros_like(t_list)
+    f1 = np.zeros_like(t_list)
+    f1_dot = np.zeros_like(t_list)
 
     for i in range(len(t_list)):
         idx = np.searchsorted(t, t_list[i])
         if idx > 0:
             idx -= 1
 
-        x_o[i] = get_pos(Px_coeffs[:, idx], t_list[i])
-        y_o[i] = get_pos(Py_coeffs[:, idx], t_list[i])
-        z_o[i] = get_pos(Pz_coeffs[:, idx], t_list[i])
+        x_o[i] = pos_processor(Px_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
+        y_o[i] = pos_processor(Py_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
+        z_o[i] = pos_processor(Pz_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
 
-        vx_o[i] = get_vel(Px_coeffs[:, idx], t_list[i])
-        vy_o[i] = get_vel(Py_coeffs[:, idx], t_list[i])
-        vz_o[i] = get_vel(Pz_coeffs[:, idx], t_list[i])
+        vx_o[i] = vel_processor(Px_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
+        vy_o[i] = vel_processor(Py_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
+        vz_o[i] = vel_processor(Pz_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
 
-        ax_o[i] = get_acc(Px_coeffs[:, idx], t_list[i])
-        ay_o[i] = get_acc(Py_coeffs[:, idx], t_list[i])
-        az_o[i] = get_acc(Pz_coeffs[:, idx], t_list[i])
+        ax_o[i] = acc_processor(Px_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
+        ay_o[i] = acc_processor(Py_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
+        az_o[i] = acc_processor(Pz_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
 
-        jx_o[i] = get_jerk(Px_coeffs[:, idx], t_list[i])
-        jy_o[i] = get_jerk(Py_coeffs[:, idx], t_list[i])
+        jx_o[i] = jerk_processor(Px_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
+        jy_o[i] = jerk_processor(Py_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
 
-        sx_o[i] = get_snap(Px_coeffs[:, idx], t_list[i])
-        sy_o[i] = get_snap(Py_coeffs[:, idx], t_list[i])
+        sx_o[i] = snap_processor(Px_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
+        sy_o[i] = snap_processor(Py_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
 
-        cx_o[i] = get_crackle(Px_coeffs[:, idx], t_list[i])
-        cy_o[i] = get_crackle(Py_coeffs[:, idx], t_list[i])
+        cx_o[i] = crackle_processor(Px_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
+        cy_o[i] = crackle_processor(Py_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
 
     temp_states = {
         "x_o": x_o,
@@ -88,10 +104,19 @@ def diff_flat_traj(
     ) ** 2
     gamma_3dot = compute_gamma_3dot(temp_states)
 
-    e1bx = np.cos(gamma)
-    e1by = np.sin(gamma)
-    e2bx = -np.sin(gamma)
-    e2by = np.cos(gamma)
+    e1bx = np.zeros_like(t_list)
+    e1by = np.zeros_like(t_list)
+    e2bx = np.zeros_like(t_list)
+    e2by = np.zeros_like(t_list)
+
+    # estimate the trajectory parameters for the 3D case
+    for i in range(len(t_list)):
+        t = np.array([ax_o[i], ay_o[i] + g, 0])
+
+        e1bx[i] = t[0] / np.linalg.norm(t)
+        e1by[i] = t[1] / np.linalg.norm(t)
+        e2bx[i] = -t[1] / np.linalg.norm(t)
+        e2by[i] = t[0] / np.linalg.norm(t)
 
     x_g = x_o - J_z / (m * l_tvc) * e1bx
     y_g = y_o - J_z / (m * l_tvc) * e1by
@@ -113,24 +138,29 @@ def diff_flat_traj(
     )
     az_g = az_o
 
-    # compute the control inputs of the system
-    f1 = np.sqrt(
-        (m * ax_o) ** 2 + (m * (ay_o + g)) ** 2 + -((-J_z * gamma_dot_dot / l_tvc) ** 2)
-    )
-    f2 = -J_z * gamma_dot_dot / l_tvc
+    r_go = J_z / (m * l_tvc)
 
-    # compute the control inputs dervatives of the system
-    f1_dot = (
-        m**2 * (ax_o * jx_o + (ay_o + g) * jy_o)
-        - J_z**2 * gamma_dot_dot * gamma_3dot / l_tvc**2
-    ) / f1
-    f2_dot = -J_z * gamma_3dot / l_tvc
+    f2 = -(J_z + m * r_go**2) * gamma_dot_dot / (l_tvc + r_go)  # dot(m*t, yb)
+    f2_dot = -(J_z + m * r_go**2) * gamma_3dot / (l_tvc + r_go)
 
-    delta_tvc = np.arctan2(f2, f1)
-    delta_tvc_dot = (f1 * f2_dot - f2 * f1_dot) / (f1**2 + f2**2)
+    for i in range(len(t_list)):
+        t = np.array([ax_o[i], ay_o[i] + g, 0])
+        t_dot = np.array([jx_o[i], jy_o[i], 0])
+
+        f1[i] = (
+            m * (t[0] * e1bx[i] + t[1] * e1by[i]) + J_z * gamma_dot[i] ** 2 / l_tvc
+        )  # dot(m*t, xb)
+
+        # compute the derivatives
+        f1_dot[i] = m * (t_dot[0] * e1bx[i] + t_dot[1] * e1by[i]) + gamma_dot[i] * (
+            -t[0] * e1by[i] + t[1] * e1bx[i]
+        )  # dot(m*t_dot, xb) + dot(t, cross(gamma_dot, xb))
 
     f = np.sqrt(f1**2 + f2**2)
     f_dot = (f1 * f1_dot + f2 * f2_dot) / f
+
+    delta_tvc = np.arctan2(f2, f1)
+    delta_tvc_dot = (f1 * f2_dot - f2 * f1_dot) / (f1**2 + f2**2)
 
     trajectory_params = {
         "t": t_list,

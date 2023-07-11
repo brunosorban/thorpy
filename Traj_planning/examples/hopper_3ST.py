@@ -6,22 +6,23 @@ sys.path.append("../")
 sys.path.append("../Traj_planning")
 
 from parameters import *
-from Traj_planning.examples.simple_circ import *
 
 # constraints
-max_vx = 150
-min_vx = -150
-max_vy = 150
-min_vy = -150
-max_vz = 150
-min_vz = -150
+max_vx = 15
+max_vy = 15
+max_vz = 15
 
-max_ax = 2 * g
-min_ax = -2 * g
-max_ay = 2 * g
-min_ay = -2 * g
+min_vx = -max_vx
+min_vy = -max_vy
+min_vz = -max_vz
+
+max_ax = 2 * g * np.sin(15 * np.pi / 180)
+max_ay = g
 max_az = 2 * g
-min_az = -2 * g
+
+min_ax = -max_ax
+min_ay = (0.6 - 1) * g
+min_az = -max_az
 
 target_points = np.array(
     [
@@ -41,22 +42,22 @@ target_velocities = np.array(
 target_accelerations = np.array(
     [[0, 0, 0], [None, None, None], [None, None, None], [None, None, None], [0, 0, 0]]
 )  # m/s^2
-time_points = 1 * np.array([0, 10, 15, 20, 30])  # time list
+time_points = 6 * np.array([0, 1, 2, 3, 4])  # time list
 dt = 0.01  # time step
 
 constraints = {
-    "min_vx": min_vx,
     "max_vx": max_vx,
-    "min_vy": min_vy,
     "max_vy": max_vy,
-    "min_vz": min_vz,
     "max_vz": max_vz,
-    "min_ax": min_ax,
+    "min_vx": min_vx,
+    "min_vy": min_vy,
+    "min_vz": min_vz,
     "max_ax": max_ax,
-    "min_ay": min_ay,
     "max_ay": max_ay,
-    "min_az": min_az,
     "max_az": max_az,
+    "min_ax": min_ax,
+    "min_ay": min_ay,
+    "min_az": min_az,
     "acceptable_offset": 5,
     "g": g,
 }

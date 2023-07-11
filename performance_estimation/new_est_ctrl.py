@@ -1,7 +1,5 @@
 import numpy as np
 from copy import deepcopy
-from Traj_planning.traj_3ST.auxiliar_codes.compute_gamma_3dot import compute_gamma_3dot
-from Traj_planning.traj_3ST.auxiliar_codes.get_f1f2 import get_f1f2, get_f1f2_dot
 from Traj_planning.traj_3ST.auxiliar_codes.coeffs2derivatives import (
     get_pos,
     get_vel,
@@ -10,9 +8,11 @@ from Traj_planning.traj_3ST.auxiliar_codes.coeffs2derivatives import (
     get_snap,
     get_crackle,
 )
+from Traj_planning.traj_3ST.auxiliar_codes.compute_gamma_3dot import compute_gamma_3dot
+import matplotlib.pyplot as plt
 
 
-def estimate_control(
+def new_estimate_control(
     Px_coeffs, Py_coeffs, Pz_coeffs, t, env_params, rocket_params, controller_params
 ):
     # estimate the trajectory parameters for the 2D case
@@ -95,7 +95,21 @@ def estimate_control(
         "g": g,
     }
 
-    gamma = np.arctan2(ay_o + g, ax_o)
+    e1bx = np.zeros_like(t_list)
+    e1by = np.zeros_like(t_list)
+    e2bx = np.zeros_like(t_list)
+    e2by = np.zeros_like(t_list)
+
+    # estimate the trajectory parameters for the 3D case
+    for i in range(len(t_list)):
+        t = np.array([ax_o[i], ay_o[i] + g, 0])
+
+        e1bx[i] = t[0] / np.linalg.norm(t)
+        e1by[i] = t[1] / np.linalg.norm(t)
+        e2bx[i] = -t[1] / np.linalg.norm(t)
+        e2by[i] = t[0] / np.linalg.norm(t)
+
+    gamma = np.arctan2(e1by, e1bx)
     gamma_dot = (jy_o * ax_o - (ay_o + g) * jx_o) / (ax_o**2 + (ay_o + g) ** 2)
     gamma_dot_dot = (sy_o * ax_o - (ay_o + g) * sx_o) / (
         ax_o**2 + (ay_o + g) ** 2
@@ -106,35 +120,41 @@ def estimate_control(
     ) ** 2
     gamma_3dot = compute_gamma_3dot(temp_states)
 
-    # estimate control
+    r_go = J_z / (m * l_tvc)
+
+    f2_o = -(J_z + m * r_go**2) * gamma_dot_dot / (l_tvc + r_go)  # dot(m*t, yb)
+    f2_dot_o = -(J_z + m * r_go**2) * gamma_3dot / (l_tvc + r_go)
+
     for i in range(len(t_list)):
-        idx = np.searchsorted(t, t_list[i])
-        if idx > 0:
-            idx -= 1
+        t = np.array([ax_o[i], ay_o[i] + g, 0])
+        t_dot = np.array([jx_o[i], jy_o[i], 0])
 
-        f1_o[i], f2_o[i] = get_f1f2(
-            t_list[i], Px_coeffs[:, idx], Py_coeffs[:, idx], params
-        )
-        f1_dot_o[i], f2_dot_o[i] = get_f1f2_dot(
-            t_list[i], Px_coeffs[:, idx], Py_coeffs[:, idx], params
-        )
+        f1_o[i] = (
+            m * (t[0] * e1bx[i] + t[1] * e1by[i]) + J_z * gamma_dot[i] ** 2 / l_tvc
+        )  # dot(m*t, xb)
 
-        f_o = np.sqrt(f1_o**2 + f2_o**2)
-        f_dot_o = (f1_o * f1_dot_o + f2_o * f2_dot_o) / f_o
+        # compute the derivatives
+        f1_dot_o[i] = m * (t_dot[0] * e1bx[i] + t_dot[1] * e1by[i]) + gamma_dot[i] * (
+            -t[0] * e1by[i] + t[1] * e1bx[i]
+        )  # dot(m*t_dot, xb) + dot(t, cross(gamma_dot, xb))
 
-        # for the delta_tvc
-        delta_tvc_o = np.arctan2(f2_o, f1_o)
-        delta_tvc_dot_o = (f1_o * f2_dot_o - f2_o * f1_dot_o) / (f1_o**2 + f2_o**2)
+    f_o = np.sqrt(f1_o**2 + f2_o**2)
+    f_dot_o = (f1_o * f1_dot_o + f2_o * f2_dot_o) / f_o
 
-    e1bx = np.cos(gamma)
-    e1by = np.sin(gamma)
-    e2bx = -np.sin(gamma)
-    e2by = np.cos(gamma)
+    delta_tvc_o = np.arctan2(f2_o, f1_o)
+    delta_tvc_dot_o = (f1_o * f2_dot_o - f2_o * f1_dot_o) / (f1_o**2 + f2_o**2)
 
     e1tx = np.cos(gamma + delta_tvc_o)
     e1ty = np.sin(gamma + delta_tvc_o)
     e2tx = -np.sin(gamma + delta_tvc_o)
     e2ty = np.cos(gamma + delta_tvc_o)
+
+    ax_g = ax_o + r_go * gamma_dot_dot * e1by + r_go * (gamma_dot**2) * e1bx
+    ay_g = ay_o - r_go * gamma_dot_dot * e1bx + r_go * (gamma_dot**2) * e1by
+
+    error_ax = m * ax_g - f1_o * e1bx - f2_o * e2bx
+    error_ay = m * ay_g - f1_o * e1by - f2_o * e2by + m * g
+    error_gamma_ddot = J_z * gamma_dot_dot + f2_o * l_tvc
 
     estimated_states = {
         "t": t_list,
@@ -153,8 +173,6 @@ def estimate_control(
         "e2by": e2by,
         "gamma": gamma,
         "gamma_dot": gamma_dot,
-        "gamma_dot_dot": gamma_dot_dot,
-        "gamma_3dot": gamma_3dot,
         "f1": f1_o,
         "f2": f2_o,
         "f1_dot": f1_dot_o,
@@ -167,8 +185,11 @@ def estimate_control(
         "e1ty": e1ty,
         "e2tx": e2tx,
         "e2ty": e2ty,
+        "error_ax": error_ax,
+        "error_ay": error_ay,
+        "error_gamma_ddot": error_gamma_ddot,
     }
 
-    # print("Trajectory parameters estimated.")
+    print("Trajectory parameters estimated.")
 
     return estimated_states

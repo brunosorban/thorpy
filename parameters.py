@@ -36,7 +36,7 @@ N = int(T * freq)  # Number of control intervals
 
 # controller input bounds
 u_max_f = 2 * m * g  # maxium thrust rate
-u_min_f = 0.35 * u_max_f  # should be 30% to 40% of the max thrust
+u_min_f = 0.3 * u_max_f  # should be 30% to 40% of the max thrust
 u_max_delta_tvc_c = np.deg2rad(15)  # maxium thrust vector angle
 u_min_delta_tvc_c = -np.deg2rad(15)  # minium thrust vector angle
 
@@ -50,7 +50,7 @@ u_max_f_deriv = u_max_f / (
 )  # u_max_f / T_thrust # maxium thrust rate
 u_min_f_deriv = -u_max_f_deriv  # should be 30% to 40% of the max thrust
 
-u_max_delta_tvc_c_deriv = np.rad2deg(30) # 30 deg/s
+u_max_delta_tvc_c_deriv = np.deg2rad(30)  # 30 deg/s
 u_min_delta_tvc_c_deriv = -u_max_delta_tvc_c_deriv
 
 q1 = 15  # position in x cost penalty
@@ -65,6 +65,19 @@ Qf_gain = 10  # gain of the final cost
 
 r1 = 1e-3  # thrust cost penalty
 r2 = 200  # thrust vector angle cost penalty
+
+# q1 = 1 / 1**2  # position in x cost penalty
+# q2 = 1 / 5**2  # velocity in x cost penalty
+# q3 = 1 / 1**2  # position in y cost penalty
+# q4 = 1 / 5**2  # velocity in y cost penalty
+# q5 = 1 / (np.pi/6)**2  # yaw angle cost penalty
+# q6 = 1 / (np.pi/15)**2  # yaw rate cost penalty
+# q7 = 1e-15  # thrust cost penalty
+# q8 = 1e-15  # thrust vector angle cost penalty
+# Qf_gain = 10  # gain of the final cost
+
+# r1 = 1 / 10**2  # thrust cost penalty
+# r2 = 1 / (np.pi/15)**2  # thrust vector angle cost penalty
 
 # normalizing parameters (not being used)
 pos_norm = 1  # position normalization

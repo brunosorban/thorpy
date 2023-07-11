@@ -9,19 +9,8 @@ from parameters import *
 from Traj_planning.examples.simple_circ import *
 
 # constraints
-max_vx = 150
-min_vx = -150
-max_vy = 150
-min_vy = -150
-max_vz = 150
-min_vz = -150
-
-max_ax = 2 * g
-min_ax = -2 * g
-max_ay = 2 * g
-min_ay = -2 * g
-max_az = 2 * g
-min_az = -2 * g
+max_v = 150
+max_a = 2 * g
 
 target_points = np.array(
     [
@@ -38,27 +27,33 @@ target_points = np.array(
 # gamma_points_deg = np.array([90, 90, 90, 90])
 gamma_dot_points = np.array([0, None, None, None, None, None, 0])
 target_velocities = np.array(
-    [[0, 0, 0], [None, None, None], [None, None, None], [None, None, None], [None, None, None], [None, None, None], [0, 0, 0]]
+    [
+        [0, 0, 0],
+        [None, None, None],
+        [None, None, None],
+        [None, None, None],
+        [None, None, None],
+        [None, None, None],
+        [0, 0, 0],
+    ]
 )  # m/s
 target_accelerations = np.array(
-    [[0, 0, 0], [None, None, None], [None, None, None], [None, None, None], [None, None, None], [None, None, None], [0, 0, 0]]
+    [
+        [0, 0, 0],
+        [None, None, None],
+        [None, None, None],
+        [None, None, None],
+        [None, None, None],
+        [None, None, None],
+        [0, 0, 0],
+    ]
 )  # m/s^2
 time_points = np.linspace(0, 35, len(target_points))  # time list
 dt = 0.01  # time step
 
 constraints = {
-    "min_vx": min_vx,
-    "max_vx": max_vx,
-    "min_vy": min_vy,
-    "max_vy": max_vy,
-    "min_vz": min_vz,
-    "max_vz": max_vz,
-    "min_ax": min_ax,
-    "max_ax": max_ax,
-    "min_ay": min_ay,
-    "max_ay": max_ay,
-    "min_az": min_az,
-    "max_az": max_az,
+    "max_v": max_v,
+    "max_a": max_a,
     "acceptable_offset": 5,
     "g": g,
 }

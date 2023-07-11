@@ -12,19 +12,8 @@ v = 15
 r = 50
 
 # constraints
-max_vx = 150
-min_vx = -150
-max_vy = 150
-min_vy = -150
-max_vz = 150
-min_vz = -150
-
-max_ax = 2 * g
-min_ax = -2 * g
-max_ay = 2 * g
-min_ay = -0.3 * g
-max_az = 2 * g
-min_az = -2 * g
+max_v = 150
+max_a = 2 * g
 
 target_points = np.array(
     [
@@ -41,18 +30,8 @@ time_points = np.array([0, 15])  # time list
 dt = 0.01  # time step
 
 constraints = {
-    "min_vx": min_vx,
-    "max_vx": max_vx,
-    "min_vy": min_vy,
-    "max_vy": max_vy,
-    "min_vz": min_vz,
-    "max_vz": max_vz,
-    "min_ax": min_ax,
-    "max_ax": max_ax,
-    "min_ay": min_ay,
-    "max_ay": max_ay,
-    "min_az": min_az,
-    "max_az": max_az,
+    "max_v": max_v,
+    "max_a": max_a,
     "g": g,
 }
 
