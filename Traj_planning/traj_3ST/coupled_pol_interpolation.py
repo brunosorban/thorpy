@@ -185,7 +185,7 @@ def coupled_pol_interpolation(states, contraints, rocket_params, controller_para
             obj += F_jerk(pol_coeffs_y[:, i], j * dt) ** 2
             obj += F_jerk(pol_coeffs_z[:, i], j * dt) ** 2
 
-            # add velocity constraints
+            # add absolute velocity constraints
             opti.subject_to(F_vel(pol_coeffs_x[:, i], j * dt) / dt_interval <= max_vx)
             opti.subject_to(F_vel(pol_coeffs_x[:, i], j * dt) / dt_interval >= min_vx)
             
@@ -195,7 +195,7 @@ def coupled_pol_interpolation(states, contraints, rocket_params, controller_para
             opti.subject_to(F_vel(pol_coeffs_z[:, i], j * dt) / dt_interval <= max_vz)
             opti.subject_to(F_vel(pol_coeffs_z[:, i], j * dt) / dt_interval >= min_vz)
 
-            # add acceleration constraints
+            # add absolute acceleration constraints
             opti.subject_to(F_acc(pol_coeffs_x[:, i], j * dt) / dt_interval**2 <= max_ax)
             opti.subject_to(F_acc(pol_coeffs_x[:, i], j * dt) / dt_interval**2 >= min_ax)
 
@@ -244,7 +244,7 @@ def coupled_pol_interpolation(states, contraints, rocket_params, controller_para
     }
 
     # select the desired solver
-    opti.solver("ipopt")  # , ipopt_options)
+    opti.solver("ipopt", ipopt_options)
 
     print("Interpolating trajectory...")
     sol = opti.solve()
