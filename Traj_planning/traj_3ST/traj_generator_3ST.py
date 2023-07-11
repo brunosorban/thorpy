@@ -1,4 +1,4 @@
-from Traj_planning.traj_3ST.pol_interpolation import *
+from Traj_planning.traj_3ST.coupled_pol_interpolation import *
 from Traj_planning.traj_3ST.diff_flat import *
 from Traj_planning.traj_3ST.auxiliar_codes.plot_traj import *
 
@@ -25,36 +25,36 @@ def trajenerator_3ST(states, constraints, env_params, rocket_params, controller_
     states_x = deepcopy(states)
     constraints_x = deepcopy(constraints)
 
-    states_x["pos"] = states["x"]
-    constraints_x["max_v"] = constraints["max_vx"]
-    constraints_x["min_v"] = constraints["min_vx"]
-    constraints_x["max_a"] = constraints["max_ax"]
-    constraints_x["min_a"] = constraints["min_ax"]
-    Px_coeffs, t = pol_interpolation(states_x, constraints_x)
+    # states_x["pos"] = states["x"]
+    # constraints_x["max_v"] = constraints["max_vx"]
+    # constraints_x["min_v"] = constraints["min_vx"]
+    # constraints_x["max_a"] = constraints["max_ax"]
+    # constraints_x["min_a"] = constraints["min_ax"]
+    # Px_coeffs, t = pol_interpolation(states_x, constraints_x)
 
-    states_y = deepcopy(states)
-    constraints_y = deepcopy(constraints)
+    # states_y = deepcopy(states)
+    # constraints_y = deepcopy(constraints)
 
-    states_y["pos"] = states["y"]
-    constraints_y["max_v"] = constraints["max_vy"]
-    constraints_y["min_v"] = constraints["min_vy"]
-    constraints_y["max_a"] = constraints["max_ay"]
-    constraints_y["min_a"] = constraints["min_ay"]
-    Py_coeffs, t = pol_interpolation(states_y, constraints_y)
+    # states_y["pos"] = states["y"]
+    # constraints_y["max_v"] = constraints["max_vy"]
+    # constraints_y["min_v"] = constraints["min_vy"]
+    # constraints_y["max_a"] = constraints["max_ay"]
+    # constraints_y["min_a"] = constraints["min_ay"]
+    # Py_coeffs, t = pol_interpolation(states_y, constraints_y)
 
-    states_z = deepcopy(states)
-    constraints_z = deepcopy(constraints)
+    # states_z = deepcopy(states)
+    # constraints_z = deepcopy(constraints)
 
-    states_z["pos"] = states["z"]
-    constraints_z["max_v"] = constraints["max_vz"]
-    constraints_z["min_v"] = constraints["min_vz"]
-    constraints_z["max_a"] = constraints["max_az"]
-    constraints_z["min_a"] = constraints["min_az"]
-    Pz_coeffs, t = pol_interpolation(states_z, constraints_z)
+    # states_z["pos"] = states["z"]
+    # constraints_z["max_v"] = constraints["max_vz"]
+    # constraints_z["min_v"] = constraints["min_vz"]
+    # constraints_z["max_a"] = constraints["max_az"]
+    # constraints_z["min_a"] = constraints["min_az"]
+    # Pz_coeffs, t = pol_interpolation(states_z, constraints_z)
 
-    # Px_coeffs, Py_coeffs, Pz_coeffs, t = min_snap_traj(
-    #     states, constraints, rocket_params, controller_params
-    # )
+    Px_coeffs, Py_coeffs, Pz_coeffs, t = coupled_pol_interpolation(
+        states, constraints, rocket_params, controller_params
+    )
 
     # calculate gamma using differential flatness
     trajectory_params = diff_flat_traj(
