@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from Traj_planning.traj_3ST.auxiliar_codes.compute_gamma_3dot import compute_gamma_3dot
 from Traj_planning.traj_3ST.auxiliar_codes.pol_processor import *
 
+
 def diff_flat_traj(
     Px_coeffs, Py_coeffs, Pz_coeffs, t, env_params, rocket_params, controller_params
 ):
@@ -53,26 +54,26 @@ def diff_flat_traj(
         if idx > 0:
             idx -= 1
 
-        x_o[i] = pos_processor(Px_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
-        y_o[i] = pos_processor(Py_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
-        z_o[i] = pos_processor(Pz_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
+        x_o[i] = pos_processor(Px_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
+        y_o[i] = pos_processor(Py_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
+        z_o[i] = pos_processor(Pz_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
 
-        vx_o[i] = vel_processor(Px_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
-        vy_o[i] = vel_processor(Py_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
-        vz_o[i] = vel_processor(Pz_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
+        vx_o[i] = vel_processor(Px_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
+        vy_o[i] = vel_processor(Py_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
+        vz_o[i] = vel_processor(Pz_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
 
-        ax_o[i] = acc_processor(Px_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
-        ay_o[i] = acc_processor(Py_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
-        az_o[i] = acc_processor(Pz_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
+        ax_o[i] = acc_processor(Px_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
+        ay_o[i] = acc_processor(Py_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
+        az_o[i] = acc_processor(Pz_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
 
-        jx_o[i] = jerk_processor(Px_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
-        jy_o[i] = jerk_processor(Py_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
+        jx_o[i] = jerk_processor(Px_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
+        jy_o[i] = jerk_processor(Py_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
 
-        sx_o[i] = snap_processor(Px_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
-        sy_o[i] = snap_processor(Py_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
+        sx_o[i] = snap_processor(Px_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
+        sy_o[i] = snap_processor(Py_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
 
-        cx_o[i] = crackle_processor(Px_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
-        cy_o[i] = crackle_processor(Py_coeffs[:, idx], [t[idx], t[idx+1]], t_list[i])
+        cx_o[i] = crackle_processor(Px_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
+        cy_o[i] = crackle_processor(Py_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
 
     temp_states = {
         "x_o": x_o,
