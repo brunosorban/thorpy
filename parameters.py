@@ -35,23 +35,19 @@ freq = 20  # frequency of the controller
 N = int(T * freq)  # Number of control intervals
 
 # controller input bounds
-u_max_f = 2 * m * g  # maxium thrust rate
-u_min_f = 0.3 * u_max_f  # should be 30% to 40% of the max thrust
-u_max_delta_tvc_c = np.deg2rad(5)  # maxium thrust vector angle
-u_min_delta_tvc_c = -np.deg2rad(5)  # minium thrust vector angle
-
-# state bounds
-gamma_max = np.deg2rad(30) + initial_state[4]  # maxium yaw angle
-gamma_min = np.deg2rad(-30) + initial_state[4]  # minium yaw angle
+max_thrust = 2 * m * g  # maxium thrust rate
+min_thrust = 0.3 * max_thrust  # should be 30% to 40% of the max thrust
+max_delta_tvc_c = np.deg2rad(15)  # maxium thrust vector angle
+min_delta_tvc_c = -np.deg2rad(15)  # minium thrust vector angle
 
 stab_time_criterion = 3  # corresponds to the system reach 95% of the final value
-u_max_f_deriv = u_max_f / (
+max_thrust_deriv = max_thrust / (
     stab_time_criterion * T_thrust
-)  # u_max_f / T_thrust # maxium thrust rate
-u_min_f_deriv = -u_max_f_deriv  # should be 30% to 40% of the max thrust
+)  # max_thrust / T_thrust # maxium thrust rate
+min_thrust_deriv = -max_thrust_deriv  # should be 30% to 40% of the max thrust
 
-u_max_delta_tvc_c_deriv = np.deg2rad(30)  # 30 deg/s
-u_min_delta_tvc_c_deriv = -u_max_delta_tvc_c_deriv
+max_delta_tvc_c_deriv = np.deg2rad(30)  # 30 deg/s
+min_delta_tvc_c_deriv = -max_delta_tvc_c_deriv
 
 q1 = 15  # position in x cost penalty
 q2 = 20  # velocity in x cost penalty
@@ -65,19 +61,6 @@ Qf_gain = 10  # gain of the final cost
 
 r1 = 1e-3  # thrust cost penalty
 r2 = 200  # thrust vector angle cost penalty
-
-# q1 = 1 / 1**2  # position in x cost penalty
-# q2 = 1 / 5**2  # velocity in x cost penalty
-# q3 = 1 / 1**2  # position in y cost penalty
-# q4 = 1 / 5**2  # velocity in y cost penalty
-# q5 = 1 / (np.pi/6)**2  # yaw angle cost penalty
-# q6 = 1 / (np.pi/15)**2  # yaw rate cost penalty
-# q7 = 1e-15  # thrust cost penalty
-# q8 = 1e-15  # thrust vector angle cost penalty
-# Qf_gain = 10  # gain of the final cost
-
-# r1 = 1 / 10**2  # thrust cost penalty
-# r2 = 1 / (np.pi/15)**2  # thrust vector angle cost penalty
 
 # normalizing parameters (not being used)
 pos_norm = 1  # position normalization
@@ -98,12 +81,6 @@ x0_val = ca.vertcat(*initial_state)  # initial state in casadi varible
 Q = ca.diag([q1, q2, q3, q4, q5, q6, q7, q8])  # cost matrix
 Qf = Qf_gain * Q  # final cost matrix
 R = ca.diag([r1, r2])  # control cost matrix
-
-# control bounds
-u_bounds = [
-    (u_min_f_deriv, u_max_f_deriv),
-    (u_min_delta_tvc_c_deriv, u_max_delta_tvc_c_deriv),
-]
 
 
 ######################### Creating the dictionaries ############################
@@ -130,15 +107,14 @@ controller_params = {
     "T": T,
     "N": N,
     "dt": T / N,
-    "u_bounds": u_bounds,
     "t0": t0_val,
     "x0": x0_val,
     "x_target": x_target,
     "Q": Q,
     "Qf": Qf,
     "R": R,
-    "gamma_bounds": (gamma_min, gamma_max),
-    "thrust_bounds": (u_min_f, u_max_f),
-    "delta_tvc_bounds": (u_min_delta_tvc_c, u_max_delta_tvc_c),
-    "omega_control_bounds": (1, 1),
+    "thrust_bounds": (min_thrust, max_thrust),
+    "thrust_dot_bounds": (min_thrust_deriv, max_thrust_deriv),
+    "delta_tvc_bounds": (min_delta_tvc_c, max_delta_tvc_c),
+    "delta_tvc_dot_bounds": (min_delta_tvc_c_deriv, max_delta_tvc_c_deriv),
 }

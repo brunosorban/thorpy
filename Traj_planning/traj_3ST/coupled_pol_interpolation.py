@@ -1,4 +1,5 @@
 import casadi as ca
+import numpy as np
 import sys
 import os
 from copy import deepcopy
@@ -12,12 +13,38 @@ sys.path.append(os.path.join(parent_folder, ".."))
 from Traj_planning.traj_3ST.auxiliar_codes.coeffs2derivatives import *
 from Traj_planning.traj_3ST.auxiliar_codes.pol_processor import *
 from Traj_planning.traj_3ST.unc_pol_interpolation import *
-from Traj_planning.traj_3ST.auxiliar_codes.new_get_f1f2 import *
+from Traj_planning.traj_3ST.auxiliar_codes.get_f1f2 import *
 
 
-def coupled_pol_interpolation(states, contraints, rocket_params, controller_params, env_params):
+def coupled_pol_interpolation(states, rocket_params, controller_params, env_params, num_intervals=100):
     """
-    This function interpolates the polynomials between the points
+    This function interpolates the polynomials between the points. X, Y and Z directions are coupled through the control
+    input constraints. There is a given position, velocity and acceleration at the initial and final points, but the 
+    intermediate points are free since the derivatives up to crackle are continuous and control input constraints are
+    enforced. The order of the polynomials is 12 and the otimization is minimizing the jerk.
+    
+    Args:
+        states (dict): Dictionary containing the desired states. The path points shall be in pos list, and the time
+            points shall be in t list. The lists shall have the same length and the time points shall be equally spaced.
+        rocket_params (dict): Dictionary containing the rocket parameters. The used parameters are:
+            - m (float): mass of the rocket [kg]
+            - J_z (float): moment of inertia of the rocket [kg*m^2]
+            - l_tvc (float): distance from the rocket's center of mass to the TVC's pivot point [m]
+        controller_params (dict): Dictionary containing the controller parameters. The used parameters are:
+            - thrust_bounds (list): list containing the lower and upper bounds of the thrust [N]
+            - delta_tvc_bounds (list): list containing the lower and upper bounds of the TVC deflection angle [rad]
+            - thrust_dot_bounds (list): list containing the lower and upper bounds of the thrust derivative [N/s]
+            - delta_tvc_dot_bounds (list): list containing the lower and upper bounds of the TVC angular rate [rad/s]
+        env_params (dict): Dictionary containing the environment parameters. The used parameters are:
+            - g (float): gravitational acceleration [m/s^2]
+        num_intervals (int): Number of points per polynomial where the cost function will be evaluated. The higher the
+            number of points, the higher the accuracy of the interpolation, but the higher the computational cost.
+            
+    Returns:
+        pol_coeffs_x (np.ndarray): 2-D array containing the coefficients of the polynomials for x direction. Each column is a polynomial. 
+        pol_coeffs_y (np.ndarray): 2-D array containing the coefficients of the polynomials for y direction. Each column is a polynomial. 
+        pol_coeffs_z (np.ndarray): 2-D array containing the coefficients of the polynomials for z direction. Each column is a polynomial.
+        time_points (np.ndarray): List containing the time points of the trajectory.
     """
 
     #######################################
@@ -27,27 +54,16 @@ def coupled_pol_interpolation(states, contraints, rocket_params, controller_para
     x_points = states["x"]
     y_points = states["y"]
     z_points = states["z"]
-
-    max_vx = contraints["max_vx"]
-    max_vy = contraints["max_vy"]
-    max_vz = contraints["max_vz"]
-
-    min_vx = contraints["min_vx"]
-    min_vy = contraints["min_vy"]
-    min_vz = contraints["min_vz"]
-
-    max_ax = contraints["max_ax"]
-    max_ay = contraints["max_ay"]
-    max_az = contraints["max_az"]
-
-    min_ax = contraints["min_ax"]
-    min_ay = contraints["min_ay"]
-    min_az = contraints["min_az"]
+    
+    # check if the time points and the position points have the same length
+    if len(time_points) != len(x_points) or len(time_points) != len(y_points) or len(time_points) != len(z_points):
+        raise ValueError("The time points and the position points shall have the same length.")
     
     params = deepcopy(rocket_params)
     params["g"] = env_params["g"]
 
     pol_order = 12  # order of the polynom (pol_order+1 coefficients)
+    num_intervals = int(num_intervals)  # number of points per polynomial where the cost function will be evaluated
 
     #######################################
     ###### build auxiliar fuctions ########
@@ -76,12 +92,6 @@ def coupled_pol_interpolation(states, contraints, rocket_params, controller_para
     jerk = get_jerk(coefs, t)
     snap = get_snap(coefs, t)
     crackle = get_crackle(coefs, t)
-
-    # vel = ca.jacobian(pos, t)
-    # acc = ca.jacobian(vel, t)
-    # jerk = ca.jacobian(acc, t)
-    # snap = ca.jacobian(jerk, t)
-    # crackle = ca.jacobian(snap, t)
 
     F_pos = ca.Function("F_pos", [coefs, t], [pos], ["[p0:p3]", "[t]"], ["position"])
     F_vel = ca.Function("F_vel", [coefs, t], [vel], ["[p0:p3]", "[t]"], ["velocity"])
@@ -176,7 +186,6 @@ def coupled_pol_interpolation(states, contraints, rocket_params, controller_para
     # define cost function
     obj = 0
 
-    num_intervals = 100
     for i in range(number_of_points - 1):  # for each polinomial
         dt_interval = time_points[i + 1] - time_points[i]
         dt = 1 / num_intervals
@@ -221,46 +230,20 @@ def coupled_pol_interpolation(states, contraints, rocket_params, controller_para
             f = ca.sqrt(f1**2 + f2**2)
             
             f1_dot, f2_dot = get_f1f2_dot(acc[0], acc[1], jerk[0], jerk[1], snap[0], snap[1], crackle[0], crackle[1], params)
-            f_dot = f_dot = (f1 * f1_dot + f2 * f2_dot) / f
             
-            opti.subject_to(f1 >= controller_params["thrust_bounds"][0])
-            opti.subject_to(f1 <= controller_params["thrust_bounds"][1])
-            
-            # it is assumed that f1 > 0
-            opti.subject_to(f2 >= -ca.sin(controller_params["delta_tvc_bounds"][1]) * f1)
-            opti.subject_to(f2 <= ca.sin(controller_params["delta_tvc_bounds"][1]) * f1)
-            
-            # opti.subject_to(f2 >= -ca.sin(controller_params["delta_tvc_bounds"][1]) * controller_params["thrust_bounds"][1])
-            # opti.subject_to(f2 <=  ca.sin(controller_params["delta_tvc_bounds"][1]) * controller_params["thrust_bounds"][1])
+            # it is assumed that f1 > 0 - which holds because the rocket has no reverse thrust
+            opti.subject_to(f2 >= -f1 * ca.tan(controller_params["delta_tvc_bounds"][1]))
+            opti.subject_to(f2 <=  f1 * ca.tan(controller_params["delta_tvc_bounds"][1]))
             
             opti.subject_to(f >= controller_params["thrust_bounds"][0])
             opti.subject_to(f <= controller_params["thrust_bounds"][1])
             
-            opti.subject_to(f1_dot >= controller_params["u_bounds"][0][0])
-            opti.subject_to(f1_dot <= controller_params["u_bounds"][0][1])
+            opti.subject_to(f1_dot >= controller_params["thrust_dot_bounds"][0])
+            opti.subject_to(f1_dot <= controller_params["thrust_dot_bounds"][1])
             
-            # # add absolute velocity constraints
-            # opti.subject_to(F_vel(pol_coeffs_x[:, i], j * dt) / dt_interval <= max_vx)
-            # opti.subject_to(F_vel(pol_coeffs_x[:, i], j * dt) / dt_interval >= min_vx)
+            opti.subject_to(f2_dot >= f * controller_params["delta_tvc_dot_bounds"][0])
+            opti.subject_to(f2_dot <= f * controller_params["delta_tvc_dot_bounds"][1])
             
-            # opti.subject_to(F_vel(pol_coeffs_y[:, i], j * dt) / dt_interval <= max_vy)
-            # opti.subject_to(F_vel(pol_coeffs_y[:, i], j * dt) / dt_interval >= min_vy)
-            
-            # opti.subject_to(F_vel(pol_coeffs_z[:, i], j * dt) / dt_interval <= max_vz)
-            # opti.subject_to(F_vel(pol_coeffs_z[:, i], j * dt) / dt_interval >= min_vz)
-
-            # # add absolute acceleration constraints
-            # opti.subject_to(F_acc(pol_coeffs_x[:, i], j * dt) / dt_interval**2 <= max_ax)
-            # opti.subject_to(F_acc(pol_coeffs_x[:, i], j * dt) / dt_interval**2 >= min_ax)
-
-            # opti.subject_to(F_acc(pol_coeffs_y[:, i], j * dt) / dt_interval**2 <= max_ay)
-            # opti.subject_to(F_acc(pol_coeffs_y[:, i], j * dt) / dt_interval**2 >= min_ay)
-            
-            # opti.subject_to(F_acc(pol_coeffs_z[:, i], j * dt) / dt_interval**2 <= max_az)
-            # opti.subject_to(F_acc(pol_coeffs_z[:, i], j * dt) / dt_interval**2 >= min_az)
-
-        # obj += pol_coeffs[pol_order, i]**2
-
     # add final cost
     obj += F_jerk(pol_coeffs_x[:, i], 1) ** 2
     obj += F_jerk(pol_coeffs_y[:, i], 1) ** 2
@@ -307,6 +290,18 @@ def coupled_pol_interpolation(states, contraints, rocket_params, controller_para
     print("\nx: \n", sol.value(pol_coeffs_x))
     print("\ny: \n", sol.value(pol_coeffs_y))
     print("\nz: \n", sol.value(pol_coeffs_z))
-
-    return sol.value(pol_coeffs_x), sol.value(pol_coeffs_y), sol.value(pol_coeffs_z), time_points
-    # return initial_guess, time_points
+    
+    if number_of_points == 2: # tweak for the 2 points case so that the output is still a 2D array
+        return (
+            np.array([sol.value(pol_coeffs_x)]).T,
+            np.array([sol.value(pol_coeffs_y)]).T,
+            np.array([sol.value(pol_coeffs_z)]).T,
+            np.array(time_points),
+        )
+    else:
+        return (
+            np.array(sol.value(pol_coeffs_x)),
+            np.array(sol.value(pol_coeffs_y)),
+            np.array(sol.value(pol_coeffs_z)),
+            np.array(time_points),
+        )

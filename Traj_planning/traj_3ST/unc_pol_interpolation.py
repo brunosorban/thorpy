@@ -12,11 +12,23 @@ from Traj_planning.traj_3ST.auxiliar_codes.coeffs2derivatives import *
 from Traj_planning.traj_3ST.auxiliar_codes.estimate_coeffs import estimate_coeffs
 
 
-def unconstrained_pol_interpolation(states):
+def unconstrained_pol_interpolation(states, num_intervals=100):
     """
-    This function interpolates the polynomials between the points
+    This function interpolates the 1-D polynomials between the points. The polynomials are unconstrained, i.e., they have
+    a given position, velocity and acceleration at the initial and final points, but the intermediate points can assume
+    any value since the derivatives up to crackle are continuous. The order of the polynomials is 12 and the otimization
+    is minimizing the jerk.
+    
+    Args:
+        states (dict): Dictionary containing the desired states. The path points shall be in pos list, and the time
+            points shall be in t list. The lists shall have the same length and the time points shall be equally spaced.
+        num_intervals (int): Number of points per polynomial where the cost function will be evaluated. The higher the
+            number of points, the higher the accuracy of the interpolation, but the higher the computational cost.
+            
+    Returns:
+        pol_coeffs (list): 2-D array containing the coefficients of the polynomials. Each column is a polynomial.
+        time_points (list): List containing the time points where the cost function was evaluated.
     """
-
     #######################################
     ############ retrieve data ############
     #######################################
@@ -24,6 +36,7 @@ def unconstrained_pol_interpolation(states):
     position_points = states["pos"]
 
     pol_order = 12  # order of the polynom (pol_order+1 coefficients)
+    num_intervals = int(num_intervals)
 
     #######################################
     ###### build auxiliar fuctions ########
@@ -112,7 +125,6 @@ def unconstrained_pol_interpolation(states):
     # define cost function
     obj = 0
 
-    num_intervals = 100
     for i in range(number_of_points - 1):  # for each polinomial
         dt = 1 / num_intervals
 
@@ -142,8 +154,7 @@ def unconstrained_pol_interpolation(states):
 
     print("Interpolating unconstrained trajectory...")
     sol = opti.solve()
-    print("Interpolation done!")
-    print("Solution: \n", sol.value(pol_coeffs))
+    print("Unconstrained interpolation done!")
     print()
 
     return sol.value(pol_coeffs), time_points
