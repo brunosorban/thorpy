@@ -218,6 +218,7 @@ def crackle_processor(coeffs, time_interval, cur_time):
 
     return crackle
 
+
 def pop_processor(coeffs, time_interval, cur_time):
     """
     This function returns the value of the sixth derivative of the polinomial at the given time.

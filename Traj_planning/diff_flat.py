@@ -4,6 +4,7 @@ from Traj_planning.auxiliar_codes.compute_gamma_3dot import compute_gamma_3dot
 from Traj_planning.auxiliar_codes.pol_processor import *
 from Traj_planning.auxiliar_codes.get_f1f2 import *
 
+
 def diff_flat_traj(
     Px_coeffs, Py_coeffs, Pz_coeffs, t, env_params, rocket_params, controller_params
 ):
@@ -32,7 +33,7 @@ def diff_flat_traj(
     l_tvc = rocket_params["l_tvc"]
     J_z = rocket_params["J_z"]
     dt = controller_params["dt"]
-    
+
     params = {}
     params["g"] = g
     params["m"] = m
@@ -59,7 +60,7 @@ def diff_flat_traj(
     f1 = np.zeros_like(t_list)
     f1_dot = np.zeros_like(t_list)
 
-    for i in range(len(t)-1):
+    for i in range(len(t) - 1):
         t0 = t[i]
         tf = t[i + 1]
         i0 = np.where(t_list == t0)[0][0]
@@ -83,8 +84,12 @@ def diff_flat_traj(
         sx_o[i0:i1] = snap_processor(Px_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
         sy_o[i0:i1] = snap_processor(Py_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
 
-        cx_o[i0:i1] = crackle_processor(Px_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
-        cy_o[i0:i1] = crackle_processor(Py_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
+        cx_o[i0:i1] = crackle_processor(
+            Px_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1]
+        )
+        cy_o[i0:i1] = crackle_processor(
+            Py_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1]
+        )
 
     e1bx = np.zeros_like(t_list)
     e1by = np.zeros_like(t_list)
@@ -95,27 +100,29 @@ def diff_flat_traj(
     for i in range(len(t_list)):
         t = np.array([ax_o[i], ay_o[i] + g, 0])
         temp = np.linalg.norm(t)
-        
+
         e1bx[i] = t[0] / temp
         e1by[i] = t[1] / temp
         e2bx[i] = -t[1] / temp
         e2by[i] = t[0] / temp
-        
+
     # estimate the gamma, gamma_dot, gamma_dot_dot, gamma_3dot and forces
     gamma = np.arctan2(ay_o + g, ax_o)
     gamma_dot = (jy_o * ax_o - (ay_o + g) * jx_o) / (ax_o**2 + (ay_o + g) ** 2)
     gamma_dot_dot = get_gamma_2dot(ax_o, ay_o, jx_o, jy_o, sx_o, sy_o, params)
     gamma_3dot = get_gamma_3dot(ax_o, ay_o, jx_o, jy_o, sx_o, sy_o, cx_o, cy_o, params)
-    
+
     f1, f2 = get_f1f2_np(ax_o, ay_o, jx_o, jy_o, sx_o, sy_o, params)
-    f1_dot, f2_dot = get_f1f2_dot_np(ax_o, ay_o, jx_o, jy_o, sx_o, sy_o, cx_o, cy_o, params)
+    f1_dot, f2_dot = get_f1f2_dot_np(
+        ax_o, ay_o, jx_o, jy_o, sx_o, sy_o, cx_o, cy_o, params
+    )
 
     f = np.sqrt(f1**2 + f2**2)
     f_dot = (f1 * f1_dot + f2 * f2_dot) / f
 
     delta_tvc = np.arctan2(f2, f1)
     delta_tvc_dot = (f1 * f2_dot - f2 * f1_dot) / (f1**2 + f2**2)
-    
+
     # compute the states for the CG
     x_g = x_o - J_z / (m * l_tvc) * e1bx
     y_g = y_o - J_z / (m * l_tvc) * e1by

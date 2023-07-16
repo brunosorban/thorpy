@@ -107,18 +107,18 @@ def pol_interpolation(states, contraints):
     # add acceleration constraints (initial and final acceleration are zero)
     opti.subject_to(F_acc(pol_coeffs[:, 0], 0) == 0)
     opti.subject_to(F_acc(pol_coeffs[:, -1], 1) == 0)
-    
+
     # add jerk constraints - gamma_dot is zero in the beginning and end
     opti.subject_to(F_jerk(pol_coeffs[:, 0], 0) == 0)
     opti.subject_to(F_jerk(pol_coeffs[:, -1], 1) == 0)
-    
+
     # add snap constraints - gamma_dot_dot is zero in the beginning and end, thus,
     # tvc_angle is zero in the beginning and end
     opti.subject_to(F_snap(pol_coeffs[:, 0], 0) == 0)
     opti.subject_to(F_snap(pol_coeffs[:, -1], 1) == 0)
-    
+
     # add crackle constraints - gamma_dot_dot is zero in the beginning and end, thus,
-    # tvc_angle derivative is zero in the beginning and end    
+    # tvc_angle derivative is zero in the beginning and end
     opti.subject_to(F_crackle(pol_coeffs[:, 0], 0) == 0)
     opti.subject_to(F_crackle(pol_coeffs[:, -1], 1) == 0)
 

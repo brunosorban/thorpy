@@ -102,13 +102,13 @@ def unconstrained_pol_interpolation(states, num_intervals=100):
     # add jerk constraints - gamma_dot is zero in the beginning and end
     opti.subject_to(F_jerk(pol_coeffs[:, 0], 0) == 0)
     opti.subject_to(F_jerk(pol_coeffs[:, -1], 1) == 0)
-    
+
     # add snap constraints - gamma_dot_dot is zero in the beginning and end, thus,
     # tvc_angle is zero in the beginning and end
     opti.subject_to(F_snap(pol_coeffs[:, 0], 0) == 0)
     opti.subject_to(F_snap(pol_coeffs[:, -1], 1) == 0)
-    
-    # add crackle constraints - tvc_angle derivative is zero in the beginning and end    
+
+    # add crackle constraints - tvc_angle derivative is zero in the beginning and end
     opti.subject_to(F_crackle(pol_coeffs[:, 0], 0) == 0)
     opti.subject_to(F_crackle(pol_coeffs[:, -1], 1) == 0)
 
