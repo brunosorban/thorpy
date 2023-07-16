@@ -34,7 +34,7 @@ x_target = None
 
 # controller parameters
 T = 3  # time horizon
-freq = 40  # frequency of the controller
+freq = 60  # frequency of the controller
 N = int(T * freq)  # Number of control intervals
 
 # controller input bounds
@@ -72,6 +72,11 @@ angle_norm = 1  # np.deg2rad(15)  # angle normalization
 angle_rate_norm = 1  # np.deg2rad(5)  # angle rate normalization
 thrust_norm = 1  # thrust normalization
 
+# Trajectory generator parameters
+max_drift = 5 / 100  # maximum drift of the trajectory (1 equals to 100%)
+max_angular_drift = np.deg2rad(5)  # maximum angular drift of the trajectory in radians
+safety_factor_num_int = 1.1  # safety margin for the numerical integrator. The constraint will be the maximum value of the numerical integrator divided this factor
+
 ###################### Calculated and casadi varibles ##########################
 # initial state
 t0_val = 0  # initial time
@@ -86,6 +91,9 @@ R = ca.diag([r1, r2])  # control cost matrix
 # environment parameters
 env_params = {
     "g": g,
+    "max_drift": max_drift,
+    "max_angular_drift": max_angular_drift,
+    "safety_factor_num_int": safety_factor_num_int,
 }
 
 # Rocket parameters

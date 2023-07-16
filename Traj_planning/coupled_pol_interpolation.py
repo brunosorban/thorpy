@@ -76,6 +76,7 @@ def coupled_pol_interpolation(
         num_intervals
     )  # number of points per polynomial where the cost function will be evaluated
 
+    safety_factor_num_int = env_params["safety_factor_num_int"]
     #######################################
     ###### build auxiliar fuctions ########
     #######################################
@@ -156,7 +157,7 @@ def coupled_pol_interpolation(
 
     opti.subject_to(F_acc(pol_coeffs_z[:, 0], 0) == 0)
     opti.subject_to(F_acc(pol_coeffs_z[:, -1], 1) == 0)
-    
+
     # add jerk constraints - gamma_dot is zero in the beginning and end
     opti.subject_to(F_jerk(pol_coeffs_x[:, 0], 0) == 0)
     opti.subject_to(F_jerk(pol_coeffs_x[:, -1], 1) == 0)
@@ -166,7 +167,7 @@ def coupled_pol_interpolation(
 
     opti.subject_to(F_jerk(pol_coeffs_z[:, 0], 0) == 0)
     opti.subject_to(F_jerk(pol_coeffs_z[:, -1], 1) == 0)
-    
+
     # add snap constraints - gamma_dot_dot is zero in the beginning and end, thus,
     # tvc_angle is zero in the beginning and end
     opti.subject_to(F_snap(pol_coeffs_x[:, 0], 0) == 0)
@@ -177,7 +178,7 @@ def coupled_pol_interpolation(
 
     opti.subject_to(F_snap(pol_coeffs_z[:, 0], 0) == 0)
     opti.subject_to(F_snap(pol_coeffs_z[:, -1], 1) == 0)
-    
+
     # add crackle constraints - tvc_angle derivative is zero in the beginning and end
     opti.subject_to(F_crackle(pol_coeffs_x[:, 0], 0) == 0)
     opti.subject_to(F_crackle(pol_coeffs_x[:, -1], 1) == 0)
@@ -317,18 +318,46 @@ def coupled_pol_interpolation(
 
             # it is assumed that f1 > 0 - which holds because the rocket has no reverse thrust
             opti.subject_to(
-                f2 >= -f1 * ca.tan(controller_params["delta_tvc_bounds"][1])
+                f2
+                >= -f1
+                * ca.tan(controller_params["delta_tvc_bounds"][1])
+                / safety_factor_num_int
             )
-            opti.subject_to(f2 <= f1 * ca.tan(controller_params["delta_tvc_bounds"][1]))
+            opti.subject_to(
+                f2
+                <= f1
+                * ca.tan(controller_params["delta_tvc_bounds"][1])
+                / safety_factor_num_int
+            )
 
-            opti.subject_to(f >= controller_params["thrust_bounds"][0])
-            opti.subject_to(f <= controller_params["thrust_bounds"][1])
+            opti.subject_to(
+                f >= controller_params["thrust_bounds"][0] / safety_factor_num_int
+            )
+            opti.subject_to(
+                f <= controller_params["thrust_bounds"][1] / safety_factor_num_int
+            )
 
-            opti.subject_to(f1_dot >= controller_params["thrust_dot_bounds"][0])
-            opti.subject_to(f1_dot <= controller_params["thrust_dot_bounds"][1])
+            opti.subject_to(
+                f1_dot
+                >= controller_params["thrust_dot_bounds"][0] / safety_factor_num_int
+            )
+            opti.subject_to(
+                f1_dot
+                <= controller_params["thrust_dot_bounds"][1] / safety_factor_num_int
+            )
 
-            opti.subject_to(f2_dot >= f * controller_params["delta_tvc_dot_bounds"][0])
-            opti.subject_to(f2_dot <= f * controller_params["delta_tvc_dot_bounds"][1])
+            opti.subject_to(
+                f2_dot
+                >= f
+                * controller_params["delta_tvc_dot_bounds"][0]
+                / safety_factor_num_int
+            )
+            opti.subject_to(
+                f2_dot
+                <= f
+                * controller_params["delta_tvc_dot_bounds"][1]
+                / safety_factor_num_int
+            )
 
     # add final cost
     obj += F_jerk(pol_coeffs_x[:, i], 1) ** 2
