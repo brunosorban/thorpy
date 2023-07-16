@@ -9,14 +9,15 @@ def pos_processor(coeffs, time_interval, cur_time):
     time_interval : list
         The time interval of the polinomial.
     cur_time : float
-        The time at which the polinomial should be evaluated.
+        The time list at which the polinomial should be evaluated. Should be an
+        increasing list.
 
     Returns
     -------
     float
         The value of the polinomial at the given time.
     """
-    if cur_time < time_interval[0] or cur_time > time_interval[1]:
+    if cur_time[0] < time_interval[0] or cur_time[1] > time_interval[1]:
         raise ValueError(
             "The given time is not in the time interval of the polinomial."
         )
@@ -49,7 +50,7 @@ def vel_processor(coeffs, time_interval, cur_time):
     float
         The value of the first derivative of the polinomial at the given time.
     """
-    if cur_time < time_interval[0] or cur_time > time_interval[1]:
+    if cur_time[0] < time_interval[0] or cur_time[1] > time_interval[1]:
         raise ValueError(
             "The given time is not in the time interval of the polinomial."
         )
@@ -83,7 +84,7 @@ def acc_processor(coeffs, time_interval, cur_time):
     float
         The value of the second derivative of the polinomial at the given time.
     """
-    if cur_time < time_interval[0] or cur_time > time_interval[1]:
+    if cur_time[0] < time_interval[0] or cur_time[1] > time_interval[1]:
         raise ValueError(
             "The given time is not in the time interval of the polinomial."
         )
@@ -117,7 +118,7 @@ def jerk_processor(coeffs, time_interval, cur_time):
     float
         The value of the third derivative of the polinomial at the given time.
     """
-    if cur_time < time_interval[0] or cur_time > time_interval[1]:
+    if cur_time[0] < time_interval[0] or cur_time[1] > time_interval[1]:
         raise ValueError(
             "The given time is not in the time interval of the polinomial."
         )
@@ -151,7 +152,7 @@ def snap_processor(coeffs, time_interval, cur_time):
     float
         The value of the fourth derivative of the polinomial at the given time.
     """
-    if cur_time < time_interval[0] or cur_time > time_interval[1]:
+    if cur_time[0] < time_interval[0] or cur_time[1] > time_interval[1]:
         raise ValueError(
             "The given time is not in the time interval of the polinomial."
         )
@@ -193,7 +194,7 @@ def crackle_processor(coeffs, time_interval, cur_time):
     float
         The value of the fifth derivative of the polinomial at the given time.
     """
-    if cur_time < time_interval[0] or cur_time > time_interval[1]:
+    if cur_time[0] < time_interval[0] or cur_time[1] > time_interval[1]:
         raise ValueError(
             "The given time is not in the time interval of the polinomial."
         )
@@ -216,3 +217,46 @@ def crackle_processor(coeffs, time_interval, cur_time):
         )
 
     return crackle
+
+def pop_processor(coeffs, time_interval, cur_time):
+    """
+    This function returns the value of the sixth derivative of the polinomial at the given time.
+
+    Parameters
+    ----------
+    coeffs : list
+        The coefficients of the polinomial.
+    time_interval : list
+        The time interval of the polinomial.
+    cur_time : float
+        The time at which the polinomial should be evaluated.
+
+    Returns
+    -------
+    float
+        The value of the sixth derivative of the polinomial at the given time.
+    """
+    if cur_time[0] < time_interval[0] or cur_time[1] > time_interval[1]:
+        raise ValueError(
+            "The given time is not in the time interval of the polinomial."
+        )
+
+    dt = time_interval[1] - time_interval[0]
+    scaled_time = (cur_time - time_interval[0]) / dt
+
+    # define the polinomial
+    pop = 0
+    for i in range(6, len(coeffs)):
+        pop += (
+            i
+            * (i - 1)
+            * (i - 2)
+            * (i - 3)
+            * (i - 4)
+            * (i - 5)
+            * coeffs[i]
+            * (scaled_time ** (i - 6))
+            / dt**6
+        )
+
+    return pop

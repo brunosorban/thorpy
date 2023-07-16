@@ -35,7 +35,7 @@ def diff_flat_traj(
     params["l_tvc"] = l_tvc
     params["J_z"] = J_z
 
-    t_list = np.arange(0, t[-1], dt)
+    t_list = np.linspace(t[0], t[-1], int((t[-1] - t[0]) / dt) + 1, endpoint=True)
 
     x_o = np.zeros_like(t_list)
     y_o = np.zeros_like(t_list)
@@ -55,31 +55,32 @@ def diff_flat_traj(
     f1 = np.zeros_like(t_list)
     f1_dot = np.zeros_like(t_list)
 
-    for i in range(len(t_list)):
-        idx = np.searchsorted(t, t_list[i])
-        if idx > 0:
-            idx -= 1
+    for i in range(len(t)-1):
+        t0 = t[i]
+        tf = t[i + 1]
+        i0 = np.where(t_list == t0)[0][0]
+        i1 = np.where(t_list == tf)[0][0] + 1
 
-        x_o[i] = pos_processor(Px_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
-        y_o[i] = pos_processor(Py_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
-        z_o[i] = pos_processor(Pz_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
+        x_o[i0:i1] = pos_processor(Px_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
+        y_o[i0:i1] = pos_processor(Py_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
+        z_o[i0:i1] = pos_processor(Pz_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
 
-        vx_o[i] = vel_processor(Px_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
-        vy_o[i] = vel_processor(Py_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
-        vz_o[i] = vel_processor(Pz_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
+        vx_o[i0:i1] = vel_processor(Px_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
+        vy_o[i0:i1] = vel_processor(Py_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
+        vz_o[i0:i1] = vel_processor(Pz_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
 
-        ax_o[i] = acc_processor(Px_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
-        ay_o[i] = acc_processor(Py_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
-        az_o[i] = acc_processor(Pz_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
+        ax_o[i0:i1] = acc_processor(Px_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
+        ay_o[i0:i1] = acc_processor(Py_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
+        az_o[i0:i1] = acc_processor(Pz_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
 
-        jx_o[i] = jerk_processor(Px_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
-        jy_o[i] = jerk_processor(Py_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
+        jx_o[i0:i1] = jerk_processor(Px_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
+        jy_o[i0:i1] = jerk_processor(Py_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
 
-        sx_o[i] = snap_processor(Px_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
-        sy_o[i] = snap_processor(Py_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
+        sx_o[i0:i1] = snap_processor(Px_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
+        sy_o[i0:i1] = snap_processor(Py_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
 
-        cx_o[i] = crackle_processor(Px_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
-        cy_o[i] = crackle_processor(Py_coeffs[:, idx], [t[idx], t[idx + 1]], t_list[i])
+        cx_o[i0:i1] = crackle_processor(Px_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
+        cy_o[i0:i1] = crackle_processor(Py_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
 
     # temp_states = {
     #     "x_o": x_o,
@@ -119,11 +120,12 @@ def diff_flat_traj(
     # estimate the trajectory parameters for the 3D case
     for i in range(len(t_list)):
         t = np.array([ax_o[i], ay_o[i] + g, 0])
-
-        e1bx[i] = t[0] / np.linalg.norm(t)
-        e1by[i] = t[1] / np.linalg.norm(t)
-        e2bx[i] = -t[1] / np.linalg.norm(t)
-        e2by[i] = t[0] / np.linalg.norm(t)
+        temp = np.linalg.norm(t)
+        
+        e1bx[i] = t[0] / temp
+        e1by[i] = t[1] / temp
+        e2bx[i] = -t[1] / temp
+        e2by[i] = t[0] / temp
         
     # estimate the gamma, gamma_dot, gamma_dot_dot, gamma_3dot and forces
     gamma = np.arctan2(ay_o + g, ax_o)

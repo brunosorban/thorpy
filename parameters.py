@@ -30,7 +30,7 @@ x_target = None
 
 # controller parameters
 T = 3  # time horizon
-freq = 2000  # frequency of the controller
+freq = 40  # frequency of the controller
 N = int(T * freq)  # Number of control intervals
 
 # controller input bounds
