@@ -18,13 +18,13 @@ def unconstrained_pol_interpolation(states, num_intervals=100):
     a given position, velocity and acceleration at the initial and final points, but the intermediate points can assume
     any value since the derivatives up to crackle are continuous. The order of the polynomials is 12 and the otimization
     is minimizing the jerk.
-    
+
     Args:
         states (dict): Dictionary containing the desired states. The path points shall be in pos list, and the time
             points shall be in t list. The lists shall have the same length and the time points shall be equally spaced.
         num_intervals (int): Number of points per polynomial where the cost function will be evaluated. The higher the
             number of points, the higher the accuracy of the interpolation, but the higher the computational cost.
-            
+
     Returns:
         pol_coeffs (list): 2-D array containing the coefficients of the polynomials. Each column is a polynomial.
         time_points (list): List containing the time points where the cost function was evaluated.
@@ -98,6 +98,16 @@ def unconstrained_pol_interpolation(states, num_intervals=100):
     # add acceleration constraints (initial and final acceleration are zero)
     opti.subject_to(F_acc(pol_coeffs[:, 0], 0) == 0)
     opti.subject_to(F_acc(pol_coeffs[:, -1], 1) == 0)
+    
+    # add snap constraints - gamma_dot_dot is zero in the beginning and end, thus,
+    # tvc_angle is zero in the beginning and end
+    opti.subject_to(F_snap(pol_coeffs[:, 0], 0) == 0)
+    opti.subject_to(F_snap(pol_coeffs[:, -1], 1) == 0)
+    
+    # add crackle constraints - gamma_dot_dot is zero in the beginning and end, thus,
+    # tvc_angle derivative is zero in the beginning and end    
+    opti.subject_to(F_crackle(pol_coeffs[:, 0], 0) == 0)
+    opti.subject_to(F_crackle(pol_coeffs[:, -1], 1) == 0)
 
     ############## Treat middle ############
     for i in range(1, number_of_points - 1):

@@ -1,12 +1,8 @@
 import sys
-import numpy as np
 
 sys.path.append("../")
 sys.path.append("../Traj_planning")
 
-# import Function as ft
-# from flight_class import *
-import casadi as ca
 from MPC_SE3_controller import MPC_controller
 from animate import *
 from parameters import *

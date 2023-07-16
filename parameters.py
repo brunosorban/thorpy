@@ -27,11 +27,10 @@ tf = 60  # final time
 # state space: [x, x_dot, y, y_dot, gamma, gamma_dot, thrust, delta_tvc]
 initial_state = [0, 0, 0, 0, 0, 1, -1, 0, 0, 1, -1, 0, 0, m * g]
 x_target = None
-max_step = 1e-4
 
 # controller parameters
 T = 3  # time horizon
-freq = 20  # frequency of the controller
+freq = 2000  # frequency of the controller
 N = int(T * freq)  # Number of control intervals
 
 # controller input bounds

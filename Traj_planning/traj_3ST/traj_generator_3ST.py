@@ -9,7 +9,7 @@ def trajenerator_3ST(states, env_params, rocket_params, controller_params):
     """Function that takes the desired states and constraints and returns the trajectory parameters.
 
     Args:
-        states (dict): Dictionary containing the desired states. The path points shall be in x, y and z lists, and the 
+        states (dict): Dictionary containing the desired states. The path points shall be in x, y and z lists, and the
             time points shall be in t list. The lists shall have the same length and the time points shall be equally
             spaced. Currently, the initial and final velocities and accelerations are 0.
         env_params (dict): Dictionary containing the environment parameters. Currently g is used.
@@ -30,6 +30,8 @@ def trajenerator_3ST(states, env_params, rocket_params, controller_params):
         Px_coeffs, Py_coeffs, Pz_coeffs, t, env_params, rocket_params, controller_params
     )
 
-    plot_trajectory(states, trajectory_params, controller_params, "Diff flat trajectory")
+    plot_trajectory(
+        states, trajectory_params, controller_params, "Diff flat trajectory"
+    )
 
     return trajectory_params

@@ -31,7 +31,5 @@ states = {
 
 
 def traj_M_3ST():
-    traj_params = trajenerator_3ST(
-        states, env_params, rocket_params, controller_params
-    )
+    traj_params = trajenerator_3ST(states, env_params, rocket_params, controller_params)
     return traj_params

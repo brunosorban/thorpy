@@ -9,7 +9,9 @@ def get_gamma_2dot(x_dot_dot, y_dot_dot, x_3dot, y_3dot, x_4dot, y_4dot, params)
     ) ** 2
 
 
-def get_gamma_3dot(x_dot_dot, y_dot_dot, x_3dot, y_3dot, x_4dot, y_4dot, x_5dot, y_5dot, params):
+def get_gamma_3dot(
+    x_dot_dot, y_dot_dot, x_3dot, y_3dot, x_4dot, y_4dot, x_5dot, y_5dot, params
+):
     g = params["g"]
     gamma_3dot = (
         -(-(g + y_dot_dot) * x_3dot + x_dot_dot * y_3dot)

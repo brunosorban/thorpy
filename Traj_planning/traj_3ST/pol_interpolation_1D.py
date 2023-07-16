@@ -10,14 +10,28 @@ parent_folder = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(parent_folder, ".."))
 
 from Traj_planning.traj_3ST.auxiliar_codes.coeffs2derivatives import *
-from Traj_planning.traj_3ST.auxiliar_codes.estimate_coeffs import estimate_coeffs
 from Traj_planning.traj_3ST.auxiliar_codes.pol_processor import *
 from Traj_planning.traj_3ST.unc_pol_interpolation import *
 
 
 def pol_interpolation(states, contraints):
     """
-    This function interpolates the polynomials between the points
+    This function interpolates the polynomials between the points. There is a given position; velocity and acceleration
+    at the initial and final points are 0, but the intermediate points are free since the derivatives up to crackle are
+    continuous and constraints on maximum velocity and acceleration are enforced. The order of the polynomials is 12 and
+    the otimization is minimizing the jerk.
+
+    Args:
+        states (dict): Dictionary containing the desired states. The path points shall be in pos list, and the time
+            points shall be in t list. The lists shall have the same length and the time points shall be equally spaced.
+        contraints (dict): Dictionary containing the contraints. The maximum and minimum velocity shall be in max_v and
+            min_v, respectively. The maximum and minimum acceleration shall be in max_a and min_a, respectively.
+        num_intervals (int): Number of points per polynomial where the cost function will be evaluated. The higher the
+            number of points, the higher the accuracy of the interpolation, but the higher the computational cost.
+
+    Returns:
+        pol_coeffs (np.ndarray): 2-D array containing the coefficients of the polynomials. Each column is a polynomial.
+        time_points (np.ndarray): List containing the time points of the trajectory.
     """
 
     #######################################
@@ -61,12 +75,6 @@ def pol_interpolation(states, contraints):
     snap = get_snap(coefs, t)
     crackle = get_crackle(coefs, t)
 
-    # vel = ca.jacobian(pos, t)
-    # acc = ca.jacobian(vel, t)
-    # jerk = ca.jacobian(acc, t)
-    # snap = ca.jacobian(jerk, t)
-    # crackle = ca.jacobian(snap, t)
-
     F_pos = ca.Function("F_pos", [coefs, t], [pos], ["[p0:p3]", "[t]"], ["position"])
     F_vel = ca.Function("F_vel", [coefs, t], [vel], ["[p0:p3]", "[t]"], ["velocity"])
     F_acc = ca.Function(
@@ -99,6 +107,20 @@ def pol_interpolation(states, contraints):
     # add acceleration constraints (initial and final acceleration are zero)
     opti.subject_to(F_acc(pol_coeffs[:, 0], 0) == 0)
     opti.subject_to(F_acc(pol_coeffs[:, -1], 1) == 0)
+    
+    # add jerk constraints - gamma_dot is zero in the beginning and end
+    opti.subject_to(F_jerk(pol_coeffs[:, 0], 0) == 0)
+    opti.subject_to(F_jerk(pol_coeffs[:, -1], 1) == 0)
+    
+    # add snap constraints - gamma_dot_dot is zero in the beginning and end, thus,
+    # tvc_angle is zero in the beginning and end
+    opti.subject_to(F_snap(pol_coeffs[:, 0], 0) == 0)
+    opti.subject_to(F_snap(pol_coeffs[:, -1], 1) == 0)
+    
+    # add crackle constraints - gamma_dot_dot is zero in the beginning and end, thus,
+    # tvc_angle derivative is zero in the beginning and end    
+    opti.subject_to(F_crackle(pol_coeffs[:, 0], 0) == 0)
+    opti.subject_to(F_crackle(pol_coeffs[:, -1], 1) == 0)
 
     ############## Treat middle ############
     for i in range(1, number_of_points - 1):
@@ -143,8 +165,6 @@ def pol_interpolation(states, contraints):
             opti.subject_to(F_acc(pol_coeffs[:, i], j * dt) / dt_interval**2 <= max_a)
             opti.subject_to(F_acc(pol_coeffs[:, i], j * dt) / dt_interval**2 >= min_a)
 
-        # obj += pol_coeffs[pol_order, i]**2
-
     # add final cost
     obj += F_jerk(pol_coeffs[:, i], 1) ** 2
 
@@ -167,7 +187,7 @@ def pol_interpolation(states, contraints):
     }
 
     # select the desired solver
-    opti.solver("ipopt")  # , ipopt_options)
+    opti.solver("ipopt", ipopt_options)
 
     print("Interpolating trajectory...")
     sol = opti.solve()
@@ -175,4 +195,3 @@ def pol_interpolation(states, contraints):
     print("Solution: \n", sol.value(pol_coeffs))
 
     return sol.value(pol_coeffs), time_points
-    # return initial_guess, time_points
