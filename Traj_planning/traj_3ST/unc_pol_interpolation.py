@@ -91,21 +91,24 @@ def unconstrained_pol_interpolation(states, num_intervals=100):
     opti.subject_to(F_pos(pol_coeffs[:, 0], 0) == position_points[0])
     opti.subject_to(F_pos(pol_coeffs[:, -1], 1) == position_points[-1])
 
-    # add velocity constraints (initial and final velocity are zero)
+    # add velocity constraints - initial and final velocity are zero
     opti.subject_to(F_vel(pol_coeffs[:, 0], 0) == 0)
     opti.subject_to(F_vel(pol_coeffs[:, -1], 1) == 0)
 
-    # add acceleration constraints (initial and final acceleration are zero)
+    # add acceleration constraints - initial and final acceleration are zero
     opti.subject_to(F_acc(pol_coeffs[:, 0], 0) == 0)
     opti.subject_to(F_acc(pol_coeffs[:, -1], 1) == 0)
+
+    # add jerk constraints - gamma_dot is zero in the beginning and end
+    opti.subject_to(F_jerk(pol_coeffs[:, 0], 0) == 0)
+    opti.subject_to(F_jerk(pol_coeffs[:, -1], 1) == 0)
     
     # add snap constraints - gamma_dot_dot is zero in the beginning and end, thus,
     # tvc_angle is zero in the beginning and end
     opti.subject_to(F_snap(pol_coeffs[:, 0], 0) == 0)
     opti.subject_to(F_snap(pol_coeffs[:, -1], 1) == 0)
     
-    # add crackle constraints - gamma_dot_dot is zero in the beginning and end, thus,
-    # tvc_angle derivative is zero in the beginning and end    
+    # add crackle constraints - tvc_angle derivative is zero in the beginning and end    
     opti.subject_to(F_crackle(pol_coeffs[:, 0], 0) == 0)
     opti.subject_to(F_crackle(pol_coeffs[:, -1], 1) == 0)
 

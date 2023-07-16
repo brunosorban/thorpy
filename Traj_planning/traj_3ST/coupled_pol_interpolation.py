@@ -178,16 +178,15 @@ def coupled_pol_interpolation(
     opti.subject_to(F_snap(pol_coeffs_z[:, 0], 0) == 0)
     opti.subject_to(F_snap(pol_coeffs_z[:, -1], 1) == 0)
     
-    # # add crackle constraints - gamma_dot_dot is zero in the beginning and end, thus,
-    # # tvc_angle derivative is zero in the beginning and end
-    # opti.subject_to(F_crackle(pol_coeffs_x[:, 0], 0) == 0)
-    # opti.subject_to(F_crackle(pol_coeffs_x[:, -1], 1) == 0)
+    # add crackle constraints - tvc_angle derivative is zero in the beginning and end
+    opti.subject_to(F_crackle(pol_coeffs_x[:, 0], 0) == 0)
+    opti.subject_to(F_crackle(pol_coeffs_x[:, -1], 1) == 0)
 
-    # opti.subject_to(F_crackle(pol_coeffs_y[:, 0], 0) == 0)
-    # opti.subject_to(F_crackle(pol_coeffs_y[:, -1], 1) == 0)
+    opti.subject_to(F_crackle(pol_coeffs_y[:, 0], 0) == 0)
+    opti.subject_to(F_crackle(pol_coeffs_y[:, -1], 1) == 0)
 
-    # opti.subject_to(F_crackle(pol_coeffs_z[:, 0], 0) == 0)
-    # opti.subject_to(F_crackle(pol_coeffs_z[:, -1], 1) == 0)
+    opti.subject_to(F_crackle(pol_coeffs_z[:, 0], 0) == 0)
+    opti.subject_to(F_crackle(pol_coeffs_z[:, -1], 1) == 0)
 
     ############## Treat middle ############
     for i in range(1, number_of_points - 1):
