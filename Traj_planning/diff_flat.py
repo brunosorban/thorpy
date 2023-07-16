@@ -1,13 +1,15 @@
 import numpy as np
-from Traj_planning.traj_3ST.auxiliar_codes.get_gamma import *
-from Traj_planning.traj_3ST.auxiliar_codes.compute_gamma_3dot import compute_gamma_3dot
-from Traj_planning.traj_3ST.auxiliar_codes.pol_processor import *
-from Traj_planning.traj_3ST.auxiliar_codes.get_f1f2 import *
+from Traj_planning.auxiliar_codes.get_gamma import *
+from Traj_planning.auxiliar_codes.compute_gamma_3dot import compute_gamma_3dot
+from Traj_planning.auxiliar_codes.pol_processor import *
+from Traj_planning.auxiliar_codes.get_f1f2 import *
 
 def diff_flat_traj(
     Px_coeffs, Py_coeffs, Pz_coeffs, t, env_params, rocket_params, controller_params
 ):
     """This function computes the trajectory parameters for the 2D case using differential flatness.
+        One shall mind that the polinomials are for the trajectory of the oscillation point, but the
+        returned variables are converted for the center of gravity of the rocket.
 
     Args:
         Px_coeffs (list): List of coefficients for the x position.
@@ -20,6 +22,8 @@ def diff_flat_traj(
 
     Returns:
         trajectory_params (dict): Dictionary containing the trajectory parameters.
+            The variables were computed for the center of gravity of the rocket,
+            but the polinomials are for the oscillation point.
     """
 
     print("Starting differential flatness trajectory planning...")
@@ -82,36 +86,6 @@ def diff_flat_traj(
         cx_o[i0:i1] = crackle_processor(Px_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
         cy_o[i0:i1] = crackle_processor(Py_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
 
-    # temp_states = {
-    #     "x_o": x_o,
-    #     "y_o": y_o,
-    #     "z_o": z_o,
-    #     "vx_o": vx_o,
-    #     "vy_o": vy_o,
-    #     "vz_o": vz_o,
-    #     "ax_o": ax_o,
-    #     "ay_o": ay_o,
-    #     "az_o": az_o,
-    #     "jx_o": jx_o,
-    #     "jy_o": jy_o,
-    #     "sx_o": sx_o,
-    #     "sy_o": sy_o,
-    #     "cx_o": cx_o,
-    #     "cy_o": cy_o,
-    #     "g": g,
-    # }
-
-    # gamma = np.arctan2(ay_o + g, ax_o)
-    # gamma_dot = (jy_o * ax_o - (ay_o + g) * jx_o) / (ax_o**2 + (ay_o + g) ** 2)
-    # gamma_dot_dot = (sy_o * ax_o - (ay_o + g) * sx_o) / (
-    #     ax_o**2 + (ay_o + g) ** 2
-    # ) - (jy_o * ax_o - (ay_o + g) * jx_o) * (
-    #     2 * ax_o * jx_o + 2 * (ay_o + g) * jy_o
-    # ) / (
-    #     ax_o**2 + (ay_o + g) ** 2
-    # ) ** 2
-    # gamma_3dot = compute_gamma_3dot(temp_states)
-
     e1bx = np.zeros_like(t_list)
     e1by = np.zeros_like(t_list)
     e2bx = np.zeros_like(t_list)
@@ -135,24 +109,6 @@ def diff_flat_traj(
     
     f1, f2 = get_f1f2_np(ax_o, ay_o, jx_o, jy_o, sx_o, sy_o, params)
     f1_dot, f2_dot = get_f1f2_dot_np(ax_o, ay_o, jx_o, jy_o, sx_o, sy_o, cx_o, cy_o, params)
-
-    # r_go = J_z / (m * l_tvc)
-
-    # f2 = -(J_z + m * r_go**2) * gamma_dot_dot / (l_tvc + r_go)  # dot(m*t, yb)
-    # f2_dot = -(J_z + m * r_go**2) * gamma_3dot / (l_tvc + r_go)
-
-    # for i in range(len(t_list)):
-    #     t = np.array([ax_o[i], ay_o[i] + g, 0])
-    #     t_dot = np.array([jx_o[i], jy_o[i], 0])
-
-    #     f1[i] = (
-    #         m * (t[0] * e1bx[i] + t[1] * e1by[i]) + J_z * gamma_dot[i] ** 2 / l_tvc
-    #     )  # dot(m*t, xb)
-
-    #     # compute the derivatives
-    #     f1_dot[i] = m * (t_dot[0] * e1bx[i] + t_dot[1] * e1by[i]) + gamma_dot[i] * (
-    #         -t[0] * e1by[i] + t[1] * e1bx[i]
-    #     )  # dot(m*t_dot, xb) + dot(t, cross(gamma_dot, xb))
 
     f = np.sqrt(f1**2 + f2**2)
     f_dot = (f1 * f1_dot + f2 * f2_dot) / f

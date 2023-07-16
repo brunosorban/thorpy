@@ -8,8 +8,8 @@ parent_folder = os.path.dirname(os.path.abspath(__file__))
 # Add the parent folder to sys.path
 sys.path.append(os.path.join(parent_folder, ".."))
 
-from Traj_planning.traj_3ST.auxiliar_codes.coeffs2derivatives import *
-from Traj_planning.traj_3ST.auxiliar_codes.estimate_coeffs import estimate_coeffs
+from Traj_planning.auxiliar_codes.coeffs2derivatives import *
+from Traj_planning.auxiliar_codes.estimate_coeffs import estimate_coeffs
 
 
 def unconstrained_pol_interpolation(states, num_intervals=100):

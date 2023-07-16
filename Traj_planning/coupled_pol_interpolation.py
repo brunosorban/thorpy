@@ -10,10 +10,10 @@ parent_folder = os.path.dirname(os.path.abspath(__file__))
 # Add the parent folder to sys.path
 sys.path.append(os.path.join(parent_folder, ".."))
 
-from Traj_planning.traj_3ST.auxiliar_codes.coeffs2derivatives import *
-from Traj_planning.traj_3ST.auxiliar_codes.pol_processor import *
-from Traj_planning.traj_3ST.unc_pol_interpolation import *
-from Traj_planning.traj_3ST.auxiliar_codes.get_f1f2 import *
+from Traj_planning.auxiliar_codes.coeffs2derivatives import *
+from Traj_planning.auxiliar_codes.pol_processor import *
+from Traj_planning.unc_pol_interpolation import *
+from Traj_planning.auxiliar_codes.get_f1f2 import *
 
 
 def coupled_pol_interpolation(

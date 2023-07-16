@@ -1,6 +1,6 @@
 import sys
 import numpy as np
-from Traj_planning.traj_3ST.traj_generator_3ST import *
+from Traj_planning.traj_generator_3ST import *
 
 sys.path.append("../")
 sys.path.append("../Traj_planning")

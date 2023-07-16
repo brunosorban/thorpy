@@ -1,6 +1,6 @@
 import casadi as ca
 import numpy as np
-from Traj_planning.traj_3ST.auxiliar_codes.get_gamma import *
+from Traj_planning.auxiliar_codes.get_gamma import *
 
 
 def get_f1f2(x_dot_dot, y_dot_dot, x_3dot, y_3dot, x_4dot, y_4dot, params):

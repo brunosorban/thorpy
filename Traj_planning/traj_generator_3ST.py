@@ -1,6 +1,6 @@
-from Traj_planning.traj_3ST.coupled_pol_interpolation import *
-from Traj_planning.traj_3ST.diff_flat import *
-from Traj_planning.traj_3ST.auxiliar_codes.plot_traj import *
+from Traj_planning.coupled_pol_interpolation import *
+from Traj_planning.diff_flat import *
+from Traj_planning.auxiliar_codes.plot_traj import *
 
 from copy import deepcopy
 

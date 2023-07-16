@@ -24,8 +24,12 @@ T_thrust = 1  # Thrust time constant
 t0 = 0  # initial time
 tf = 60  # final time
 
-# state space: [x, x_dot, y, y_dot, gamma, gamma_dot, thrust, delta_tvc]
-initial_state = [0, 0, 0, 0, 0, 1, -1, 0, 0, 1, -1, 0, 0, m * g]
+J_z = (
+    1 / 12 * m * (h**2 + 3 * radius**2)
+)  # moment of inertia of the hopper perpendicular to the main axis
+
+# initial state of the oscillation point (the trajectory generator will return to the CM)
+initial_state = [0, 0, -J_z / (m * l_tvc), 0, 0, 1, -1, 0, 0, 1, -1, 0, 0, m * g]
 x_target = None
 
 # controller parameters
@@ -69,10 +73,6 @@ angle_rate_norm = 1  # np.deg2rad(5)  # angle rate normalization
 thrust_norm = 1  # thrust normalization
 
 ###################### Calculated and casadi varibles ##########################
-J_z = (
-    1 / 12 * m * (h**2 + 3 * radius**2)
-)  # moment of inertia of the hopper perpendicular to the main axis
-
 # initial state
 t0_val = 0  # initial time
 x0_val = ca.vertcat(*initial_state)  # initial state in casadi varible

@@ -1,8 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# from Traj_planning.traj_generators.traj_planner_SE3 import *
-
 
 def curve(r, theta):
     return r * np.cos(theta), r * np.sin(theta)
