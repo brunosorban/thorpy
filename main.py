@@ -3,46 +3,22 @@
 # to explore more actions in the beginning of the training session
 
 import rocket
-# import numpy as np
-# import matplotlib.pyplot as plt
 from agent import Agent
-
-
-# # Test of the ODE and step() + reset() fcn
-# duration = 20
-# N = 200
-#
-# env = rocket.HopperEnv()
-#
-# state = env.reset()
-# print(f"The initial state of the hopper is: {state}")
-#
-# S = []
-# t = np.linspace(0, duration, N)
-#
-# for i in enumerate(t):
-#     new_state, reward, done = env.step(0.298, state)
-#     state = new_state
-#     S.append(new_state[0])
-#
-# print(S[199])
-# plt.plot(t, S)
-# plt.show()
 
 env = rocket.HopperEnv()
 
-TRAIN = 1
-TEST = 0
-EPISODES = 500
+TRAIN = 0
+TEST = 1
+EPISODES = 100
 GRAPH = True
 
 ACTION_SPACE_SIZE = env.action_space
 OBSERVATION_SPACE_SIZE = env.observation_space
 
 FILE_TYPE = 'tf'
-FILE = 'saved_networks/dqn_model23'
+FILE = 'saved_networks/dqn_model9'
 
-dqn_agent = Agent(lr=0.0075, discount_factor=0.99, num_actions=ACTION_SPACE_SIZE, epsilon=1.0, batch_size=128,
+dqn_agent = Agent(lr=0.00075, discount_factor=0.95, num_actions=ACTION_SPACE_SIZE, epsilon=1.0, batch_size=64,
                   input_dims=OBSERVATION_SPACE_SIZE)
 
 if TRAIN and not TEST:

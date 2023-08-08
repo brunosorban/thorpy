@@ -5,7 +5,7 @@ class HopperEnv:
     # Physical Properties of the Hopper & the Environment
     m = 3
     g = 9.81
-    MaxThrust = 100  # Maximum possible thrust in N
+    MaxThrust = 50  # Maximum possible thrust in N
 
     # Time and Step variable
     duration = 20
@@ -19,10 +19,11 @@ class HopperEnv:
     margin = 0.05  # Allowed stationary offset of 5cm
 
     # RL related constants for the environment
-    MOVE_PENALTY = 1
-    BOUNDARY_PENALTY = 100
-    HEIGHT_REWARD = 10
-    HEIGHT_STEP_REWARD = 2
+    # MOVE_PENALTY = 0
+    BOUNDARY_PENALTY = 10
+    sigma_1 = 2
+    # HEIGHT_REWARD = 10
+    # HEIGHT_STEP_REWARD = 2
 
     # Action Space and Observation Space Sizes
     action_space = 100
@@ -36,7 +37,7 @@ class HopperEnv:
     xt = random.uniform(0, 8)
 
     def thrust_eqn(self, action):
-        thrust = action * self.MaxThrust
+        thrust = action/100 * self.MaxThrust
         return thrust
 
     def f(self, t, y, action):
@@ -94,27 +95,37 @@ class HopperEnv:
             y[0] = self.x0 - self.xt
             y[1] = 0
         elif y[0] + self.xt > 10:
-            y[0] = 10
+            y[0] = 10 - self.xt
             y[1] = 0
-
-        print(y)
 
         y = np.concatenate((y, np.array([action])))  # By giving the action in the state we give the Network the current valve position
 
         # Define the reward
-        if self.xt + y[0] < 0:
-            reward = -self.BOUNDARY_PENALTY
-        elif self.xt + y[0] > 10:
-            reward = -self.BOUNDARY_PENALTY
-        elif abs(y[0]) < self.margin:
-            reward = self.HEIGHT_REWARD
-        elif abs(y[0]) < 0.5:
-            reward = self.HEIGHT_STEP_REWARD
+        if abs(y[0]) < self.sigma_1:
+            rew1 = 1 - np.sqrt(abs(y[0])/self.sigma_1)
         else:
-            reward = -self.MOVE_PENALTY
+            rew1 = 0
+
+        if y[0] + self.xt == 10 or y[0] + self.xt == 0:
+            penalty = -self.BOUNDARY_PENALTY
+        else:
+            penalty = 0
+
+        reward = rew1 + penalty
+
+        # if self.xt + y[0] < 0:
+        #     reward = -self.BOUNDARY_PENALTY
+        # elif self.xt + y[0] > 10:
+        #     reward = -self.BOUNDARY_PENALTY
+        # elif abs(y[0]) < self.margin:
+        #     reward = self.HEIGHT_REWARD
+        # elif abs(y[0]) < 0.5:
+        #     reward = self.HEIGHT_STEP_REWARD
+        # else:
+        #     reward = -self.MOVE_PENALTY
 
         done = False
-        if reward == self.BOUNDARY_PENALTY or self.episode_step >= 200:
+        if self.episode_step >= 200:
             done = True
 
         return y, reward, done

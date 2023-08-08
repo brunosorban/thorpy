@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import random
 from replay_buffer import ReplayBuffer
+import rocket
 
 
 
@@ -29,16 +30,16 @@ class Agent:
         self.discount_factor = discount_factor
         self.epsilon = epsilon
         self.batch_size = batch_size
-        self.epsilon_decay = 0.001
+        self.epsilon_decay = 0.0005
         self.epsilon_final = 0.01
-        self.update_rate = 120
+        self.update_rate = 1000
         self.step_counter = 0
         # Initialize replay buffer
         self.buffer = ReplayBuffer(1000000, input_dims)
         # Initialize policy Network
-        self.q_net = DeepQNetwork(lr, num_actions, input_dims, 256, 256)
+        self.q_net = DeepQNetwork(lr, num_actions, input_dims, 64, 64)
         # Initialize target Network with same parameters as policy Network
-        self.q_target_net = DeepQNetwork(lr, num_actions, input_dims, 256, 256)
+        self.q_target_net = DeepQNetwork(lr, num_actions, input_dims, 64, 64)
 
     def store_tuple(self, state, action, reward, new_state, done):
         self.buffer.store_tuples(state, action, reward, new_state, done)
@@ -104,7 +105,7 @@ class Agent:
             avg_scores.append(avg_score)
             print("Episode {0}/{1}, Score: {2} ({3}), AVG Score: {4}".format(i, num_episodes, score, self.epsilon,
                                                                              avg_score))
-            if avg_score >= 0.0 and score >= 300.0:
+            if avg_score >= 0.0 and score >= 0.0:
                 self.q_net.save(("saved_networks/dqn_model{0}".format(f)))
                 self.q_net.save_weights(("saved_networks/dqn_model{0}/net_weights{0}.h5".format(f)))
                 txt.write("Save {0} - Episode {1}/{2}, Score: {3} ({4}), AVG Score: {5}\n".format(f, i, num_episodes,
@@ -133,7 +134,7 @@ class Agent:
             self.q_net.load_weights(file)
         self.epsilon = 0.0
         scores, episodes, avg_scores, obj = [], [], [], []
-        goal = 200
+        goal = 0
         score = 0.0
         for i in range(num_episodes):
             state = env.reset()
@@ -141,15 +142,15 @@ class Agent:
             episode_score = 0.0
             S1 = []
             S2 = []
-            U = []
             while not done:
                 # env.render()
                 action = self.policy(state)
                 new_state, reward, done = env.step(action, state)
 
+                # print(f"State: {new_state} Action: {action}  Reward: {reward} ")
+
                 S1.append(new_state[0])
                 S2.append(new_state[1])
-                U.append(T)
 
                 episode_score += reward
                 state = new_state
@@ -160,8 +161,13 @@ class Agent:
             avg_score = np.mean(scores[-100:])
             avg_scores.append(avg_score)
 
-            plt.plot(np.linspace(0, 1, np.size(S1)), S1)
-            plt.show()
+            print("Episode {0}/{1}, Score: {2} ({3}), AVG Score: {4}".format(i, num_episodes, episode_score, self.epsilon,
+                                                                             avg_score))
+
+            if i % 10 == 0:
+                plt.plot(np.linspace(0, rocket.HopperEnv.duration, np.size(S1)), S1)
+        plt.savefig('TestRuns.png')
+        plt.close()
         if graph:
             df = pd.DataFrame({'x': episodes, 'Score': scores, 'Average Score': avg_scores, 'Solved Requirement': obj})
 
