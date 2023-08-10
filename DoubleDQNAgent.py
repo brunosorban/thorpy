@@ -2,10 +2,8 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-import random
-from replay_buffer import ReplayBuffer
+from DoubleDQNReplayBuffer import ReplayBuffer
 import rocket
-
 
 
 def DeepQNetwork(lr, num_actions, input_dims, fc1, fc2):

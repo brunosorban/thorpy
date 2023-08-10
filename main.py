@@ -3,7 +3,7 @@
 # to explore more actions in the beginning of the training session
 
 import rocket
-from agent import Agent
+from DoubleDQNAgent import Agent
 
 env = rocket.HopperEnv()
 
@@ -16,7 +16,7 @@ ACTION_SPACE_SIZE = env.action_space
 OBSERVATION_SPACE_SIZE = env.observation_space
 
 FILE_TYPE = 'tf'
-FILE = 'saved_networks/dqn_model9'
+FILE = 'saved_networks/dqn_model293'
 
 dqn_agent = Agent(lr=0.00075, discount_factor=0.95, num_actions=ACTION_SPACE_SIZE, epsilon=1.0, batch_size=64,
                   input_dims=OBSERVATION_SPACE_SIZE)
