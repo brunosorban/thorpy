@@ -82,7 +82,7 @@ class HopperEnv:
     v0 = 0
 
     # Random target state (altitude)
-    xt = random.uniform(0, 8)
+    xt = random.uniform(0.5, 4.5)
 
     # Use Hopper Equations in Hopper Environment
     rocket = Hopper()
@@ -116,7 +116,7 @@ class HopperEnv:
 
     def reset(self):
         # New random altitude goal
-        self.xt = random.uniform(0, 8)
+        self.xt = random.uniform(0.5, 4.5)
 
         # Calculate the new initial state vector
         s0 = [self.x0 - self.xt, self.v0]
@@ -141,8 +141,8 @@ class HopperEnv:
         if y[0] + self.xt < 0:
             y[0] = self.x0 - self.xt
             y[1] = 0
-        elif y[0] + self.xt > 10:
-            y[0] = 10 - self.xt
+        elif y[0] + self.xt > 5:
+            y[0] = 5 - self.xt
             y[1] = 0
 
         # By giving the action in the state we give the Network the current valve position
@@ -154,7 +154,7 @@ class HopperEnv:
         else:
             rew1 = 0
 
-        if y[0] + self.xt == 10 or y[0] + self.xt == 0:
+        if y[0] + self.xt == 5 or y[0] + self.xt == 0:
             penalty = -self.BOUNDARY_PENALTY
         else:
             penalty = 0

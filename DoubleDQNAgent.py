@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from DoubleDQNReplayBuffer import ReplayBuffer
-import rocket
+import rocketDQN
 
 
 def DeepQNetwork(lr, num_actions, input_dims, fc1, fc2):
@@ -80,7 +80,7 @@ class Agent:
     def train_model(self, env, num_episodes, graph):
 
         scores, episodes, avg_scores, obj = [], [], [], []
-        goal = 200
+        goal = 100
         f = 0
         txt = open("saved_networks.txt", "w")
 
@@ -103,7 +103,7 @@ class Agent:
             avg_scores.append(avg_score)
             print("Episode {0}/{1}, Score: {2} ({3}), AVG Score: {4}".format(i, num_episodes, score, self.epsilon,
                                                                              avg_score))
-            if avg_score >= 0.0 and score >= 0.0:
+            if avg_score >= 50.0 and score >= 100.0:
                 self.q_net.save(("saved_networks/dqn_model{0}".format(f)))
                 self.q_net.save_weights(("saved_networks/dqn_model{0}/net_weights{0}.h5".format(f)))
                 txt.write("Save {0} - Episode {1}/{2}, Score: {3} ({4}), AVG Score: {5}\n".format(f, i, num_episodes,
@@ -120,7 +120,7 @@ class Agent:
             plt.plot('x', 'Average Score', data=df, marker='', color='orange', linewidth=2, linestyle='dashed',
                      label='AverageScore')
             plt.plot('x', 'Solved Requirement', data=df, marker='', color='red', linewidth=2, linestyle='dashed',
-                     label='Solved Requirement')
+                     label='Target Reward')
             plt.legend()
             plt.savefig('Hopper1D_Train.png')
 
@@ -132,7 +132,7 @@ class Agent:
             self.q_net.load_weights(file)
         self.epsilon = 0.0
         scores, episodes, avg_scores, obj = [], [], [], []
-        goal = 0
+        goal = 100
         score = 0.0
         for i in range(num_episodes):
             state = env.reset()
@@ -163,7 +163,7 @@ class Agent:
                                                                              avg_score))
 
             if i % 10 == 0:
-                plt.plot(np.linspace(0, rocket.HopperEnv.duration, np.size(S1)), S1)
+                plt.plot(np.linspace(0, rocketDQN.HopperEnv.duration, np.size(S1)), S1)
         plt.savefig('TestRuns.png')
         plt.close()
         if graph:
@@ -173,7 +173,7 @@ class Agent:
             plt.plot('x', 'Average Score', data=df, marker='', color='orange', linewidth=2, linestyle='dashed',
                      label='AverageScore')
             plt.plot('x', 'Solved Requirement', data=df, marker='', color='red', linewidth=2, linestyle='dashed',
-                     label='Solved Requirement')
+                     label='Target Reward')
             plt.legend()
             plt.savefig('Hopper1D_Test.png')
 
