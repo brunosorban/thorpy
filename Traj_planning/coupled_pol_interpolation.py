@@ -321,7 +321,7 @@ def coupled_pol_interpolation(
                 f2
                 >= -f1
                 * ca.tan(controller_params["delta_tvc_bounds"][1])
-                / safety_factor_num_int
+                * safety_factor_num_int
             )
             opti.subject_to(
                 f2
@@ -331,7 +331,7 @@ def coupled_pol_interpolation(
             )
 
             opti.subject_to(
-                f >= controller_params["thrust_bounds"][0] / safety_factor_num_int
+                f >= controller_params["thrust_bounds"][0] * safety_factor_num_int
             )
             opti.subject_to(
                 f <= controller_params["thrust_bounds"][1] / safety_factor_num_int
@@ -339,7 +339,7 @@ def coupled_pol_interpolation(
 
             opti.subject_to(
                 f1_dot
-                >= controller_params["thrust_dot_bounds"][0] / safety_factor_num_int
+                >= controller_params["thrust_dot_bounds"][0] * safety_factor_num_int
             )
             opti.subject_to(
                 f1_dot
@@ -350,7 +350,7 @@ def coupled_pol_interpolation(
                 f2_dot
                 >= f
                 * controller_params["delta_tvc_dot_bounds"][0]
-                / safety_factor_num_int
+                * safety_factor_num_int
             )
             opti.subject_to(
                 f2_dot
