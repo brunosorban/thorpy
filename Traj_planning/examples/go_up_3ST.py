@@ -8,14 +8,10 @@ sys.path.append("../Traj_planning")
 from parameters import *
 from Traj_planning.examples.simple_circ import *
 
-# constraints
-max_v = 150
-max_a = 2 * g
-
 target_points = np.array(
     [
         [0, 0, 0],
-        [0, 100, 0],
+        [0, 0, 100],
     ]
 )
 

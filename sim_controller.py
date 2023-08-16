@@ -3,27 +3,35 @@ import sys
 sys.path.append("../")
 sys.path.append("../Traj_planning")
 
-from MPC_SE3_controller import MPC_controller
+from MPC import MPC_controller
 from animate import *
 from parameters import *
 from Traj_planning.examples.go_up_3ST import traj_go_up_3ST
 from Traj_planning.examples.hopper_3ST import traj_hopper_3ST
 from Traj_planning.examples.M_3ST import traj_M_3ST
 from Traj_planning.examples.circle_3ST import traj_circle_3ST
+from Traj_planning.examples.spiral_3ST import traj_spiral_3ST
+from Traj_planning.examples.infinity_symbol_3ST import traj_infinity_symbol_3ST
 
 ########################## Trajectory generation ###############################
 
 # trajectory_params = traj_go_up_3ST()
 # tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
 
-trajectory_params = traj_hopper_3ST()
-tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
+# trajectory_params = traj_hopper_3ST()
+# tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
 
 # trajectory_params = traj_M_3ST()
 # tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
 
 # trajectory_params = traj_circle_3ST()
 # tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
+
+trajectory_params = traj_spiral_3ST()
+tf = trajectory_params["t"][-1]
+
+# trajectory_params = traj_infinity_symbol_3ST()
+# tf = trajectory_params["t"][-1]
 
 ######################### Creating the controller ##############################
 controller = MPC_controller(

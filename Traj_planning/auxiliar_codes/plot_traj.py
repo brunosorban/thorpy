@@ -33,39 +33,42 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     last_t = t[0]
 
     fig, axs = plt.subplots(3, 2, figsize=(15, 15))
-    axs[0, 0].plot(x, y, label="trajectory")
-    axs[0, 0].scatter([-100, 100], [0, 0], s=1e-3)
-    axs[0, 0].plot(states["x"], states["y"], "o", markersize=1, label="target points")
-    axs[0, 0].set_xlabel("Horizontal Position (m)")
-    axs[0, 0].set_ylabel("Vertical Position (m)")
-    axs[0, 0].set_title("Trajectory")
-    axs[0, 0].set_aspect("equal")
-    axs[0, 0].legend()
-    axs[0, 0].grid()
+    # axs[0, 0] = fig.add_subplot(3, 2, 1, projection='3d')
+    # axs[0, 0].plot(x, y, z, label="trajectory")
+    # # axs[0, 0].scatter([-100, 100], [0, 0], s=1e-3)
+    # axs[0, 0].plot(states["x"], states["y"], states["z"], "o", markersize=1, label="target points")
+    # axs[0, 0].set_xlabel("X Position (m)")
+    # axs[0, 0].set_ylabel("Y Position (m)")
+    # axs[0, 0].set_zlabel("Z Position (m)")
+    # axs[0, 0].set_title("Trajectory")
+    # axs[0, 0].set_aspect("equal")
+    # axs[0, 0].legend()
+    # axs[0, 0].grid()
 
-    # make the arrows
-    for k in range(0, len(t) - 1):
-        temp = t[t >= t[k]]
+    # # make the arrows
+    # for k in range(0, len(t) - 1):
+    #     temp = t[t >= t[k]]
 
-        for i in range(len(temp)):
-            if (
-                temp[i] - last_t >= 1 and temp[i] < t[k + 1]
-            ):  # Plot frame every 10 seconds
-                ind = np.searchsorted(t, temp[i])
-                origin_x = x[ind]
-                origin_y = y[ind]
-                e1_x = e1bx[ind]
-                e1_y = e1by[ind]
-                e2_x = e2bx[ind]
-                e2_y = e2by[ind]
-                axs[0, 0].quiver(origin_x, origin_y, e1_x, e1_y, scale=10, color="red")
-                axs[0, 0].quiver(origin_x, origin_y, e2_x, e2_y, scale=10, color="blue")
-                last_t = temp[i]
+    #     for i in range(len(temp)):
+    #         if (
+    #             temp[i] - last_t >= 1 and temp[i] < t[k + 1]
+    #         ):  # Plot frame every 10 seconds
+    #             ind = np.searchsorted(t, temp[i])
+    #             origin_x = x[ind]
+    #             origin_y = y[ind]
+    #             e1_x = e1bx[ind]
+    #             e1_y = e1by[ind]
+    #             e2_x = e2bx[ind]
+    #             e2_y = e2by[ind]
+    #             axs[0, 0].quiver(origin_x, origin_y, e1_x, e1_y, scale=10, color="red")
+    #             axs[0, 0].quiver(origin_x, origin_y, e2_x, e2_y, scale=10, color="blue")
+    #             last_t = temp[i]
 
     fig.suptitle(title, fontsize=16)
 
     axs[1, 0].plot(t, x, label="x")
     axs[1, 0].plot(t, y, label="y")
+    axs[1, 0].plot(t, z, label="z")
     axs[1, 0].set_xlabel("Time (s)")
     axs[1, 0].set_ylabel("Position (m)")
     axs[1, 0].set_title("Position vs Time")
@@ -109,10 +112,11 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     # Plotting the estimated f1 and f2
     ######################################
     thrust_bounds = controller_params["thrust_bounds"]
-    delta_tvc_bounds = controller_params["delta_tvc_bounds"]
+    delta_tvc_y_bounds = controller_params["delta_tvc_y_bounds"]
+    delta_tvc_z_bounds = controller_params["delta_tvc_z_bounds"]
 
-    f1_bounds = np.cos(delta_tvc_bounds[1]) * np.array(thrust_bounds)
-    f2_bounds = np.sin(delta_tvc_bounds[1]) * np.array(
+    f1_bounds = np.cos(delta_tvc_y_bounds[1]) * np.array(thrust_bounds)
+    f2_bounds = np.sin(delta_tvc_y_bounds[1]) * np.array(
         [-thrust_bounds[1], thrust_bounds[1]]
     )
 
@@ -132,10 +136,10 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     ax1_2.set_ylabel("f1")
 
     ax2_2.plot(t, f2, "o", markersize=1, label="f2")
-    ax2_2.plot(t, np.sin(delta_tvc_bounds[1]) * f, "--", color="orange")
+    ax2_2.plot(t, np.sin(delta_tvc_y_bounds[1]) * f, "--", color="orange")
     ax2_2.plot(t, [f2_bounds[0]] * len(t), "--", color="black")
     ax2_2.plot(t, [f2_bounds[1]] * len(t), "--", color="black")
-    ax2_2.plot(t, -np.sin(delta_tvc_bounds[1]) * f, "--", color="orange")
+    ax2_2.plot(t, -np.sin(delta_tvc_y_bounds[1]) * f, "--", color="orange")
     ax2_2.grid()
     ax2_2.legend(["f2", "current", "max"])
     ax2_2.set_title("Estimated f2")
@@ -166,22 +170,22 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
 
     ax5_2.plot(t, f2_dot, "o", markersize=1, label="f2_dot")
     ax5_2.plot(
-        t, f * controller_params["delta_tvc_dot_bounds"][0], "--", color="orange"
+        t, f * controller_params["delta_tvc_y_dot_bounds"][0], "--", color="orange"
     )
     ax5_2.plot(
         t,
         f_dot * np.sin(delta_tvc)
-        + f * np.cos(delta_tvc) * controller_params["delta_tvc_dot_bounds"][0],
+        + f * np.cos(delta_tvc) * controller_params["delta_tvc_y_dot_bounds"][0],
         "--",
         color="black",
     )
     ax5_2.plot(
-        t, f * controller_params["delta_tvc_dot_bounds"][1], "--", color="orange"
+        t, f * controller_params["delta_tvc_y_dot_bounds"][1], "--", color="orange"
     )
     ax5_2.plot(
         t,
         f_dot * np.sin(delta_tvc)
-        + f * np.cos(delta_tvc) * controller_params["delta_tvc_dot_bounds"][1],
+        + f * np.cos(delta_tvc) * controller_params["delta_tvc_y_dot_bounds"][1],
         "--",
         color="black",
     )
@@ -199,8 +203,8 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     ax6_2.set_ylabel("f_dot")
 
     ax7_2.plot(t, np.rad2deg(delta_tvc), "o", markersize=1, label="delta_tvc")
-    ax7_2.plot(t, [np.rad2deg(delta_tvc_bounds[0])] * len(t), "--", color="black")
-    ax7_2.plot(t, [np.rad2deg(delta_tvc_bounds[1])] * len(t), "--", color="black")
+    ax7_2.plot(t, [np.rad2deg(delta_tvc_y_bounds[0])] * len(t), "--", color="black")
+    ax7_2.plot(t, [np.rad2deg(delta_tvc_y_bounds[1])] * len(t), "--", color="black")
     ax7_2.grid()
     ax7_2.legend()
     ax7_2.set_title("Estimated delta_tvc")
@@ -209,10 +213,10 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
 
     ax8_2.plot(t, delta_tvc_dot, "o", markersize=1, label="delta_tvc_dot")
     ax8_2.plot(
-        t, [controller_params["delta_tvc_dot_bounds"][0]] * len(t), "--", color="black"
+        t, [controller_params["delta_tvc_y_dot_bounds"][0]] * len(t), "--", color="black"
     )
     ax8_2.plot(
-        t, [controller_params["delta_tvc_dot_bounds"][1]] * len(t), "--", color="black"
+        t, [controller_params["delta_tvc_y_dot_bounds"][1]] * len(t), "--", color="black"
     )
     ax8_2.grid()
     ax8_2.legend()
@@ -228,4 +232,17 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     ax9_2.set_xlabel("t")
     ax9_2.set_ylabel("gamma (deg)")
 
+    fig_3 = plt.figure(figsize=(15, 15))
+    axs_3 = fig_3.add_subplot(111, projection='3d')
+    axs_3.plot(x, y, z, label="trajectory")
+    axs_3.plot(states["x"], states["y"], states["z"], "o", markersize=5, label="target points")
+    axs_3.set_xlabel("X Position (m)")
+    axs_3.set_ylabel("Y Position (m)")
+    axs_3.set_zlabel("Z Position (m)")
+    axs_3.set_title("Trajectory")
+    axs_3.set_aspect("equal")
+    axs_3.legend()
+    axs_3.grid()
+    
     plt.show()
+    

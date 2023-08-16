@@ -33,6 +33,6 @@ def trajenerator_3ST(states, env_params, rocket_params, controller_params):
         states, trajectory_params, controller_params, "Diff flat trajectory"
     )
 
-    drift_checker(env_params, trajectory_params, plot=True)
+    # drift_checker(env_params, trajectory_params, plot=True)
 
     return trajectory_params

@@ -269,95 +269,95 @@ def coupled_pol_interpolation(
             obj += F_jerk(pol_coeffs_y[:, i], j * dt) ** 2
             obj += F_jerk(pol_coeffs_z[:, i], j * dt) ** 2
 
-            vel = ca.vertcat(
-                F_vel(pol_coeffs_x[:, i], j * dt) / dt_interval,
-                F_vel(pol_coeffs_y[:, i], j * dt) / dt_interval,
-                F_vel(pol_coeffs_z[:, i], j * dt) / dt_interval,
-            )
+            # vel = ca.vertcat(
+            #     F_vel(pol_coeffs_x[:, i], j * dt) / dt_interval,
+            #     F_vel(pol_coeffs_y[:, i], j * dt) / dt_interval,
+            #     F_vel(pol_coeffs_z[:, i], j * dt) / dt_interval,
+            # )
 
-            acc = ca.vertcat(
-                F_acc(pol_coeffs_x[:, i], j * dt) / dt_interval**2,
-                F_acc(pol_coeffs_y[:, i], j * dt) / dt_interval**2,
-                F_acc(pol_coeffs_z[:, i], j * dt) / dt_interval**2,
-            )
+            # acc = ca.vertcat(
+            #     F_acc(pol_coeffs_x[:, i], j * dt) / dt_interval**2,
+            #     F_acc(pol_coeffs_y[:, i], j * dt) / dt_interval**2,
+            #     F_acc(pol_coeffs_z[:, i], j * dt) / dt_interval**2,
+            # )
 
-            jerk = ca.vertcat(
-                F_jerk(pol_coeffs_x[:, i], j * dt) / dt_interval**3,
-                F_jerk(pol_coeffs_y[:, i], j * dt) / dt_interval**3,
-                F_jerk(pol_coeffs_z[:, i], j * dt) / dt_interval**3,
-            )
+            # jerk = ca.vertcat(
+            #     F_jerk(pol_coeffs_x[:, i], j * dt) / dt_interval**3,
+            #     F_jerk(pol_coeffs_y[:, i], j * dt) / dt_interval**3,
+            #     F_jerk(pol_coeffs_z[:, i], j * dt) / dt_interval**3,
+            # )
 
-            snap = ca.vertcat(
-                F_snap(pol_coeffs_x[:, i], j * dt) / dt_interval**4,
-                F_snap(pol_coeffs_y[:, i], j * dt) / dt_interval**4,
-                F_snap(pol_coeffs_z[:, i], j * dt) / dt_interval**4,
-            )
+            # snap = ca.vertcat(
+            #     F_snap(pol_coeffs_x[:, i], j * dt) / dt_interval**4,
+            #     F_snap(pol_coeffs_y[:, i], j * dt) / dt_interval**4,
+            #     F_snap(pol_coeffs_z[:, i], j * dt) / dt_interval**4,
+            # )
 
-            crackle = ca.vertcat(
-                F_crackle(pol_coeffs_x[:, i], j * dt) / dt_interval**4,
-                F_crackle(pol_coeffs_y[:, i], j * dt) / dt_interval**4,
-                F_crackle(pol_coeffs_z[:, i], j * dt) / dt_interval**4,
-            )
+            # crackle = ca.vertcat(
+            #     F_crackle(pol_coeffs_x[:, i], j * dt) / dt_interval**4,
+            #     F_crackle(pol_coeffs_y[:, i], j * dt) / dt_interval**4,
+            #     F_crackle(pol_coeffs_z[:, i], j * dt) / dt_interval**4,
+            # )
 
-            f1, f2 = get_f1f2(
-                acc[0], acc[1], jerk[0], jerk[1], snap[0], snap[1], params
-            )
-            f = ca.sqrt(f1**2 + f2**2)
+            # f1, f2 = get_f1f2(
+            #     acc[0], acc[1], jerk[0], jerk[1], snap[0], snap[1], params
+            # )
+            # f = ca.sqrt(f1**2 + f2**2)
 
-            f1_dot, f2_dot = get_f1f2_dot(
-                acc[0],
-                acc[1],
-                jerk[0],
-                jerk[1],
-                snap[0],
-                snap[1],
-                crackle[0],
-                crackle[1],
-                params,
-            )
+            # f1_dot, f2_dot = get_f1f2_dot(
+            #     acc[0],
+            #     acc[1],
+            #     jerk[0],
+            #     jerk[1],
+            #     snap[0],
+            #     snap[1],
+            #     crackle[0],
+            #     crackle[1],
+            #     params,
+            # )
 
-            # it is assumed that f1 > 0 - which holds because the rocket has no reverse thrust
-            opti.subject_to(
-                f2
-                >= -f1
-                * ca.tan(controller_params["delta_tvc_bounds"][1])
-                / safety_factor_num_int
-            )
-            opti.subject_to(
-                f2
-                <= f1
-                * ca.tan(controller_params["delta_tvc_bounds"][1])
-                / safety_factor_num_int
-            )
+            # # it is assumed that f1 > 0 - which holds because the rocket has no reverse thrust
+            # opti.subject_to(
+            #     f2
+            #     >= -f1
+            #     * ca.tan(controller_params["delta_tvc_bounds"][1])
+            #     / safety_factor_num_int
+            # )
+            # opti.subject_to(
+            #     f2
+            #     <= f1
+            #     * ca.tan(controller_params["delta_tvc_bounds"][1])
+            #     / safety_factor_num_int
+            # )
 
-            opti.subject_to(
-                f >= controller_params["thrust_bounds"][0] * safety_factor_num_int
-            ) # in this case is "*" because the thrust is always positive
-            opti.subject_to(
-                f <= controller_params["thrust_bounds"][1] / safety_factor_num_int
-            )
+            # opti.subject_to(
+            #     f >= controller_params["thrust_bounds"][0] * safety_factor_num_int
+            # )  # in this case is "*" because the thrust is always positive
+            # opti.subject_to(
+            #     f <= controller_params["thrust_bounds"][1] / safety_factor_num_int
+            # )
 
-            opti.subject_to(
-                f1_dot
-                >= controller_params["thrust_dot_bounds"][0] / safety_factor_num_int
-            )
-            opti.subject_to(
-                f1_dot
-                <= controller_params["thrust_dot_bounds"][1] / safety_factor_num_int
-            )
+            # opti.subject_to(
+            #     f1_dot
+            #     >= controller_params["thrust_dot_bounds"][0] / safety_factor_num_int
+            # )
+            # opti.subject_to(
+            #     f1_dot
+            #     <= controller_params["thrust_dot_bounds"][1] / safety_factor_num_int
+            # )
 
-            opti.subject_to(
-                f2_dot
-                >= f
-                * controller_params["delta_tvc_dot_bounds"][0]
-                / safety_factor_num_int
-            )
-            opti.subject_to(
-                f2_dot
-                <= f
-                * controller_params["delta_tvc_dot_bounds"][1]
-                / safety_factor_num_int
-            )
+            # opti.subject_to(
+            #     f2_dot
+            #     >= f
+            #     * controller_params["delta_tvc_dot_bounds"][0]
+            #     / safety_factor_num_int
+            # )
+            # opti.subject_to(
+            #     f2_dot
+            #     <= f
+            #     * controller_params["delta_tvc_dot_bounds"][1]
+            #     / safety_factor_num_int
+            # )
 
     # add final cost
     obj += F_jerk(pol_coeffs_x[:, i], 1) ** 2
