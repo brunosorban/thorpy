@@ -207,7 +207,7 @@ class MPC_controller:
         self.x = self.opti.variable(28, N + 1)
         self.u = self.opti.variable(3, N)
         self.x_initial = self.opti.parameter(28, 1)
-        self.x_target = self.opti.parameter(28, N + 1)
+        self.x_target = self.opti.parameter(6, N + 1)
 
         # define the cost function
         self.obj = 0
@@ -216,43 +216,12 @@ class MPC_controller:
             tracking_error = self.x[0:6, k] - self.x_target[0:6, k]
             self.obj += ca.mtimes([tracking_error.T, Q[0:6, 0:6], tracking_error])
 
-            # # rotation error
-            # er = (
-            #     0.5 * self.x[4, k] * self.x_target[6, k]
-            #     + 0.5 * self.x[5, k] * self.x_target[7, k]
-            #     - 0.5 * self.x_target[4, k] * self.x[6, k]
-            #     - 0.5 * self.x_target[5, k] * self.x[7, k]
-            # )
-
-            # self.obj += ca.mtimes([er, Q[4:5, 4:5], er])
-
-            # angular velocity error
-            # self.obj += ca.mtimes([self.x[12, k], Q[5, 5], self.x[12, k]])
-
-            # thrust error (almost 0, accounted on the control effort)
-            self.obj += ca.mtimes([self.x[27, k], Q[14, 14], self.x[27, k]])
-
             # control effort
             self.obj += ca.mtimes([self.u[:, k].T, R, self.u[:, k]])
 
         # position and velocity tracking error
         tracking_error = self.x[0:6, N] - self.x_target[0:6, N]
         self.obj += ca.mtimes([tracking_error.T, Q[0:6, 0:6], tracking_error])
-
-        # rotation error
-        # er = (
-        #     0.5 * self.x[4, k] * self.x_target[6, k]
-        #     + 0.5 * self.x[5, k] * self.x_target[7, k]
-        #     - 0.5 * self.x_target[4, k] * self.x[6, k]
-        #     - 0.5 * self.x_target[5, k] * self.x[7, k]
-        # )
-        # self.obj += ca.mtimes([er, Q[4:5, 4:5], er])
-
-        # angular velocity error
-        # self.obj += ca.mtimes([self.x[12, k], Q[5, 5], self.x[12, k]])
-
-        # thrust error (almost 0, accounted on the control effort)
-        self.obj += ca.mtimes([self.x[27, k], Qf[14, 14], self.x[27, k]])
 
         self.opti.minimize(self.obj)
 
@@ -261,7 +230,6 @@ class MPC_controller:
         self.opti.subject_to(self.x[:, 0] == self.x_initial)
 
         # set the dynamics
-        # self.F = F
         for k in range(0, N + 1):
             if k < N:
                 # apply the dynamics as constraints
@@ -326,37 +294,6 @@ class MPC_controller:
         vx = self.trajectory_params["vx"]
         vy = self.trajectory_params["vy"]
         vz = self.trajectory_params["vz"]
-        e1bx = self.trajectory_params["e1bx"]
-        e1by = self.trajectory_params["e1by"]
-        # e1bz = self.trajectory_params["e1bz"]
-        e2bx = self.trajectory_params["e2bx"]
-        e2by = self.trajectory_params["e2by"]
-        # e2bz = self.trajectory_params["e2bz"]
-        # e3bx = self.trajectory_params["e3bx"]
-        # e3by = self.trajectory_params["e3by"]
-        # e3bz = self.trajectory_params["e3bz"]
-        
-        # TODO: apply differential flatness or remove
-        e1bz = np.zeros_like(e1bx)
-        e2bz = np.zeros_like(e2bx)
-        e3bx = np.zeros_like(e1bx)
-        e3by = np.zeros_like(e1bx)
-        e3bz = np.zeros_like(e1bx)
-        
-        # TODO: update to differential flatness computed trajectory
-        e1tx = e1bx
-        e1ty = e1by
-        e1tz = e1bz
-        e2tx = e2bx
-        e2ty = e2by
-        e2tz = e2bz
-        e3tx = e3bx
-        e3ty = e3by
-        e3tz = e3bz
-        
-        # TODO: update to differential flatness computed trajectory (angular velocity)
-        
-        # TODO: update to differential flatness computed trajectory (thrust)
 
         N = self.controller_params["N"]
         t_list = np.linspace(time, time + N * self.dt, N + 1, endpoint=True)
@@ -367,26 +304,6 @@ class MPC_controller:
         vx_list = np.zeros(len(t_list))
         vy_list = np.zeros(len(t_list))
         vz_list = np.zeros(len(t_list))
-        e1bx_list = np.zeros(len(t_list))
-        e1by_list = np.zeros(len(t_list))
-        e1bz_list = np.zeros(len(t_list))
-        e2bx_list = np.zeros(len(t_list))
-        e2by_list = np.zeros(len(t_list))
-        e2bz_list = np.zeros(len(t_list))
-        e3bx_list = np.zeros(len(t_list))
-        e3by_list = np.zeros(len(t_list))
-        e3bz_list = np.zeros(len(t_list))
-        e1tx_list = np.zeros(len(t_list))
-        e1ty_list = np.zeros(len(t_list))
-        e1tz_list = np.zeros(len(t_list))
-        e2tx_list = np.zeros(len(t_list))
-        e2ty_list = np.zeros(len(t_list))
-        e2tz_list = np.zeros(len(t_list))
-        e3tx_list = np.zeros(len(t_list))
-        e3ty_list = np.zeros(len(t_list))
-        e3tz_list = np.zeros(len(t_list))
-        
-        thrust_list = np.zeros(len(t_list))
 
         for i in range(len(t_list)):
             px_list[i] = self.linear_spline(t_list[i], self.trajectory_params["t"], px)
@@ -395,77 +312,7 @@ class MPC_controller:
             vx_list[i] = self.linear_spline(t_list[i], self.trajectory_params["t"], vx)
             vy_list[i] = self.linear_spline(t_list[i], self.trajectory_params["t"], vy)
             vz_list[i] = self.linear_spline(t_list[i], self.trajectory_params["t"], vz)
-            
-            # e1b
-            e1bx_list[i] = self.linear_spline(
-                t_list[i], self.trajectory_params["t"], e1bx
-            )
-            e1by_list[i] = self.linear_spline(
-                t_list[i], self.trajectory_params["t"], e1by
-            )
-            e1bz_list[i] = self.linear_spline(
-                t_list[i], self.trajectory_params["t"], e1bz
-            )
-            
-            # e2b
-            e2bx_list[i] = self.linear_spline(
-                t_list[i], self.trajectory_params["t"], e2bx
-            )
-            e2by_list[i] = self.linear_spline(
-                t_list[i], self.trajectory_params["t"], e2by
-            )
-            e2bz_list[i] = self.linear_spline(
-                t_list[i], self.trajectory_params["t"], e2bz
-            )
-            
-            # e3b
-            e3bx_list[i] = self.linear_spline(
-                t_list[i], self.trajectory_params["t"], e3bx
-            )
-            e3by_list[i] = self.linear_spline(
-                t_list[i], self.trajectory_params["t"], e3by
-            )
-            e3bz_list[i] = self.linear_spline(
-                t_list[i], self.trajectory_params["t"], e3bz
-            )
-            
-            # e1t
-            e1tx_list[i] = self.linear_spline(
-                t_list[i], self.trajectory_params["t"], e1tx
-            )
-            e1ty_list[i] = self.linear_spline(
-                t_list[i], self.trajectory_params["t"], e1ty
-            )
-            e1tz_list[i] = self.linear_spline(
-                t_list[i], self.trajectory_params["t"], e1tz
-            )
-            
-            # e2t
-            e2tx_list[i] = self.linear_spline(
-                t_list[i], self.trajectory_params["t"], e2tx
-            )
-            e2ty_list[i] = self.linear_spline(
-                t_list[i], self.trajectory_params["t"], e2ty
-            )
-            e2tz_list[i] = self.linear_spline(
-                t_list[i], self.trajectory_params["t"], e2tz
-            )
-            
-            # e3t
-            e3tx_list[i] = self.linear_spline(
-                t_list[i], self.trajectory_params["t"], e3tx
-            )
-            e3ty_list[i] = self.linear_spline(
-                t_list[i], self.trajectory_params["t"], e3ty
-            )
-            e3tz_list[i] = self.linear_spline(
-                t_list[i], self.trajectory_params["t"], e3tz
-            )
 
-            # TODO: update to differential flatness computed trajectory (angular velocity)
-            
-            # TODO: update to differential flatness computed trajectory (thrust)
-            
         target = np.array(
             [
                 px_list,
@@ -474,28 +321,6 @@ class MPC_controller:
                 vy_list,
                 pz_list,
                 vz_list,
-                e1bx_list,
-                e1by_list,
-                e1bz_list,
-                e2bx_list,
-                e2by_list,
-                e2bz_list,
-                e3bx_list,
-                e3by_list,
-                e3bz_list,
-                e1tx_list,
-                e1ty_list,
-                e1tz_list,
-                e2tx_list,
-                e2ty_list,
-                e2tz_list,
-                e3tx_list,
-                e3ty_list,
-                e3tz_list, # TODO: update to differential flatness computed trajectory (angular velocity)
-                np.zeros_like(thrust_list),  # omegax = angular velocity
-                np.zeros_like(thrust_list),  # omegay = angular velocity
-                np.zeros_like(thrust_list),  # omegaz = angular velocity
-                thrust_list,
             ]
         )
         self.update_target(target)
@@ -690,44 +515,6 @@ class MPC_controller:
             )
             self.epos_list.append(pos_error)
 
-            # e1bx_target = self.linear_spline(
-            #     t[-1], self.trajectory_params["t"], self.trajectory_params["e1bx"]
-            # )
-            # e1by_target = self.linear_spline(
-            #     t[-1], self.trajectory_params["t"], self.trajectory_params["e1by"]
-            # )
-            # e1bz_target = self.linear_spline(
-            #     t[-1], self.trajectory_params["t"], self.trajectory_params["e1bz"]
-            # )
-            # e2bx_target = self.linear_spline(
-            #     t[-1], self.trajectory_params["t"], self.trajectory_params["e2bx"]
-            # )
-            # e2by_target = self.linear_spline(
-            #     t[-1], self.trajectory_params["t"], self.trajectory_params["e2by"]
-            # )
-            # e2bz_target = self.linear_spline(
-            #     t[-1], self.trajectory_params["t"], self.trajectory_params["e2bz"]
-            # )
-            # e3bx_target = self.linear_spline(
-            #     t[-1], self.trajectory_params["t"], self.trajectory_params["e3bx"]
-            # )
-            # e3by_target = self.linear_spline(
-            #     t[-1], self.trajectory_params["t"], self.trajectory_params["e3by"]
-            # )
-            # e3bz_target = self.linear_spline(
-            #     t[-1], self.trajectory_params["t"], self.trajectory_params["e3bz"]
-            # )
-
-            # TODO: update to 3D
-            # er = (
-            #     0.5 * x_list[-1][4] * e2bx_target
-            #     + 0.5 * x_list[-1][5] * e2by_target
-            #     - 0.5 * e1bx_target * x_list[-1][6]
-            #     - 0.5 * e1by_target * x_list[-1][7]
-            # )
-            er = np.array([0, 0, 0]) 
-            self.er_list.append(er)
-
             if plot_online and t[-1] > self.dt:
                 self.plot_horizon_online(
                     t, np.array(x_list), [thrust, delta_tvc_y, delta_tvc_z], u, horizon
@@ -805,7 +592,7 @@ class MPC_controller:
             [x[:, 9], x[:, 10], x[:, 11]],
             [x[:, 12], x[:, 13], x[:, 14]]
         ]
-        )
+        ) # world to body
         
         # Calculate yaw (rotation around Z-axis)
         yaw = np.arctan2(rotation_matrix[1, 0], rotation_matrix[0, 0])
@@ -962,7 +749,6 @@ class MPC_controller:
         fig_4.suptitle("Simulation results (tracking error))")
         
         self.epos_list = np.array(self.epos_list)
-        self.er_list = np.array(self.er_list)
         
         # plot 1: x error
         ax1_4.plot(t, self.epos_list[:, 0])
@@ -985,25 +771,31 @@ class MPC_controller:
         ax3_4.set_title("Z error vs Time")
         ax3_4.grid()
         
-        # plot 4: erx
-        ax4_4.plot(t, self.er_list[:, 0])
+        # plot 4: e1
+        ax4_4.plot(t, e1b[0, :])
+        ax4_4.plot(t, e1b[1, :])
+        ax4_4.plot(t, e1b[2, :])
         ax4_4.set_xlabel("Time (s)")
-        ax4_4.set_ylabel("er")
-        ax4_4.set_title("er vs Time")
+        ax4_4.set_ylabel("e1b")
+        ax4_4.set_title("e1b vs Time")
         ax4_4.grid()
         
-        # plot 5: ery
-        ax5_4.plot(t, self.er_list[:, 1])
+        # plot 5: e2
+        ax5_4.plot(t, e2b[0, :])
+        ax5_4.plot(t, e2b[1, :])
+        ax5_4.plot(t, e2b[2, :])
         ax5_4.set_xlabel("Time (s)")
-        ax5_4.set_ylabel("er")
-        ax5_4.set_title("er vs Time")
+        ax5_4.set_ylabel("e2b")
+        ax5_4.set_title("e2b vs Time")
         ax5_4.grid()
         
-        # plot 6: erz
-        ax6_4.plot(t, self.er_list[:, 2])
+        # plot 6: e3
+        ax6_4.plot(t, e3b[0, :])
+        ax6_4.plot(t, e3b[1, :])
+        ax6_4.plot(t, e3b[2, :])
         ax6_4.set_xlabel("Time (s)")
-        ax6_4.set_ylabel("er")
-        ax6_4.set_title("er vs Time")
+        ax6_4.set_ylabel("e3b")
+        ax6_4.set_title("e3b vs Time")
         ax6_4.grid()
         
         # plot 3D trajectory
