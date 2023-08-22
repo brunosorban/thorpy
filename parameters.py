@@ -24,48 +24,47 @@ T_thrust = 1  # Thrust time constant
 t0 = 0  # initial time
 tf = 60  # final time
 
-J_x = (
+J_1 = (
     1 / 2 * m * radius**2
 )  # moment of inertia of the hopper perpendicular to the main axis
-J_y = (
+J_2 = (
     1 / 12 * m * (h**2 + 3 * radius**2)
 )  # moment of inertia of the hopper perpendicular to the main axis
-J_z = (
+J_3 = (
     1 / 12 * m * (h**2 + 3 * radius**2)
 )  # moment of inertia of the hopper perpendicular to the main axis
 
 # initial state of the oscillation point (the trajectory generator will return to the CM)
 initial_state = [
-    0, # x
-    0, # x_dot
-    0, # y
-    0, # y_dot
-    # -J_z / (m * l_tvc), # z
-    0, # z
-    0, # z_dot
-    0, # e1bx
-    0, # e1by
-    1, # e1bz
-    0, # e2bx
-    1, # e2by
-    0, # e2bz
-    -1, # e3bx
-    0, # e3by
-    0, # e3bz
-    0, # e1tx
-    0, # e1ty
-    1, # e1tz
-    0, # e2tx
-    1, # e2ty
-    0, # e2tz
-    -1, # e3tx
-    0, # e3ty
-    0, # e3tz
-    0, # omega_x
-    0, # omega_y
-    0, # omega_z
-    m * g, # thrust
-] # initial state of the center of mass (oscillation point displacement)
+    0,  # x
+    0,  # x_dot
+    0,  # y
+    0,  # y_dot
+    0,  # z
+    0,  # z_dot
+    0,  # e1bx
+    0,  # e1by
+    1,  # e1bz
+    0,  # e2bx
+    1,  # e2by
+    0,  # e2bz
+    -1,  # e3bx
+    0,  # e3by
+    0,  # e3bz
+    0,  # e1tx
+    0,  # e1ty
+    1,  # e1tz
+    0,  # e2tx
+    1,  # e2ty
+    0,  # e2tz
+    -1,  # e3tx
+    0,  # e3ty
+    0,  # e3tz
+    0,  # omega_x
+    0,  # omega_y
+    0,  # omega_z
+    m * g,  # thrust
+]  # initial state of the center of mass (oscillation point displacement)
 x_target = None
 
 # controller parameters
@@ -151,9 +150,9 @@ rocket_params = {
     "m": m,
     "h": h,
     "radius": radius,
-    "J_x": J_x,
-    "J_y": J_y,
-    "J_z": J_z,
+    "J_1": J_1,
+    "J_2": J_2,
+    "J_3": J_3,
     "K_tvc": K_tvc,
     "T_tvc": T_tvc,
     "l_tvc": l_tvc,
