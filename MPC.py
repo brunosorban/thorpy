@@ -32,9 +32,9 @@ class MPC_controller:
         # rocket and environment parameters
         g = env_params["g"]
         m = rocket_params["m"]
-        J_x = rocket_params["J_x"]
-        J_y = rocket_params["J_y"]
-        J_z = rocket_params["J_z"]
+        J_1 = rocket_params["J_1"]
+        J_2 = rocket_params["J_2"]
+        J_3 = rocket_params["J_3"]
         l_tvc = rocket_params["l_tvc"]
 
         # controller parameters
@@ -168,9 +168,9 @@ class MPC_controller:
             -omega_x * e2tx + (omega_y + delta_tvc_dot_y) * e1tx,  # e3tx
             -omega_x * e2ty + (omega_y + delta_tvc_dot_y) * e1ty,  # e3ty
             -omega_x * e2tz + (omega_y + delta_tvc_dot_y) * e1tz,  # e3tz
-            (-(-J_y + J_z) * omega_y * omega_z) / J_x,  # omega x
-            (-thrust * l_tvc * (e1tx * e3bx + e1ty * e3by + e1tz * e3bz) - (J_x - J_z) * omega_x * omega_z) / J_y,  # omega y
-            (-thrust * l_tvc * (e1tx * e2bx + e1ty * e2by + e1tz * e2bz) - (-J_x + J_y) * omega_x * omega_y) / J_z,  # omega z
+            (-(-J_2 + J_3) * omega_y * omega_z) / J_2,  # omega x
+            (-thrust * l_tvc * (e1tx * e3bx + e1ty * e3by + e1tz * e3bz) - (J_1 - J_3) * omega_x * omega_z) / J_2,  # omega y
+            (-thrust * l_tvc * (e1tx * e2bx + e1ty * e2by + e1tz * e2bz) - (-J_1 + J_2) * omega_x * omega_y) / J_3,  # omega z
             thrust_dot,  # thrust
         )
 

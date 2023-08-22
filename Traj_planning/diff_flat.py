@@ -319,7 +319,6 @@ def diff_flat_traj(
 
         # compute the thrust force and the thrust force derivative
         temp = m * Ri.T @ np.array([ax_o[i], ay_o[i], az_o[i] + g]).T
-        print(temp)
         f1[i] = temp[0] + ((J_2 + J_3) / (2 * l_tvc)) * (omega_body[1, i] ** 2 + omega_body[2, i] ** 2)
         f2[i] = -J_3 * omega_dot_body[2, i] / l_tvc
         f3[i] = -J_2 * omega_dot_body[1, i] / l_tvc
