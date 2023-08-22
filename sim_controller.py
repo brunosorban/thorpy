@@ -25,7 +25,7 @@ from Traj_planning.examples.infinity_symbol_3ST import traj_infinity_symbol_3ST
 # trajectory_params = traj_M_3ST()
 # tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
 
-# trajectory_params = traj_circle_3ST()
+# trajectory_params = traj_circle_3ST() # currently not working
 # tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
 
 # trajectory_params = traj_spiral_3ST()
@@ -72,16 +72,16 @@ controller.plot_simulation(t, x, u)
 # )
 
 animate_traj(
-    x[:, 0], # x
-    x[:, 2], # y
-    x[:, 4], # z
-    x[:, 6], # e1bx
-    x[:, 7], # e1by
-    x[:, 8], # e1bz
-    x[:, 9], # e2bx
-    x[:, 10], # e2by
-    x[:, 11], # e2bz
-    x[:, 12], # e3bx
-    x[:, 13], # e3by
-    x[:, 14], # e3bz
+    x[:, 0],  # x
+    x[:, 2],  # y
+    x[:, 4],  # z
+    x[:, 6],  # e1bx
+    x[:, 7],  # e1by
+    x[:, 8],  # e1bz
+    x[:, 9],  # e2bx
+    x[:, 10],  # e2by
+    x[:, 11],  # e2bz
+    x[:, 12],  # e3bx
+    x[:, 13],  # e3by
+    x[:, 14],  # e3bz
 )

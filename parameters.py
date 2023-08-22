@@ -173,8 +173,8 @@ controller_params = {
     "R": R,
     "thrust_bounds": (min_thrust, max_thrust),
     "thrust_dot_bounds": (min_thrust_deriv, max_thrust_deriv),
-    "delta_tvc_y_bounds": (min_delta_tvc_y, max_delta_tvc_y),
-    "delta_tvc_z_bounds": (min_delta_tvc_z, max_delta_tvc_z),
-    "delta_tvc_y_dot_bounds": (min_delta_tvc_y_deriv, max_delta_tvc_y_deriv),
-    "delta_tvc_z_dot_bounds": (min_delta_tvc_z_deriv, max_delta_tvc_z_deriv),
+    "delta_tvc_bounds": (min_delta_tvc_y, max_delta_tvc_y),
+    "delta_tvc_bounds": (min_delta_tvc_z, max_delta_tvc_z),
+    "delta_tvc_dot_bounds": (min_delta_tvc_y_deriv, max_delta_tvc_y_deriv),
+    "delta_tvc_dot_bounds": (min_delta_tvc_z_deriv, max_delta_tvc_z_deriv),
 }

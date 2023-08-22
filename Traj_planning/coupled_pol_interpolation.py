@@ -10,9 +10,11 @@ parent_folder = os.path.dirname(os.path.abspath(__file__))
 # Add the parent folder to sys.path
 sys.path.append(os.path.join(parent_folder, ".."))
 
-from Traj_planning.auxiliar_codes.coeffs2derivatives import *
-from Traj_planning.auxiliar_codes.pol_processor import *
 from Traj_planning.unc_pol_interpolation import *
+from Traj_planning.auxiliar_codes.pol_processor import *
+from Traj_planning.auxiliar_codes.compute_f1f2f3 import *
+from Traj_planning.auxiliar_codes.coeffs2derivatives import *
+
 
 def coupled_pol_interpolation(
     states, rocket_params, controller_params, env_params, num_intervals=100
@@ -267,29 +269,29 @@ def coupled_pol_interpolation(
             obj += F_jerk(pol_coeffs_y[:, i], j * dt) ** 2
             obj += F_jerk(pol_coeffs_z[:, i], j * dt) ** 2
 
-            # vel = ca.vertcat(
-            #     F_vel(pol_coeffs_x[:, i], j * dt) / dt_interval,
-            #     F_vel(pol_coeffs_y[:, i], j * dt) / dt_interval,
-            #     F_vel(pol_coeffs_z[:, i], j * dt) / dt_interval,
-            # )
+            vel = ca.vertcat(
+                F_vel(pol_coeffs_x[:, i], j * dt) / dt_interval,
+                F_vel(pol_coeffs_y[:, i], j * dt) / dt_interval,
+                F_vel(pol_coeffs_z[:, i], j * dt) / dt_interval,
+            )
 
-            # acc = ca.vertcat(
-            #     F_acc(pol_coeffs_x[:, i], j * dt) / dt_interval**2,
-            #     F_acc(pol_coeffs_y[:, i], j * dt) / dt_interval**2,
-            #     F_acc(pol_coeffs_z[:, i], j * dt) / dt_interval**2,
-            # )
+            acc = ca.vertcat(
+                F_acc(pol_coeffs_x[:, i], j * dt) / dt_interval**2,
+                F_acc(pol_coeffs_y[:, i], j * dt) / dt_interval**2,
+                F_acc(pol_coeffs_z[:, i], j * dt) / dt_interval**2,
+            )
 
-            # jerk = ca.vertcat(
-            #     F_jerk(pol_coeffs_x[:, i], j * dt) / dt_interval**3,
-            #     F_jerk(pol_coeffs_y[:, i], j * dt) / dt_interval**3,
-            #     F_jerk(pol_coeffs_z[:, i], j * dt) / dt_interval**3,
-            # )
+            jerk = ca.vertcat(
+                F_jerk(pol_coeffs_x[:, i], j * dt) / dt_interval**3,
+                F_jerk(pol_coeffs_y[:, i], j * dt) / dt_interval**3,
+                F_jerk(pol_coeffs_z[:, i], j * dt) / dt_interval**3,
+            )
 
-            # snap = ca.vertcat(
-            #     F_snap(pol_coeffs_x[:, i], j * dt) / dt_interval**4,
-            #     F_snap(pol_coeffs_y[:, i], j * dt) / dt_interval**4,
-            #     F_snap(pol_coeffs_z[:, i], j * dt) / dt_interval**4,
-            # )
+            snap = ca.vertcat(
+                F_snap(pol_coeffs_x[:, i], j * dt) / dt_interval**4,
+                F_snap(pol_coeffs_y[:, i], j * dt) / dt_interval**4,
+                F_snap(pol_coeffs_z[:, i], j * dt) / dt_interval**4,
+            )
 
             # crackle = ca.vertcat(
             #     F_crackle(pol_coeffs_x[:, i], j * dt) / dt_interval**4,
@@ -297,10 +299,22 @@ def coupled_pol_interpolation(
             #     F_crackle(pol_coeffs_z[:, i], j * dt) / dt_interval**4,
             # )
 
-            # f1, f2 = get_f1f2(
-            #     acc[0], acc[1], jerk[0], jerk[1], snap[0], snap[1], params
-            # )
-            # f = ca.sqrt(f1**2 + f2**2)
+            # f2 and f3 are computed together since the direction doesn't matter to the constraints
+            f1, f23 = compute_f1f2f3(
+                acc[0],
+                acc[1],
+                acc[2],
+                jerk[0],
+                jerk[1],
+                jerk[2],
+                snap[0],
+                snap[1],
+                snap[2],
+                params,
+            )
+
+            # f = ca.sqrt(f1**2  + f23**2)
+            f = f1
 
             # f1_dot, f2_dot = get_f1f2_dot(
             #     acc[0],
@@ -314,26 +328,26 @@ def coupled_pol_interpolation(
             #     params,
             # )
 
-            # # it is assumed that f1 > 0 - which holds because the rocket has no reverse thrust
+            # it is assumed that f1 > 0 - which holds because the rocket has no reverse thrust
             # opti.subject_to(
-            #     f2
+            #     f23
             #     >= -f1
             #     * ca.tan(controller_params["delta_tvc_bounds"][1])
             #     / safety_factor_num_int
             # )
             # opti.subject_to(
-            #     f2
+            #     f23
             #     <= f1
             #     * ca.tan(controller_params["delta_tvc_bounds"][1])
             #     / safety_factor_num_int
             # )
 
-            # opti.subject_to(
-            #     f >= controller_params["thrust_bounds"][0] * safety_factor_num_int
-            # )  # in this case is "*" because the thrust is always positive
-            # opti.subject_to(
-            #     f <= controller_params["thrust_bounds"][1] / safety_factor_num_int
-            # )
+            opti.subject_to(
+                f >= controller_params["thrust_bounds"][0] * safety_factor_num_int
+            )  # in this case is "*" because the thrust is always positive
+            opti.subject_to(
+                f <= controller_params["thrust_bounds"][1] / safety_factor_num_int
+            )
 
             # opti.subject_to(
             #     f1_dot

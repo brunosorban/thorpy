@@ -8,21 +8,25 @@ sys.path.append("../Traj_planning")
 from parameters import *
 from Traj_planning.examples.simple_circ import *
 
+
 def generate_spiral(radius, height, num_turns, num_points):
     theta = np.linspace(0, 2 * np.pi * num_turns, num_points)  # Angle values
-    z = np.linspace(0, height * num_turns, num_points)         # Height values
+    z = np.linspace(0, height * num_turns, num_points)  # Height values
 
     # Generate x, y coordinates based on radius and angle
     x = radius * np.cos(theta)
     y = radius * np.sin(theta)
 
     # Create a list of (x, y, z) points
-    spiral_points = np.array([[x_val, y_val, z_val] for x_val, y_val, z_val in zip(x, y, z)])
-    
+    spiral_points = np.array(
+        [[x_val, y_val, z_val] for x_val, y_val, z_val in zip(x, y, z)]
+    )
+
     return spiral_points
 
+
 radius = 50
-height = 50 # between each spiral
+height = 50  # between each spiral
 num_turns = 3
 num_points = 20
 

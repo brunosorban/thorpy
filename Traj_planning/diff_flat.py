@@ -134,8 +134,8 @@ def diff_flat_traj(
     for i in range(len(t) - 1):
         t0 = t[i]
         tf = t[i + 1]
-        i0 = np.where(t_list == t0)[0][0]
-        i1 = np.where(t_list == tf)[0][0] + 1
+        i0 = np.searchsorted(t_list, t0)
+        i1 = np.searchsorted(t_list, tf, side="right")
 
         x_o[i0:i1] = pos_processor(Px_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
         y_o[i0:i1] = pos_processor(Py_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
@@ -318,8 +318,10 @@ def diff_flat_traj(
         az_g[i] = az_o[i] - temp[2]
 
         # compute the thrust force and the thrust force derivative
-        temp = m * Ri.T @ np.array([ax_o[i], ay_o[i], az_o[i] + g]).T
-        f1[i] = temp[0] + ((J_2 + J_3) / (2 * l_tvc)) * (omega_body[1, i] ** 2 + omega_body[2, i] ** 2)
+        e1b_t = np.array([e1bx[i], e1by[i], e1bz[i]])
+        f1[i] = m * e1b_t @ np.array([ax_o[i], ay_o[i], az_o[i] + g]).T + (
+            (J_2 + J_3) / (2 * l_tvc)
+        ) * (omega_body[1, i] ** 2 + omega_body[2, i] ** 2)
         f2[i] = -J_3 * omega_dot_body[2, i] / l_tvc
         f3[i] = -J_2 * omega_dot_body[1, i] / l_tvc
         f[i] = np.sqrt(f1[i] ** 2 + f2[i] ** 2 + f3[i] ** 2)
@@ -327,7 +329,7 @@ def diff_flat_traj(
         temp = m * Ri_dot.T @ np.array(
             [ax_o[i], ay_o[i], az_o[i] + g]
         ).T + m * Ri.T @ np.array([jx_o[i], jy_o[i], jz_o[i]])
-        
+
         f1_dot[i] = temp[0] + ((J_2 + J_3) / (2 * l_tvc)) * (
             2 * omega_body[1, i] * omega_dot_body[1, i]
             + 2 * omega_body[2, i] * omega_dot_body[2, i]
