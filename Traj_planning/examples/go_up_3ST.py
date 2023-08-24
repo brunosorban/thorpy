@@ -11,11 +11,11 @@ from Traj_planning.examples.simple_circ import *
 target_points = np.array(
     [
         [0, 0, 0],
-        [0, 0, 100],
+        [0, 0, 10],
     ]
 )
 
-time_points = 20 * np.arange(len(target_points))  # time list
+time_points = 6 * np.arange(len(target_points))  # time list
 
 states = {
     "t": time_points,

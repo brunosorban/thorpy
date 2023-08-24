@@ -1,36 +1,37 @@
 import sys
-import numpy as np
 
 sys.path.append("../")
 sys.path.append("../Traj_planning")
 
-from Flight import *
-import casadi as ca
-from old.MPC_SE3_controller import (
-    MPC_controller,
-)  ############## TODO: change this to the new controller
-from animate import *
+from MPC import MPC_controller
 from parameters import *
-from Environment import Environment
+from Animation.animate_traj import animate_traj
 from Traj_planning.examples.go_up_3ST import traj_go_up_3ST
 from Traj_planning.examples.hopper_3ST import traj_hopper_3ST
 from Traj_planning.examples.M_3ST import traj_M_3ST
 from Traj_planning.examples.circle_3ST import traj_circle_3ST
+from Traj_planning.examples.spiral_3ST import traj_spiral_3ST
+from Traj_planning.examples.infinity_symbol_3ST import traj_infinity_symbol_3ST
 
 ########################## Trajectory generation ###############################
 
 # trajectory_params = traj_go_up_3ST()
 # tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
 
-trajectory_params = traj_hopper_3ST()
-tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
-# tf = 17.7
+# trajectory_params = traj_hopper_3ST()
+# tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
 
 # trajectory_params = traj_M_3ST()
 # tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
 
-# trajectory_params = traj_circle_3ST()
+# trajectory_params = traj_circle_3ST() # currently not working
 # tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
+
+# trajectory_params = traj_spiral_3ST()
+# tf = trajectory_params["t"][-1]
+
+trajectory_params = traj_infinity_symbol_3ST()
+tf = trajectory_params["t"][-1]
 
 ######################### Creating the controller ##############################
 controller = MPC_controller(
@@ -41,40 +42,31 @@ controller = MPC_controller(
 )
 
 
-######################### Creating the environment #############################
-env = Environment(env_params)
-
-
 ################################## Simulation ##################################
-flight = Flight(
-    rocket_params,
-    env,
-    controller,
-    initial_solution=initial_state,
-    max_time=tf,
-    max_step=1e-3,
+t, x, u, state_horizon_list, control_horizon_list = controller.simulate_inside(
+    tf, plot_online=False
 )
 
-flight.solve_system()
-flight.post_process()
 
 ################################## Plotting ####################################
-flight.xy()
+controller.plot_simulation(t, x, u)
+# controller.plot_tracking_results(t, x)
 
 
 ################################## Animation ###################################
-# animate(
-#     t,
-#     x=x[:, 0],
-#     y=x[:, 2],
-#     gamma=np.arctan2(x[:, 5], x[:, 4]),
-#     state_horizon_list=state_horizon_list,
-#     control_horizon_list=control_horizon_list,
-#     N=N,
-#     dt=T / N,
-#     target_goal=None,
-#     trajectory_params=trajectory_params,
-#     scale=1,
-#     matplotlib=False,
-#     save=True,
-# )
+animate_traj(
+    t,
+    x[:, 0],  # x
+    x[:, 2],  # y
+    x[:, 4],  # z
+    x[:, 6],  # e1bx
+    x[:, 7],  # e1by
+    x[:, 8],  # e1bz
+    x[:, 9],  # e2bx
+    x[:, 10],  # e2by
+    x[:, 11],  # e2bz
+    x[:, 12],  # e3bx
+    x[:, 13],  # e3by
+    x[:, 14],  # e3bz
+    trajectory_params,
+)
