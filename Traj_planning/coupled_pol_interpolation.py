@@ -294,9 +294,9 @@ def coupled_pol_interpolation(
             )
 
             # crackle = ca.vertcat(
-            #     F_crackle(pol_coeffs_x[:, i], j * dt) / dt_interval**4,
-            #     F_crackle(pol_coeffs_y[:, i], j * dt) / dt_interval**4,
-            #     F_crackle(pol_coeffs_z[:, i], j * dt) / dt_interval**4,
+            #     F_crackle(pol_coeffs_x[:, i], j * dt) / dt_interval**5,
+            #     F_crackle(pol_coeffs_y[:, i], j * dt) / dt_interval**5,
+            #     F_crackle(pol_coeffs_z[:, i], j * dt) / dt_interval**5,
             # )
 
             # f2 and f3 are computed together since the direction doesn't matter to the constraints

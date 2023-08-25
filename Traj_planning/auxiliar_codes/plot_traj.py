@@ -24,6 +24,7 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     e3bz = trajectory_params["e3bz"]
     omega = trajectory_params["omega"]
     omega_dot = trajectory_params["omega_dot"]
+    omega_dot_2 = trajectory_params["omega_dot_2"]
 
     f1 = trajectory_params["f1"]
     f2 = trajectory_params["f2"]
@@ -35,6 +36,8 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     f_dot = trajectory_params["f_dot"]
     # delta_tvc = trajectory_params["delta_tvc"]
     # delta_tvc_dot = trajectory_params["delta_tvc_dot"]
+    f1_2 = trajectory_params["f1_2"]
+    f2_2 = trajectory_params["f2_2"]
 
     last_t = t[0]
 
@@ -196,6 +199,7 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     ) = plt.subplots(2, 3, figsize=(15, 10))
 
     ax1_2.plot(t, f1, "o", markersize=1, label="f1")
+    ax1_2.plot(t, f1_2, "o", markersize=1, label="f1_2")
     ax1_2.plot(t, [f1_bounds[0]] * len(t), "--", color="black")
     ax1_2.plot(t, [f1_bounds[1]] * len(t), "--", color="black")
     ax1_2.grid()
@@ -204,8 +208,9 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     ax1_2.set_xlabel("t")
     ax1_2.set_ylabel("f1")
 
-    ax2_2.plot(t, f2, "o", markersize=1, label="f2")
-    ax2_2.plot(t, f3, "o", markersize=1, label="f3")
+    ax2_2.plot(t, np.sqrt(f2**2 + f3**2), "o", markersize=1, label="f2")
+    # ax2_2.plot(t, f3, "o", markersize=1, label="f3")
+    ax2_2.plot(t, f2_2, "o", markersize=1, label="f2_2")
     ax2_2.plot(
         t, np.sin(delta_tvc_y_bounds[1]) * f, "--", color="orange", label="constraint"
     )
@@ -305,5 +310,3 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     axs_3.set_aspect("equal")
     axs_3.legend()
     axs_3.grid()
-
-    plt.show()

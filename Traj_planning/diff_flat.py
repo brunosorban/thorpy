@@ -323,7 +323,7 @@ def diff_flat_traj(
             (J_2 + J_3) / (2 * l_tvc)
         ) * (omega_body[1, i] ** 2 + omega_body[2, i] ** 2)
         f2[i] = -J_3 * omega_dot_body[2, i] / l_tvc
-        f3[i] = -J_2 * omega_dot_body[1, i] / l_tvc
+        f3[i] = J_2 * omega_dot_body[1, i] / l_tvc
         f[i] = np.sqrt(f1[i] ** 2 + f2[i] ** 2 + f3[i] ** 2)
 
         temp = m * Ri_dot.T @ np.array(
@@ -335,7 +335,7 @@ def diff_flat_traj(
             + 2 * omega_body[2, i] * omega_dot_body[2, i]
         )
         f_dot[i] = (f1[i] * f1_dot[i] + f2[i] * f2_dot[i] + f3[i] * f3_dot[i]) / f[i]
-
+               
     trajectory_params = {
         "t": t_list,
         "x": x_g,

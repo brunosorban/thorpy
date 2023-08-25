@@ -8,7 +8,7 @@ def animate_traj(t, x, y, z, e1bx, e1by, e1bz, e2bx, e2by, e2bz, e3bx, e3by, e3b
         w = imageio.get_writer("Videos/rocket.mp4", format="FFMPEG", fps=60)
         
     fps = 60
-    time_list = np.linspace(0, duration, duration * fps)
+    time_list = np.linspace(0, t[-1], duration * fps)
 
     x_ref = trajectory_params["x"]
     y_ref = trajectory_params["y"]
@@ -82,15 +82,15 @@ def animate_traj(t, x, y, z, e1bx, e1by, e1bz, e2bx, e2by, e2bz, e3bx, e3by, e3b
     rocket_nose = mlab.mesh(X_nose, Y_nose, Z_nose, color=(1, 0, 0))
     rocket_body = mlab.mesh(X_body, Y_body, Z_body, color=(0, 0, 1))
     # Ball representing the center of gravity
-    ball_diameter = 1.2 * 2 * radius_body  # Define an appropriate radius for visualization
-    ball = mlab.points3d(0, 0, 0, scale_factor=ball_diameter, color=(0, 0, 0))
+    # ball_diameter = 1.2 * 2 * radius_body  # Define an appropriate radius for visualization
+    # ball = mlab.points3d(0, 0, 0, scale_factor=ball_diameter, color=(0, 0, 0))
 
     # Initial camera view settings
     azimuth = 45  # rotation around the up axis
     elevation = 1.5 * np.rad2deg(
         np.arctan(1 / np.sqrt(2))
     )  # elevation angle (90 means top-down view)
-    initial_distance = 3 * ground_size  # initial distance from the focal point
+    initial_distance = 2 * ground_size  # initial distance from the focal point
 
     mlab.view(azimuth=azimuth, elevation=elevation, distance=initial_distance)
 
@@ -207,7 +207,7 @@ def animate_traj(t, x, y, z, e1bx, e1by, e1bz, e2bx, e2by, e2bz, e3bx, e3by, e3b
         rocket_body.mlab_source.set(
             x=X_body_rotated, y=Y_body_rotated, z=Z_body_rotated
         )
-        ball.mlab_source.set(x=x_translation, y=y_translation, z=z_translation)
+        # ball.mlab_source.set(x=x_translation, y=y_translation, z=z_translation)
 
         mlab.process_ui_events()
         
