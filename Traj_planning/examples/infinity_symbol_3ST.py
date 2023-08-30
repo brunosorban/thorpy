@@ -29,7 +29,7 @@ num_points = 9
 
 target_points = generate_infinity_symbol(length, height_variation, num_points)
 
-time_points = 3.3 * np.arange(len(target_points))  # time list
+time_points = 4 * np.arange(len(target_points))  # time list
 
 states = {
     "t": time_points,

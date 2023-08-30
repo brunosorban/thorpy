@@ -3,8 +3,9 @@ from RK4 import RK4
 from Traj_planning.auxiliar_codes.pol_processor import *
 
 # from Traj_planning.auxiliar_codes.get_f1f2 import *
-from Traj_planning.auxiliar_codes.compute_omega import compute_omega
-from Traj_planning.auxiliar_codes.compute_omega_dot import compute_omega_dot
+from Traj_planning.auxiliar_codes.compute_omega import compute_omega_np
+from Traj_planning.auxiliar_codes.compute_omega_dot import compute_omega_dot_np
+from Traj_planning.auxiliar_codes.compute_omega_dot_dot import compute_omega_dot_dot_np
 
 
 def fun_R(x, u):
@@ -182,10 +183,10 @@ def diff_flat_traj(
 
     omega_world = np.zeros((3, len(e1bx)))
     omega_dot_world = np.zeros((3, len(e1bx)))
+    omega_dot_dot_world = np.zeros((3, len(e1bx)))
 
     for i in range(len(e1bx)):
-        omega_world[:, i] = np.array(
-            compute_omega(
+        omega_world[:, i] = compute_omega_np(
                 ax_o[i],
                 ay_o[i],
                 az_o[i],
@@ -194,10 +195,9 @@ def diff_flat_traj(
                 jz_o[i],
                 g,
             )
-        )
+        
 
-        omega_dot_world[:, i] = np.array(
-            compute_omega_dot(
+        omega_dot_world[:, i] = compute_omega_dot_np(
                 ax_o[i],
                 ay_o[i],
                 az_o[i],
@@ -209,6 +209,23 @@ def diff_flat_traj(
                 sz_o[i],
                 g,
             )
+        
+        
+        omega_dot_dot_world[:, i] = compute_omega_dot_dot_np(
+                ax_o[i],
+                ay_o[i],
+                az_o[i],
+                jx_o[i],
+                jy_o[i],
+                jz_o[i],
+                sx_o[i],
+                sy_o[i],
+                sz_o[i],
+                cx_o[i],
+                cy_o[i],
+                cz_o[i],
+                g,
+            
         )
 
     e2bx = np.zeros_like(t_list)
@@ -257,6 +274,7 @@ def diff_flat_traj(
     # compute the angular velocity and acceleration in body frame
     omega_body = np.zeros((3, len(e1bx)))
     omega_dot_body = np.zeros((3, len(e1bx)))
+    omega_dot_dot_body = np.zeros((3, len(e1bx)))
 
     f1 = np.zeros_like(t_list)
     f2 = np.zeros_like(t_list)
@@ -290,6 +308,7 @@ def diff_flat_traj(
         # compute the angular velocity and acceleration in body frame
         omega_body[:, i] = Ri.T @ omega_world[:, i]
         omega_dot_body[:, i] = Ri.T @ omega_dot_world[:, i]
+        omega_dot_dot_body[:, i] = Ri.T @ omega_dot_dot_world[:, i]
 
         # Compute the derivative of the rotation matrix
         Ri_dot = Ri @ np.array(
@@ -334,6 +353,8 @@ def diff_flat_traj(
             2 * omega_body[1, i] * omega_dot_body[1, i]
             + 2 * omega_body[2, i] * omega_dot_body[2, i]
         )
+        f2_dot[i] = (-J_3 / l_tvc) * omega_dot_dot_body[2, i]
+        f3_dot[i] = (J_2 / l_tvc) * omega_dot_dot_body[1, i]
         f_dot[i] = (f1[i] * f1_dot[i] + f2[i] * f2_dot[i] + f3[i] * f3_dot[i]) / f[i]
                
     trajectory_params = {

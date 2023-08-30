@@ -24,7 +24,6 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     e3bz = trajectory_params["e3bz"]
     omega = trajectory_params["omega"]
     omega_dot = trajectory_params["omega_dot"]
-    omega_dot_2 = trajectory_params["omega_dot_2"]
 
     f1 = trajectory_params["f1"]
     f2 = trajectory_params["f2"]
@@ -36,8 +35,8 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     f_dot = trajectory_params["f_dot"]
     # delta_tvc = trajectory_params["delta_tvc"]
     # delta_tvc_dot = trajectory_params["delta_tvc_dot"]
-    f1_2 = trajectory_params["f1_2"]
-    f2_2 = trajectory_params["f2_2"]
+    safety_factor_num_int = controller_params["safety_factor_num_int"]
+
 
     last_t = t[0]
 
@@ -136,17 +135,7 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     axs[2, 1].legend()
     axs[2, 1].grid()
 
-    ######################################
-    # Plotting the estimated f1 and f2
-    ######################################
-    thrust_bounds = controller_params["thrust_bounds"]
-    delta_tvc_y_bounds = controller_params["delta_tvc_bounds"]
-    delta_tvc_z_bounds = controller_params["delta_tvc_bounds"]
 
-    f1_bounds = np.cos(delta_tvc_y_bounds[1]) * np.array(thrust_bounds)
-    f2_bounds = np.sin(delta_tvc_y_bounds[1]) * np.array(
-        [-thrust_bounds[1], thrust_bounds[1]]
-    )
 
     fig_2, ((ax1_2, ax2_2, ax3_2), (ax4_2, ax5_2, ax6_2)) = plt.subplots(
         2, 3, figsize=(15, 10)
@@ -193,24 +182,33 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     ax6_2.legend()
     ax6_2.grid()
 
+    ######################################
+    # Plotting the estimated f1 and f2
+    ######################################
+    thrust_bounds = controller_params["thrust_bounds"]
+    delta_tvc_y_bounds = controller_params["delta_tvc_bounds"]
+    
+    # f1_bounds = np.cos(delta_tvc_y_bounds[1]) * np.array(thrust_bounds)
+    f2_bounds = np.sin(delta_tvc_y_bounds[1]) * np.array(
+        [-thrust_bounds[1], thrust_bounds[1]]
+    )
+    
     fig_2, (
         (ax1_2, ax2_2, ax3_2),
         (ax4_2, ax5_2, ax6_2),
     ) = plt.subplots(2, 3, figsize=(15, 10))
 
     ax1_2.plot(t, f1, "o", markersize=1, label="f1")
-    ax1_2.plot(t, f1_2, "o", markersize=1, label="f1_2")
-    ax1_2.plot(t, [f1_bounds[0]] * len(t), "--", color="black")
-    ax1_2.plot(t, [f1_bounds[1]] * len(t), "--", color="black")
+    ax1_2.plot(t, [thrust_bounds[0]] * len(t), "--", color="black")
+    ax1_2.plot(t, [thrust_bounds[1]] * len(t), "--", color="black")
     ax1_2.grid()
     ax1_2.legend()
     ax1_2.set_title("Estimated f1")
     ax1_2.set_xlabel("t")
     ax1_2.set_ylabel("f1")
 
-    ax2_2.plot(t, np.sqrt(f2**2 + f3**2), "o", markersize=1, label="f2")
-    # ax2_2.plot(t, f3, "o", markersize=1, label="f3")
-    ax2_2.plot(t, f2_2, "o", markersize=1, label="f2_2")
+    ax2_2.plot(t, f2, "o", markersize=1, label="f2")
+    ax2_2.plot(t, f3, "o", markersize=1, label="f3")
     ax2_2.plot(
         t, np.sin(delta_tvc_y_bounds[1]) * f, "--", color="orange", label="constraint"
     )
@@ -247,23 +245,23 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
 
     ax5_2.plot(t, f2_dot, "o", markersize=1, label="f2_dot")
     ax5_2.plot(t, f3_dot, "o", markersize=1, label="f3_dot")
-    # ax5_2.plot(
-    #     t, f * controller_params["delta_tvc_dot_bounds"][0], "--", color="orange", label="constraint"
-    # )
+    ax5_2.plot(
+        t, f * controller_params["delta_tvc_dot_bounds"][0], "--", color="orange", label="constraint"
+    )
     # ax5_2.plot(
     #     t,
-    #     f_dot * np.sin(delta_tvc_y_bounds)
-    #     + f * np.cos(delta_tvc_y_bounds) * controller_params["delta_tvc_dot_bounds"][0],
+    #     f_dot * np.sin(delta_tvc_y_bounds[0])
+    #     + f * np.cos(delta_tvc_y_bounds[0]) * controller_params["delta_tvc_dot_bounds"][0],
     #     "--",
     #     color="black",
     # )
-    # ax5_2.plot(
-    #     t, f * controller_params["delta_tvc_dot_bounds"][1], "--", color="orange"
-    # )
+    ax5_2.plot(
+        t, f * controller_params["delta_tvc_dot_bounds"][1], "--", color="orange"
+    )
     # ax5_2.plot(
     #     t,
-    #     f_dot * np.sin(delta_tvc_y_bounds)
-    #     + f * np.cos(delta_tvc_y_bounds) * controller_params["delta_tvc_dot_bounds"][1],
+    #     f_dot * np.sin(delta_tvc_y_bounds[1])
+    #     + f * np.cos(delta_tvc_y_bounds[1]) * controller_params["delta_tvc_dot_bounds"][1],
     #     "--",
     #     color="black",
     # )
@@ -274,16 +272,18 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     ax5_2.set_ylabel("f2_dot")
 
     ax6_2.plot(t, f_dot, "o", markersize=1, label="f_dot")
+    ax6_2.plot(t, [controller_params["thrust_dot_bounds"][0]] * len(t))
+    ax6_2.plot(t, [controller_params["thrust_dot_bounds"][1]] * len(t))
     ax6_2.grid()
     ax6_2.legend()
     ax6_2.set_title("Estimated f_dot")
     ax6_2.set_xlabel("t")
     ax6_2.set_ylabel("f_dot")
 
-    fig_3 = plt.figure(figsize=(15, 15))
-    axs_3 = fig_3.add_subplot(111, projection="3d")
-    axs_3.plot(x, y, z, label="trajectory")
-    axs_3.plot(
+    fig_4 = plt.figure(figsize=(15, 15))
+    axs_4 = fig_4.add_subplot(111, projection="3d")
+    axs_4.plot(x, y, z, label="trajectory")
+    axs_4.plot(
         states["x"], states["y"], states["z"], "o", markersize=5, label="target points"
     )
     
@@ -296,17 +296,19 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     
     # Plot e1b, e2b, e3b vectors
     for i in sampled_indices:
-        axs_3.quiver(x[i], y[i], z[i],
+        axs_4.quiver(x[i], y[i], z[i],
                   e1bx[i], e1by[i], e1bz[i], color='r', label='e1b' if i == sampled_indices[0] else "", length=arrow_length)
-        axs_3.quiver(x[i], y[i], z[i],
+        axs_4.quiver(x[i], y[i], z[i],
                   e2bx[i], e2by[i], e2bz[i], color='g', label='e2b' if i == sampled_indices[0] else "", length=arrow_length)
-        axs_3.quiver(x[i], y[i], z[i],
+        axs_4.quiver(x[i], y[i], z[i],
                   e3bx[i], e3by[i], e3bz[i], color='b', label='e3b' if i == sampled_indices[0] else "", length=arrow_length)
         
-    axs_3.set_xlabel("X Position (m)")
-    axs_3.set_ylabel("Y Position (m)")
-    axs_3.set_zlabel("Z Position (m)")
-    axs_3.set_title("Trajectory")
-    axs_3.set_aspect("equal")
-    axs_3.legend()
-    axs_3.grid()
+    axs_4.set_xlabel("X Position (m)")
+    axs_4.set_ylabel("Y Position (m)")
+    axs_4.set_zlabel("Z Position (m)")
+    axs_4.set_title("Trajectory")
+    axs_4.set_aspect("equal")
+    axs_4.legend()
+    axs_4.grid()
+    
+    plt.show()

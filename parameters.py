@@ -34,6 +34,9 @@ J_3 = (
     1 / 12 * m * (h**2 + 3 * radius**2)
 )  # moment of inertia of the hopper perpendicular to the main axis
 
+I = J_1
+J = J_2
+
 # initial state of the oscillation point (the trajectory generator will return to the CM)
 initial_state = [
     0,  # x
@@ -142,7 +145,6 @@ env_params = {
     "g": g,
     # "max_drift": max_drift,
     # "max_angular_drift": max_angular_drift,
-    "safety_factor_num_int": safety_factor_num_int,
 }
 
 # Rocket parameters
@@ -153,6 +155,8 @@ rocket_params = {
     "J_1": J_1,
     "J_2": J_2,
     "J_3": J_3,
+    "I": I,
+    "J": J,
     "K_tvc": K_tvc,
     "T_tvc": T_tvc,
     "l_tvc": l_tvc,
@@ -177,4 +181,5 @@ controller_params = {
     "delta_tvc_bounds": (min_delta_tvc_z, max_delta_tvc_z),
     "delta_tvc_dot_bounds": (min_delta_tvc_y_deriv, max_delta_tvc_y_deriv),
     "delta_tvc_dot_bounds": (min_delta_tvc_z_deriv, max_delta_tvc_z_deriv),
+    "safety_factor_num_int": safety_factor_num_int,
 }

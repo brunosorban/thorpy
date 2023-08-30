@@ -13,6 +13,7 @@ sys.path.append(os.path.join(parent_folder, ".."))
 from Traj_planning.unc_pol_interpolation import *
 from Traj_planning.auxiliar_codes.pol_processor import *
 from Traj_planning.auxiliar_codes.compute_f1f2f3 import *
+from Traj_planning.auxiliar_codes.compute_f1f2f3_dot import *
 from Traj_planning.auxiliar_codes.coeffs2derivatives import *
 
 
@@ -76,26 +77,26 @@ def coupled_pol_interpolation(
         num_intervals
     )  # number of points per polynomial where the cost function will be evaluated
 
-    safety_factor_num_int = env_params["safety_factor_num_int"]
+    safety_factor_num_int = controller_params["safety_factor_num_int"]
     #######################################
     ###### build auxiliar fuctions ########
     #######################################
 
     # calculate the polynom
-    p0 = ca.SX.sym("p0")
-    p1 = ca.SX.sym("p1")
-    p2 = ca.SX.sym("p2")
-    p3 = ca.SX.sym("p3")
-    p4 = ca.SX.sym("p4")
-    p5 = ca.SX.sym("p5")
-    p6 = ca.SX.sym("p6")
-    p7 = ca.SX.sym("p7")
-    p8 = ca.SX.sym("p8")
-    p9 = ca.SX.sym("p9")
-    p10 = ca.SX.sym("p10")
-    p11 = ca.SX.sym("p11")
-    p12 = ca.SX.sym("p12")
-    t = ca.SX.sym("t")
+    p0 = ca.MX.sym("p0")
+    p1 = ca.MX.sym("p1")
+    p2 = ca.MX.sym("p2")
+    p3 = ca.MX.sym("p3")
+    p4 = ca.MX.sym("p4")
+    p5 = ca.MX.sym("p5")
+    p6 = ca.MX.sym("p6")
+    p7 = ca.MX.sym("p7")
+    p8 = ca.MX.sym("p8")
+    p9 = ca.MX.sym("p9")
+    p10 = ca.MX.sym("p10")
+    p11 = ca.MX.sym("p11")
+    p12 = ca.MX.sym("p12")
+    t = ca.MX.sym("t")
 
     coefs = ca.vertcat(p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12)
     pos = get_pos(coefs, t)
@@ -293,14 +294,14 @@ def coupled_pol_interpolation(
                 F_snap(pol_coeffs_z[:, i], j * dt) / dt_interval**4,
             )
 
-            # crackle = ca.vertcat(
-            #     F_crackle(pol_coeffs_x[:, i], j * dt) / dt_interval**5,
-            #     F_crackle(pol_coeffs_y[:, i], j * dt) / dt_interval**5,
-            #     F_crackle(pol_coeffs_z[:, i], j * dt) / dt_interval**5,
-            # )
+            crackle = ca.vertcat(
+                F_crackle(pol_coeffs_x[:, i], j * dt) / dt_interval**5,
+                F_crackle(pol_coeffs_y[:, i], j * dt) / dt_interval**5,
+                F_crackle(pol_coeffs_z[:, i], j * dt) / dt_interval**5,
+            )
 
-            # f2 and f3 are computed together since the direction doesn't matter to the constraints
-            f1, f23 = compute_f1f2f3(
+            f1, f2, f3, f1_dot, f2_dot, f3_dot = compute_f1f2f3(
+                t,
                 acc[0],
                 acc[1],
                 acc[2],
@@ -310,66 +311,45 @@ def coupled_pol_interpolation(
                 snap[0],
                 snap[1],
                 snap[2],
+                crackle[0],
+                crackle[1],
+                crackle[2],
                 params,
             )
-
-            # f = ca.sqrt(f1**2  + f23**2)
-            f = f1
-
-            # f1_dot, f2_dot = get_f1f2_dot(
-            #     acc[0],
-            #     acc[1],
-            #     jerk[0],
-            #     jerk[1],
-            #     snap[0],
-            #     snap[1],
-            #     crackle[0],
-            #     crackle[1],
-            #     params,
-            # )
+            
+            f_squared = f1**2  + f2**2 + f3**2
 
             # it is assumed that f1 > 0 - which holds because the rocket has no reverse thrust
-            # opti.subject_to(
-            #     f23
-            #     >= -f1
-            #     * ca.tan(controller_params["delta_tvc_bounds"][1])
-            #     / safety_factor_num_int
-            # )
-            # opti.subject_to(
-            #     f23
-            #     <= f1
-            #     * ca.tan(controller_params["delta_tvc_bounds"][1])
-            #     / safety_factor_num_int
-            # )
-
             opti.subject_to(
-                f >= controller_params["thrust_bounds"][0] * safety_factor_num_int
-            )  # in this case is "*" because the thrust is always positive
-            opti.subject_to(
-                f <= controller_params["thrust_bounds"][1] / safety_factor_num_int
+                f1**2 + f2**2
+                <= (f3
+                * ca.tan(controller_params["delta_tvc_bounds"][1])
+                / safety_factor_num_int)**2
             )
 
-            # opti.subject_to(
-            #     f1_dot
-            #     >= controller_params["thrust_dot_bounds"][0] / safety_factor_num_int
-            # )
-            # opti.subject_to(
-            #     f1_dot
-            #     <= controller_params["thrust_dot_bounds"][1] / safety_factor_num_int
-            # )
+            opti.subject_to(
+                f_squared >= (controller_params["thrust_bounds"][0] * safety_factor_num_int)**2
+            )  # in this case is "*" because the thrust is always positive
+            opti.subject_to(
+                f_squared <= (controller_params["thrust_bounds"][1] / safety_factor_num_int)**2
+            )
 
-            # opti.subject_to(
-            #     f2_dot
-            #     >= f
-            #     * controller_params["delta_tvc_dot_bounds"][0]
-            #     / safety_factor_num_int
-            # )
-            # opti.subject_to(
-            #     f2_dot
-            #     <= f
-            #     * controller_params["delta_tvc_dot_bounds"][1]
-            #     / safety_factor_num_int
-            # )
+            opti.subject_to(
+                f3_dot
+                >= controller_params["thrust_dot_bounds"][0] / safety_factor_num_int
+            )
+            
+            opti.subject_to(
+                f3_dot
+                <= controller_params["thrust_dot_bounds"][1] / safety_factor_num_int
+            )
+
+            opti.subject_to(
+                f1_dot**2 + f2_dot**2
+                <= f_squared
+                * (controller_params["delta_tvc_dot_bounds"][1]
+                / safety_factor_num_int)**2
+            )
 
     # add final cost
     obj += F_jerk(pol_coeffs_x[:, i], 1) ** 2
@@ -399,8 +379,8 @@ def coupled_pol_interpolation(
     # configure the solver
     ipopt_options = {
         "verbose": False,
-        "ipopt.tol": 1e-8,
-        "ipopt.acceptable_tol": 1e-8,
+        "ipopt.tol": 1e-6,
+        "ipopt.acceptable_tol": 1e-6,
         "ipopt.max_iter": 500,
         "ipopt.warm_start_init_point": "yes",
         "ipopt.print_level": 5,
