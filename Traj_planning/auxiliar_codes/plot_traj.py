@@ -37,7 +37,6 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     # delta_tvc_dot = trajectory_params["delta_tvc_dot"]
     safety_factor_num_int = controller_params["safety_factor_num_int"]
 
-
     last_t = t[0]
 
     fig, axs = plt.subplots(3, 2, figsize=(15, 15))
@@ -135,8 +134,6 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     axs[2, 1].legend()
     axs[2, 1].grid()
 
-
-
     fig_2, ((ax1_2, ax2_2, ax3_2), (ax4_2, ax5_2, ax6_2)) = plt.subplots(
         2, 3, figsize=(15, 10)
     )
@@ -187,12 +184,12 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     ######################################
     thrust_bounds = controller_params["thrust_bounds"]
     delta_tvc_y_bounds = controller_params["delta_tvc_bounds"]
-    
+
     # f1_bounds = np.cos(delta_tvc_y_bounds[1]) * np.array(thrust_bounds)
     f2_bounds = np.sin(delta_tvc_y_bounds[1]) * np.array(
         [-thrust_bounds[1], thrust_bounds[1]]
     )
-    
+
     fig_2, (
         (ax1_2, ax2_2, ax3_2),
         (ax4_2, ax5_2, ax6_2),
@@ -246,7 +243,11 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     ax5_2.plot(t, f2_dot, "o", markersize=1, label="f2_dot")
     ax5_2.plot(t, f3_dot, "o", markersize=1, label="f3_dot")
     ax5_2.plot(
-        t, f * controller_params["delta_tvc_dot_bounds"][0], "--", color="orange", label="constraint"
+        t,
+        f * controller_params["delta_tvc_dot_bounds"][0],
+        "--",
+        color="orange",
+        label="constraint",
     )
     # ax5_2.plot(
     #     t,
@@ -286,23 +287,49 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     axs_4.plot(
         states["x"], states["y"], states["z"], "o", markersize=5, label="target points"
     )
-    
 
     # Determine indices to sample every 5 seconds
     dt = t[1] - t[0]  # Assuming t is uniformly spaced
     sample_interval = int(3 / dt)
     sampled_indices = range(0, len(t), sample_interval)
     arrow_length = 10
-    
+
     # Plot e1b, e2b, e3b vectors
     for i in sampled_indices:
-        axs_4.quiver(x[i], y[i], z[i],
-                  e1bx[i], e1by[i], e1bz[i], color='r', label='e1b' if i == sampled_indices[0] else "", length=arrow_length)
-        axs_4.quiver(x[i], y[i], z[i],
-                  e2bx[i], e2by[i], e2bz[i], color='g', label='e2b' if i == sampled_indices[0] else "", length=arrow_length)
-        axs_4.quiver(x[i], y[i], z[i],
-                  e3bx[i], e3by[i], e3bz[i], color='b', label='e3b' if i == sampled_indices[0] else "", length=arrow_length)
-        
+        axs_4.quiver(
+            x[i],
+            y[i],
+            z[i],
+            e1bx[i],
+            e1by[i],
+            e1bz[i],
+            color="r",
+            label="e1b" if i == sampled_indices[0] else "",
+            length=arrow_length,
+        )
+        axs_4.quiver(
+            x[i],
+            y[i],
+            z[i],
+            e2bx[i],
+            e2by[i],
+            e2bz[i],
+            color="g",
+            label="e2b" if i == sampled_indices[0] else "",
+            length=arrow_length,
+        )
+        axs_4.quiver(
+            x[i],
+            y[i],
+            z[i],
+            e3bx[i],
+            e3by[i],
+            e3bz[i],
+            color="b",
+            label="e3b" if i == sampled_indices[0] else "",
+            length=arrow_length,
+        )
+
     axs_4.set_xlabel("X Position (m)")
     axs_4.set_ylabel("Y Position (m)")
     axs_4.set_zlabel("Z Position (m)")
@@ -310,5 +337,5 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     axs_4.set_aspect("equal")
     axs_4.legend()
     axs_4.grid()
-    
+
     plt.show()

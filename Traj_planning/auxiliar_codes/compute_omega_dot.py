@@ -22,18 +22,28 @@ def compute_omega_dot(
 
     Returns:
         e (list): omega_dot vector."""
-        
+
     t = ca.vertcat(x_dot_dot, y_dot_dot, z_dot_dot + g)
-    
+
     beta_dot = (
         -2
         * (x_dot_dot * x_3dot + y_dot_dot * y_3dot + (z_dot_dot + g) * z_3dot)
-        / ca.norm_2(t)**4
+        / ca.norm_2(t) ** 4
     )
+    
+    wx = -g * y_3dot - y_3dot * z_dot_dot + y_dot_dot * z_3dot
+    wy = g * x_3dot + x_3dot * z_dot_dot - x_dot_dot * z_3dot
+    wz = -x_3dot * y_dot_dot + x_dot_dot * y_3dot
+    
     wx_dot = -(z_dot_dot + g) * y_4dot + y_dot_dot * z_4dot
     wy_dot = (z_dot_dot + g) * x_4dot - x_dot_dot * z_4dot
     wz_dot = -y_dot_dot * x_4dot + x_dot_dot * y_4dot
-    e = ca.vertcat(beta_dot * wx_dot, beta_dot * wy_dot, beta_dot * wz_dot)
+
+    e = ca.vertcat(
+        wx_dot / ca.norm_2(t) ** 2 + wx * beta_dot,
+        wy_dot / ca.norm_2(t) ** 2 + wy * beta_dot,
+        wz_dot / ca.norm_2(t) ** 2 + wz * beta_dot,
+    )
 
     return e
 
@@ -58,17 +68,26 @@ def compute_omega_dot_np(
 
     Returns:
         e (list): omega_dot vector."""
-        
+
     t = np.array([x_dot_dot, y_dot_dot, z_dot_dot + g])
-    
+
     beta_dot = (
         -2
         * (x_dot_dot * x_3dot + y_dot_dot * y_3dot + (z_dot_dot + g) * z_3dot)
-        / np.linalg.norm(t)**4
+        / np.linalg.norm(t) ** 4
     )
+    
+    wx = -g * y_3dot - y_3dot * z_dot_dot + y_dot_dot * z_3dot
+    wy = g * x_3dot + x_3dot * z_dot_dot - x_dot_dot * z_3dot
+    wz = -x_3dot * y_dot_dot + x_dot_dot * y_3dot
+    
     wx_dot = -(z_dot_dot + g) * y_4dot + y_dot_dot * z_4dot
     wy_dot = (z_dot_dot + g) * x_4dot - x_dot_dot * z_4dot
     wz_dot = -y_dot_dot * x_4dot + x_dot_dot * y_4dot
-    e = [beta_dot * wx_dot, beta_dot * wy_dot, beta_dot * wz_dot]
+    e = [
+        wx_dot / np.linalg.norm(t) ** 2 + wx * beta_dot,
+        wy_dot / np.linalg.norm(t) ** 2 + wy * beta_dot,
+        wz_dot / np.linalg.norm(t) ** 2 + wz * beta_dot,
+    ]
 
     return e

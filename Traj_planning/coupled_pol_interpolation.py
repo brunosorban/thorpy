@@ -13,7 +13,6 @@ sys.path.append(os.path.join(parent_folder, ".."))
 from Traj_planning.unc_pol_interpolation import *
 from Traj_planning.auxiliar_codes.pol_processor import *
 from Traj_planning.auxiliar_codes.compute_f1f2f3 import *
-from Traj_planning.auxiliar_codes.compute_f1f2f3_dot import *
 from Traj_planning.auxiliar_codes.coeffs2derivatives import *
 
 
@@ -316,29 +315,34 @@ def coupled_pol_interpolation(
                 crackle[2],
                 params,
             )
-            
-            f_squared = f1**2  + f2**2 + f3**2
+
+            f_squared = f1**2 + f2**2 + f3**2
 
             # it is assumed that f1 > 0 - which holds because the rocket has no reverse thrust
             opti.subject_to(
                 f1**2 + f2**2
-                <= (f3
-                * ca.tan(controller_params["delta_tvc_bounds"][1])
-                / safety_factor_num_int)**2
+                <= (
+                    f3
+                    * ca.tan(controller_params["delta_tvc_bounds"][1])
+                    / safety_factor_num_int
+                )
+                ** 2
             )
 
             opti.subject_to(
-                f_squared >= (controller_params["thrust_bounds"][0] * safety_factor_num_int)**2
+                f_squared
+                >= (controller_params["thrust_bounds"][0] * safety_factor_num_int) ** 2
             )  # in this case is "*" because the thrust is always positive
             opti.subject_to(
-                f_squared <= (controller_params["thrust_bounds"][1] / safety_factor_num_int)**2
+                f_squared
+                <= (controller_params["thrust_bounds"][1] / safety_factor_num_int) ** 2
             )
 
             opti.subject_to(
                 f3_dot
                 >= controller_params["thrust_dot_bounds"][0] / safety_factor_num_int
             )
-            
+
             opti.subject_to(
                 f3_dot
                 <= controller_params["thrust_dot_bounds"][1] / safety_factor_num_int
@@ -347,8 +351,8 @@ def coupled_pol_interpolation(
             opti.subject_to(
                 f1_dot**2 + f2_dot**2
                 <= f_squared
-                * (controller_params["delta_tvc_dot_bounds"][1]
-                / safety_factor_num_int)**2
+                * (controller_params["delta_tvc_dot_bounds"][1] / safety_factor_num_int)
+                ** 2
             )
 
     # add final cost

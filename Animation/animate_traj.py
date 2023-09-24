@@ -3,10 +3,27 @@ from mayavi import mlab
 import imageio
 
 
-def animate_traj(t, x, y, z, e1bx, e1by, e1bz, e2bx, e2by, e2bz, e3bx, e3by, e3bz, trajectory_params, duration=15, save=True):
+def animate_traj(
+    t,
+    x,
+    y,
+    z,
+    e1bx,
+    e1by,
+    e1bz,
+    e2bx,
+    e2by,
+    e2bz,
+    e3bx,
+    e3by,
+    e3bz,
+    trajectory_params,
+    duration=15,
+    save=True,
+):
     if save:
         w = imageio.get_writer("Videos/rocket.mp4", format="FFMPEG", fps=60)
-        
+
     fps = 60
     time_list = np.linspace(0, t[-1], duration * fps)
 
@@ -48,7 +65,7 @@ def animate_traj(t, x, y, z, e1bx, e1by, e1bz, e2bx, e2by, e2bz, e3bx, e3by, e3b
 
     # Calculate the center of mass (z-coordinate) for the rocket assuming uniform density
     x_cm = height_body / 2
-    
+
     X_nose = X_nose - x_cm
     X_body = X_body - x_cm
 
@@ -65,17 +82,42 @@ def animate_traj(t, x, y, z, e1bx, e1by, e1bz, e2bx, e2by, e2bz, e3bx, e3by, e3b
     mlab.plot3d(x_ref, y_ref, z_ref, color=(0, 0, 1), tube_radius=0.1)
 
     # Plot reference orientation vectors sampled every 3 seconds
-    step = max(1, 3 * int(len(x_ref) / len(x)))  # Assuming equal time steps for both trajectories
-    mlab.quiver3d(x_ref[::step], y_ref[::step], z_ref[::step], 
-                 e1bx_ref[::step], e1by_ref[::step], e1bz_ref[::step], 
-                 color=(1, 0, 0), mode='arrow', scale_factor=2)
-    mlab.quiver3d(x_ref[::step], y_ref[::step], z_ref[::step], 
-                 e2bx_ref[::step], e2by_ref[::step], e2bz_ref[::step], 
-                 color=(0, 1, 0), mode='arrow', scale_factor=2)
-    mlab.quiver3d(x_ref[::step], y_ref[::step], z_ref[::step], 
-                 e3bx_ref[::step], e3by_ref[::step], e3bz_ref[::step], 
-                 color=(0, 0, 1), mode='arrow', scale_factor=2)
-
+    step = max(
+        1, 3 * int(len(x_ref) / len(x))
+    )  # Assuming equal time steps for both trajectories
+    mlab.quiver3d(
+        x_ref[::step],
+        y_ref[::step],
+        z_ref[::step],
+        e1bx_ref[::step],
+        e1by_ref[::step],
+        e1bz_ref[::step],
+        color=(1, 0, 0),
+        mode="arrow",
+        scale_factor=2,
+    )
+    mlab.quiver3d(
+        x_ref[::step],
+        y_ref[::step],
+        z_ref[::step],
+        e2bx_ref[::step],
+        e2by_ref[::step],
+        e2bz_ref[::step],
+        color=(0, 1, 0),
+        mode="arrow",
+        scale_factor=2,
+    )
+    mlab.quiver3d(
+        x_ref[::step],
+        y_ref[::step],
+        z_ref[::step],
+        e3bx_ref[::step],
+        e3by_ref[::step],
+        e3bz_ref[::step],
+        color=(0, 0, 1),
+        mode="arrow",
+        scale_factor=2,
+    )
 
     # Create mesh representations for the rocket's components
 
@@ -112,15 +154,13 @@ def animate_traj(t, x, y, z, e1bx, e1by, e1bz, e2bx, e2by, e2bz, e3bx, e3by, e3b
             for j in range(X.shape[1]):
                 coordinates = np.array([X_origin[i, j], Y_origin[i, j], Z_origin[i, j]])
                 rotated_coordinates = rotation_matrix @ coordinates
-                
-                X_rotated_translated[i, j] = (
-                    rotated_coordinates[0] + x_translation
-                )
+
+                X_rotated_translated[i, j] = rotated_coordinates[0] + x_translation
                 Y_rotated_translated[i, j] = rotated_coordinates[1] + y_translation
                 Z_rotated_translated[i, j] = rotated_coordinates[2] + z_translation
 
         return X_rotated_translated, Y_rotated_translated, Z_rotated_translated
-    
+
     def linear_spline(x, x_source, y_source):
         """Linear interpolation of x in x_source and y_source"""
 
@@ -177,7 +217,6 @@ def animate_traj(t, x, y, z, e1bx, e1by, e1bz, e2bx, e2by, e2bz, e3bx, e3by, e3b
         # Update ball position
         # Update the ball position according to the center of gravity
 
-
         # Apply rotation around center of mass and translations
         X_nose_rotated, Y_nose_rotated, Z_nose_rotated = apply_center_of_mass_rotation(
             X_nose,
@@ -210,10 +249,10 @@ def animate_traj(t, x, y, z, e1bx, e1by, e1bz, e2bx, e2by, e2bz, e3bx, e3by, e3b
         # ball.mlab_source.set(x=x_translation, y=y_translation, z=z_translation)
 
         mlab.process_ui_events()
-        
+
         if save:
             mlab.savefig(filename="Videos/temp.jpg")
             w.append_data(imageio.imread("Videos/temp.jpg"))
-            
+
     if save:
         w.close()

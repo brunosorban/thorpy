@@ -880,20 +880,47 @@ class MPC_controller:
         #             e2b[0, i], e2b[1, i], e2b[2, i], color='g', label='e2b' if i == sampled_indices[0] else "")
         #     ax.quiver(x[i, 0], x[i, 2], x[i, 4],
         #             e3b[0, i], e3b[1, i], e3b[2, i], color='b', label='e3b' if i == sampled_indices[0] else "")
-            
+
         # Determine indices to sample every 5 seconds
         dt = t_ref[1] - t_ref[0]  # Assuming t is uniformly spaced
         sample_interval = int(3 / dt)
         sampled_indices = range(0, len(t), sample_interval)
-        
-        for i in sampled_indices:    
-            ax.quiver(x_ref[i], y_ref[i], z_ref[i],
-                    e1bx_ref[i], e1by_ref[i], e1bz_ref[i], color='r', label='e1b' if i == sampled_indices[0] else "", length=arrow_length)
-            ax.quiver(x_ref[i], y_ref[i], z_ref[i],
-                    e2bx_ref[i], e2by_ref[i], e2bz_ref[i], color='g', label='e2b' if i == sampled_indices[0] else "", length=arrow_length)
-            ax.quiver(x_ref[i], y_ref[i], z_ref[i],
-                    e3bx_ref[i], e3by_ref[i], e3bz_ref[i], color='b', label='e3b' if i == sampled_indices[0] else "", length=arrow_length)
-            
+
+        for i in sampled_indices:
+            ax.quiver(
+                x_ref[i],
+                y_ref[i],
+                z_ref[i],
+                e1bx_ref[i],
+                e1by_ref[i],
+                e1bz_ref[i],
+                color="r",
+                label="e1b" if i == sampled_indices[0] else "",
+                length=arrow_length,
+            )
+            ax.quiver(
+                x_ref[i],
+                y_ref[i],
+                z_ref[i],
+                e2bx_ref[i],
+                e2by_ref[i],
+                e2bz_ref[i],
+                color="g",
+                label="e2b" if i == sampled_indices[0] else "",
+                length=arrow_length,
+            )
+            ax.quiver(
+                x_ref[i],
+                y_ref[i],
+                z_ref[i],
+                e3bx_ref[i],
+                e3by_ref[i],
+                e3bz_ref[i],
+                color="b",
+                label="e3b" if i == sampled_indices[0] else "",
+                length=arrow_length,
+            )
+
         ax.set_xlabel("X position (m)")
         ax.set_ylabel("Y position (m)")
         ax.set_zlabel("Z position (m)")

@@ -187,45 +187,42 @@ def diff_flat_traj(
 
     for i in range(len(e1bx)):
         omega_world[:, i] = compute_omega_np(
-                ax_o[i],
-                ay_o[i],
-                az_o[i],
-                jx_o[i],
-                jy_o[i],
-                jz_o[i],
-                g,
-            )
-        
+            ax_o[i],
+            ay_o[i],
+            az_o[i],
+            jx_o[i],
+            jy_o[i],
+            jz_o[i],
+            g,
+        )
 
         omega_dot_world[:, i] = compute_omega_dot_np(
-                ax_o[i],
-                ay_o[i],
-                az_o[i],
-                jx_o[i],
-                jy_o[i],
-                jz_o[i],
-                sx_o[i],
-                sy_o[i],
-                sz_o[i],
-                g,
-            )
-        
-        
+            ax_o[i],
+            ay_o[i],
+            az_o[i],
+            jx_o[i],
+            jy_o[i],
+            jz_o[i],
+            sx_o[i],
+            sy_o[i],
+            sz_o[i],
+            g,
+        )
+
         omega_dot_dot_world[:, i] = compute_omega_dot_dot_np(
-                ax_o[i],
-                ay_o[i],
-                az_o[i],
-                jx_o[i],
-                jy_o[i],
-                jz_o[i],
-                sx_o[i],
-                sy_o[i],
-                sz_o[i],
-                cx_o[i],
-                cy_o[i],
-                cz_o[i],
-                g,
-            
+            ax_o[i],
+            ay_o[i],
+            az_o[i],
+            jx_o[i],
+            jy_o[i],
+            jz_o[i],
+            sx_o[i],
+            sy_o[i],
+            sz_o[i],
+            cx_o[i],
+            cy_o[i],
+            cz_o[i],
+            g,
         )
 
     e2bx = np.zeros_like(t_list)
@@ -356,7 +353,7 @@ def diff_flat_traj(
         f2_dot[i] = (-J_3 / l_tvc) * omega_dot_dot_body[2, i]
         f3_dot[i] = (J_2 / l_tvc) * omega_dot_dot_body[1, i]
         f_dot[i] = (f1[i] * f1_dot[i] + f2[i] * f2_dot[i] + f3[i] * f3_dot[i]) / f[i]
-               
+
     trajectory_params = {
         "t": t_list,
         "x": x_g,
