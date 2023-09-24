@@ -52,22 +52,22 @@ def animate_traj(
     v = np.linspace(0, 2 * np.pi, 100)
 
     U_nose, V = np.meshgrid(u_nose, v)
-    X_nose = height_body + U_nose
+    Z_nose = height_body + U_nose
     Y_nose = (height_nose - U_nose) / height_nose * radius_body * np.sin(V)
-    Z_nose = (height_nose - U_nose) / height_nose * radius_body * np.cos(V)
+    X_nose = (height_nose - U_nose) / height_nose * radius_body * np.cos(V)
 
     # Body (Cylinder)
     u_body = np.linspace(0, height_body, 100)
     U_body, V = np.meshgrid(u_body, v)
-    X_body = U_body
+    Z_body = U_body
     Y_body = radius_body * np.sin(V)
-    Z_body = radius_body * np.cos(V)
+    X_body = radius_body * np.cos(V)
 
     # Calculate the center of mass (z-coordinate) for the rocket assuming uniform density
     x_cm = height_body / 2
 
-    X_nose = X_nose - x_cm
-    X_body = X_body - x_cm
+    Z_nose = Z_nose - x_cm
+    Z_body = Z_body - x_cm
 
     f = mlab.figure(bgcolor=(1, 1, 1), fgcolor=(0, 0, 0), size=(1280, 978))
 

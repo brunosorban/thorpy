@@ -30,11 +30,11 @@ def compute_omega_dot(
         * (x_dot_dot * x_3dot + y_dot_dot * y_3dot + (z_dot_dot + g) * z_3dot)
         / ca.norm_2(t) ** 4
     )
-    
+
     wx = -g * y_3dot - y_3dot * z_dot_dot + y_dot_dot * z_3dot
     wy = g * x_3dot + x_3dot * z_dot_dot - x_dot_dot * z_3dot
     wz = -x_3dot * y_dot_dot + x_dot_dot * y_3dot
-    
+
     wx_dot = -(z_dot_dot + g) * y_4dot + y_dot_dot * z_4dot
     wy_dot = (z_dot_dot + g) * x_4dot - x_dot_dot * z_4dot
     wz_dot = -y_dot_dot * x_4dot + x_dot_dot * y_4dot
@@ -76,11 +76,11 @@ def compute_omega_dot_np(
         * (x_dot_dot * x_3dot + y_dot_dot * y_3dot + (z_dot_dot + g) * z_3dot)
         / np.linalg.norm(t) ** 4
     )
-    
+
     wx = -g * y_3dot - y_3dot * z_dot_dot + y_dot_dot * z_3dot
     wy = g * x_3dot + x_3dot * z_dot_dot - x_dot_dot * z_3dot
     wz = -x_3dot * y_dot_dot + x_dot_dot * y_3dot
-    
+
     wx_dot = -(z_dot_dot + g) * y_4dot + y_dot_dot * z_4dot
     wy_dot = (z_dot_dot + g) * x_4dot - x_dot_dot * z_4dot
     wz_dot = -y_dot_dot * x_4dot + x_dot_dot * y_4dot

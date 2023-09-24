@@ -45,24 +45,24 @@ initial_state = [
     0,  # y_dot
     0,  # z
     0,  # z_dot
-    0,  # e1bx
+    1,  # e1bx
     0,  # e1by
-    1,  # e1bz
+    0,  # e1bz
     0,  # e2bx
     1,  # e2by
     0,  # e2bz
-    -1,  # e3bx
+    0,  # e3bx
     0,  # e3by
-    0,  # e3bz
-    0,  # e1tx
+    1,  # e3bz
+    1,  # e1tx
     0,  # e1ty
-    1,  # e1tz
+    0,  # e1tz
     0,  # e2tx
     1,  # e2ty
     0,  # e2tz
-    -1,  # e3tx
+    0,  # e3tx
     0,  # e3ty
-    0,  # e3tz
+    1,  # e3tz
     0,  # omega_x
     0,  # omega_y
     0,  # omega_z

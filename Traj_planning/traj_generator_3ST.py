@@ -1,7 +1,8 @@
 from Traj_planning.coupled_pol_interpolation import *
 from Traj_planning.diff_flat import *
 from Traj_planning.auxiliar_codes.plot_traj import *
-from Traj_planning.auxiliar_codes.drift_checker import drift_checker
+
+# from Traj_planning.auxiliar_codes.drift_checker import drift_checker
 
 
 def trajenerator_3ST(states, env_params, rocket_params, controller_params):

@@ -168,24 +168,24 @@ def diff_flat_traj(
             Pz_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1]
         )
 
-    e1bx = np.zeros_like(t_list)
-    e1by = np.zeros_like(t_list)
-    e1bz = np.zeros_like(t_list)
+    e3bx = np.zeros_like(t_list)
+    e3by = np.zeros_like(t_list)
+    e3bz = np.zeros_like(t_list)
 
     # estimate the trajectory parameters for the 3D case
     for i in range(len(t_list)):
         t = np.array([ax_o[i], ay_o[i], az_o[i] + g])
         temp = np.linalg.norm(t)
 
-        e1bx[i] = t[0] / temp
-        e1by[i] = t[1] / temp
-        e1bz[i] = t[2] / temp
+        e3bx[i] = t[0] / temp
+        e3by[i] = t[1] / temp
+        e3bz[i] = t[2] / temp
 
-    omega_world = np.zeros((3, len(e1bx)))
-    omega_dot_world = np.zeros((3, len(e1bx)))
-    omega_dot_dot_world = np.zeros((3, len(e1bx)))
+    omega_world = np.zeros((3, len(e3bx)))
+    omega_dot_world = np.zeros((3, len(e3bx)))
+    omega_dot_dot_world = np.zeros((3, len(e3bx)))
 
-    for i in range(len(e1bx)):
+    for i in range(len(e3bx)):
         omega_world[:, i] = compute_omega_np(
             ax_o[i],
             ay_o[i],
@@ -225,20 +225,20 @@ def diff_flat_traj(
             g,
         )
 
+    e1bx = np.zeros_like(t_list)
+    e1by = np.zeros_like(t_list)
+    e1bz = np.zeros_like(t_list)
     e2bx = np.zeros_like(t_list)
     e2by = np.zeros_like(t_list)
     e2bz = np.zeros_like(t_list)
-    e3bx = np.zeros_like(t_list)
-    e3by = np.zeros_like(t_list)
-    e3bz = np.zeros_like(t_list)
 
     # load initial state
+    e1bx[0] = x0[6]
+    e1by[0] = x0[7]
+    e1bz[0] = x0[8]
     e2bx[0] = x0[9]
     e2by[0] = x0[10]
     e2bz[0] = x0[11]
-    e3bx[0] = x0[12]
-    e3by[0] = x0[13]
-    e3bz[0] = x0[14]
 
     for i in range(len(t_list) - 1):
         x_var = np.array(
@@ -259,14 +259,14 @@ def diff_flat_traj(
         )
         R_new = RK4(fun_R, x_var, None, dt)
 
+        norm_e1b = np.sqrt(R_new[0] ** 2 + R_new[1] ** 2 + R_new[2] ** 2)
         norm_e2b = np.sqrt(R_new[3] ** 2 + R_new[4] ** 2 + R_new[5] ** 2)
-        norm_e3b = np.sqrt(R_new[6] ** 2 + R_new[7] ** 2 + R_new[8] ** 2)
+        e1bx[i + 1] = R_new[0] / norm_e1b
+        e1by[i + 1] = R_new[1] / norm_e1b
+        e1bz[i + 1] = R_new[2] / norm_e1b
         e2bx[i + 1] = R_new[3] / norm_e2b
         e2by[i + 1] = R_new[4] / norm_e2b
         e2bz[i + 1] = R_new[5] / norm_e2b
-        e3bx[i + 1] = R_new[6] / norm_e3b
-        e3by[i + 1] = R_new[7] / norm_e3b
-        e3bz[i + 1] = R_new[8] / norm_e3b
 
     # compute the angular velocity and acceleration in body frame
     omega_body = np.zeros((3, len(e1bx)))
@@ -334,24 +334,24 @@ def diff_flat_traj(
         az_g[i] = az_o[i] - temp[2]
 
         # compute the thrust force and the thrust force derivative
-        e1b_t = np.array([e1bx[i], e1by[i], e1bz[i]])
-        f1[i] = m * e1b_t @ np.array([ax_o[i], ay_o[i], az_o[i] + g]).T + (
-            (J_2 + J_3) / (2 * l_tvc)
-        ) * (omega_body[1, i] ** 2 + omega_body[2, i] ** 2)
-        f2[i] = -J_3 * omega_dot_body[2, i] / l_tvc
-        f3[i] = J_2 * omega_dot_body[1, i] / l_tvc
+        e3b_t = np.array([e3bx[i], e3by[i], e3bz[i]])
+        f1[i] = -J_2 * omega_dot_body[1, i] / l_tvc
+        f2[i] = J_1 * omega_dot_body[0, i] / l_tvc
+        f3[i] = m * e3b_t @ np.array([ax_o[i], ay_o[i], az_o[i] + g]).T + (
+            (J_1 + J_2) / (2 * l_tvc)
+        ) * (omega_body[0, i] ** 2 + omega_body[1, i] ** 2)
         f[i] = np.sqrt(f1[i] ** 2 + f2[i] ** 2 + f3[i] ** 2)
 
         temp = m * Ri_dot.T @ np.array(
             [ax_o[i], ay_o[i], az_o[i] + g]
         ).T + m * Ri.T @ np.array([jx_o[i], jy_o[i], jz_o[i]])
 
-        f1_dot[i] = temp[0] + ((J_2 + J_3) / (2 * l_tvc)) * (
-            2 * omega_body[1, i] * omega_dot_body[1, i]
-            + 2 * omega_body[2, i] * omega_dot_body[2, i]
+        f1_dot[i] = -(J_2 / l_tvc) * omega_dot_dot_body[1, i]
+        f2_dot[i] = (J_1 / l_tvc) * omega_dot_dot_body[0, i]
+        f3_dot[i] = temp[0] + ((J_1 + J_2) / (2 * l_tvc)) * (
+            2 * omega_body[0, i] * omega_dot_body[0, i]
+            + 2 * omega_body[1, i] * omega_dot_body[1, i]
         )
-        f2_dot[i] = (-J_3 / l_tvc) * omega_dot_dot_body[2, i]
-        f3_dot[i] = (J_2 / l_tvc) * omega_dot_dot_body[1, i]
         f_dot[i] = (f1[i] * f1_dot[i] + f2[i] * f2_dot[i] + f3[i] * f3_dot[i]) / f[i]
 
     trajectory_params = {

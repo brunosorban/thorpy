@@ -18,8 +18,8 @@ from Traj_planning.examples.infinity_symbol_3ST import traj_infinity_symbol_3ST
 # trajectory_params = traj_go_up_3ST()
 # tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
 
-# trajectory_params = traj_hopper_3ST()
-# tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
+trajectory_params = traj_hopper_3ST()
+tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
 
 # trajectory_params = traj_M_3ST()
 # tf = trajectory_params["t"][-1] + 0.1  # 0.1 second after the landing
@@ -30,8 +30,8 @@ from Traj_planning.examples.infinity_symbol_3ST import traj_infinity_symbol_3ST
 # trajectory_params = traj_spiral_3ST()
 # tf = trajectory_params["t"][-1]
 
-trajectory_params = traj_infinity_symbol_3ST()
-tf = trajectory_params["t"][-1]
+# trajectory_params = traj_infinity_symbol_3ST()
+# tf = trajectory_params["t"][-1]
 
 ######################### Creating the controller ##############################
 controller = MPC_controller(

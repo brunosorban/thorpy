@@ -35,7 +35,7 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     f_dot = trajectory_params["f_dot"]
     # delta_tvc = trajectory_params["delta_tvc"]
     # delta_tvc_dot = trajectory_params["delta_tvc_dot"]
-    safety_factor_num_int = controller_params["safety_factor_num_int"]
+    # safety_factor_num_int = controller_params["safety_factor_num_int"]
 
     last_t = t[0]
 
@@ -195,17 +195,17 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
         (ax4_2, ax5_2, ax6_2),
     ) = plt.subplots(2, 3, figsize=(15, 10))
 
-    ax1_2.plot(t, f1, "o", markersize=1, label="f1")
+    ax1_2.plot(t, f3, "o", markersize=1, label="f3")
     ax1_2.plot(t, [thrust_bounds[0]] * len(t), "--", color="black")
     ax1_2.plot(t, [thrust_bounds[1]] * len(t), "--", color="black")
     ax1_2.grid()
     ax1_2.legend()
-    ax1_2.set_title("Estimated f1")
+    ax1_2.set_title("Estimated f3")
     ax1_2.set_xlabel("t")
-    ax1_2.set_ylabel("f1")
+    ax1_2.set_ylabel("f3")
 
     ax2_2.plot(t, f2, "o", markersize=1, label="f2")
-    ax2_2.plot(t, f3, "o", markersize=1, label="f3")
+    ax2_2.plot(t, f1, "o", markersize=1, label="f1")
     ax2_2.plot(
         t, np.sin(delta_tvc_y_bounds[1]) * f, "--", color="orange", label="constraint"
     )
@@ -214,9 +214,9 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     ax2_2.plot(t, -np.sin(delta_tvc_y_bounds[1]) * f, "--", color="orange")
     ax2_2.grid()
     ax2_2.legend()
-    ax2_2.set_title("Estimated f2")
+    ax2_2.set_title("Estimated f1 and f2")
     ax2_2.set_xlabel("t")
-    ax2_2.set_ylabel("f2")
+    ax2_2.set_ylabel("f1 and f2")
 
     ax3_2.plot(t, f, "o", markersize=1, label="f")
     ax3_2.plot(t, [thrust_bounds[0]] * len(t), "--", color="black")
@@ -227,7 +227,7 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     ax3_2.set_xlabel("t")
     ax3_2.set_ylabel("f")
 
-    ax4_2.plot(t, f1_dot, "o", markersize=1, label="f1_dot")
+    ax4_2.plot(t, f3_dot, "o", markersize=1, label="f3_dot")
     ax4_2.plot(
         t, [controller_params["thrust_dot_bounds"][0]] * len(t), "--", color="black"
     )
@@ -236,12 +236,12 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     )
     ax4_2.grid()
     ax4_2.legend()
-    ax4_2.set_title("Estimated f1_dot")
+    ax4_2.set_title("Estimated f3_dot")
     ax4_2.set_xlabel("t")
-    ax4_2.set_ylabel("f1_dot")
+    ax4_2.set_ylabel("f3_dot")
 
     ax5_2.plot(t, f2_dot, "o", markersize=1, label="f2_dot")
-    ax5_2.plot(t, f3_dot, "o", markersize=1, label="f3_dot")
+    ax5_2.plot(t, f1_dot, "o", markersize=1, label="f1_dot")
     ax5_2.plot(
         t,
         f * controller_params["delta_tvc_dot_bounds"][0],
@@ -268,9 +268,9 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     # )
     ax5_2.grid()
     ax5_2.legend()
-    ax5_2.set_title("Estimated f2_dot")
+    ax5_2.set_title("Estimated f1_dot and f2_dot")
     ax5_2.set_xlabel("t")
-    ax5_2.set_ylabel("f2_dot")
+    ax5_2.set_ylabel("f1_dot and f2_dot")
 
     ax6_2.plot(t, f_dot, "o", markersize=1, label="f_dot")
     ax6_2.plot(t, [controller_params["thrust_dot_bounds"][0]] * len(t))

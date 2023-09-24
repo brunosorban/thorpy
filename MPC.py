@@ -143,11 +143,11 @@ class MPC_controller:
         # define the nonlinear ode
         ode = ca.vertcat(
             x_dot,  # x
-            thrust / m * e1tx,  # v_x
+            thrust / m * e3tx,  # v_x
             y_dot,  # y
-            thrust / m * e1ty,  # v_y
+            thrust / m * e3ty,  # v_y
             z_dot,  # z
-            thrust / m * e1tz - g,  # v_z
+            thrust / m * e3tz - g,  # v_z
             -omega_y * e3bx + omega_z * e2bx,  # e1bx
             -omega_y * e3by + omega_z * e2by,  # e1by
             -omega_y * e3bz + omega_z * e2bz,  # e1bz
@@ -169,17 +169,17 @@ class MPC_controller:
             -omega_x * e2tx + (omega_y + delta_tvc_dot_y) * e1tx,  # e3tx
             -omega_x * e2ty + (omega_y + delta_tvc_dot_y) * e1ty,  # e3ty
             -omega_x * e2tz + (omega_y + delta_tvc_dot_y) * e1tz,  # e3tz
-            (-(-J_2 + J_3) * omega_y * omega_z) / J_2,  # omega x
             (
-                -thrust * l_tvc * (e1tx * e3bx + e1ty * e3by + e1tz * e3bz)
+                thrust * l_tvc * (e3tx * e2bx + e3ty * e2by + e3tz * e2bz)
+                - (-J_2 + J_3) * omega_y * omega_z
+            )
+            / J_1,  # omega x
+            (
+                -thrust * l_tvc * (e3tx * e1bx + e3ty * e1by + e3tz * e1bz)
                 - (J_1 - J_3) * omega_x * omega_z
             )
             / J_2,  # omega y
-            (
-                -thrust * l_tvc * (e1tx * e2bx + e1ty * e2by + e1tz * e2bz)
-                - (-J_1 + J_2) * omega_x * omega_y
-            )
-            / J_3,  # omega z
+            (-(-J_1 + J_2) * omega_x * omega_y) / J_3,  # omega z
             thrust_dot,  # thrust
         )
 
