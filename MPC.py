@@ -134,11 +134,11 @@ class MPC_controller:
 
         # initializing the control varibles
         thrust_dot = ca.SX.sym("thrust_dot")  # controls
+        delta_tvc_dot_x = ca.SX.sym("delta_tvc_dot_x")  # controls
         delta_tvc_dot_y = ca.SX.sym("delta_tvc_dot_y")  # controls
-        delta_tvc_dot_z = ca.SX.sym("delta_tvc_dot_z")  # controls
 
         # create a vector with variable names
-        u = ca.vertcat(thrust_dot, delta_tvc_dot_y, delta_tvc_dot_z)
+        u = ca.vertcat(thrust_dot, delta_tvc_dot_x, delta_tvc_dot_y)
 
         # define the nonlinear ode
         ode = ca.vertcat(
@@ -157,18 +157,18 @@ class MPC_controller:
             -omega_x * e2bx + omega_y * e1bx,  # e3bx
             -omega_x * e2by + omega_y * e1by,  # e3by
             -omega_x * e2bz + omega_y * e1bz,  # e3bz
-            -(omega_y + delta_tvc_dot_y) * e3tx
-            + (omega_z + delta_tvc_dot_z) * e2tx,  # e1tx
-            -(omega_y + delta_tvc_dot_y) * e3ty
-            + (omega_z + delta_tvc_dot_z) * e2ty,  # e1ty
-            -(omega_y + delta_tvc_dot_y) * e3tz
-            + (omega_z + delta_tvc_dot_z) * e2tz,  # e1tz
-            omega_x * e3tx - (omega_z + delta_tvc_dot_z) * e1tx,  # e2tx
-            omega_x * e3ty - (omega_z + delta_tvc_dot_z) * e1ty,  # e2ty
-            omega_x * e3tz - (omega_z + delta_tvc_dot_z) * e1tz,  # e2tz
-            -omega_x * e2tx + (omega_y + delta_tvc_dot_y) * e1tx,  # e3tx
-            -omega_x * e2ty + (omega_y + delta_tvc_dot_y) * e1ty,  # e3ty
-            -omega_x * e2tz + (omega_y + delta_tvc_dot_y) * e1tz,  # e3tz
+            -(omega_y + delta_tvc_dot_y) * e3tx + omega_z * e2tx,  # e1tx
+            -(omega_y + delta_tvc_dot_y) * e3ty + omega_z * e2ty,  # e1ty
+            -(omega_y + delta_tvc_dot_y) * e3tz + omega_z * e2tz,  # e1tz
+            (omega_x + delta_tvc_dot_x) * e3tx - omega_z * e1tx,  # e2tx
+            (omega_x + delta_tvc_dot_x) * e3ty - omega_z * e1ty,  # e2ty
+            (omega_x + delta_tvc_dot_x) * e3tz - omega_z * e1tz,  # e2tz
+            -(omega_x + delta_tvc_dot_x) * e2tx
+            + (omega_y + delta_tvc_dot_y) * e1tx,  # e3tx
+            -(omega_x + delta_tvc_dot_x) * e2ty
+            + (omega_y + delta_tvc_dot_y) * e1ty,  # e3ty
+            -(omega_x + delta_tvc_dot_x) * e2tz
+            + (omega_y + delta_tvc_dot_y) * e1tz,  # e3tz
             (
                 thrust * l_tvc * (e3tx * e2bx + e3ty * e2by + e3tz * e2bz)
                 - (-J_2 + J_3) * omega_y * omega_z

@@ -1,8 +1,8 @@
 from Traj_planning.coupled_pol_interpolation import *
-from Traj_planning.diff_flat import *
+from Traj_planning.post_processing import *
 from Traj_planning.auxiliar_codes.plot_traj import *
 
-# from Traj_planning.auxiliar_codes.drift_checker import drift_checker
+from Traj_planning.auxiliar_codes.drift_checker import drift_checker
 
 
 def trajenerator_3ST(states, env_params, rocket_params, controller_params):
@@ -26,7 +26,7 @@ def trajenerator_3ST(states, env_params, rocket_params, controller_params):
     )
 
     # calculate gamma using differential flatness
-    trajectory_params = diff_flat_traj(
+    trajectory_params = traj_post_processing(
         Px_coeffs, Py_coeffs, Pz_coeffs, t, env_params, rocket_params, controller_params
     )
 
@@ -34,6 +34,6 @@ def trajenerator_3ST(states, env_params, rocket_params, controller_params):
         states, trajectory_params, controller_params, "Diff flat trajectory"
     )
 
-    # drift_checker(env_params, trajectory_params, plot=True)
+    drift_checker(env_params, trajectory_params, plot=True)
 
     return trajectory_params

@@ -69,7 +69,7 @@ def fun_R(x, u):
     return u_dot
 
 
-def diff_flat_traj(
+def traj_post_processing(
     Px_coeffs, Py_coeffs, Pz_coeffs, t, env_params, rocket_params, controller_params
 ):
     """This function computes the trajectory parameters for the 2D case using differential flatness.
@@ -95,19 +95,9 @@ def diff_flat_traj(
     g = env_params["g"]
     m = rocket_params["m"]
     l_tvc = rocket_params["l_tvc"]
-    J_1 = rocket_params["J_1"]
-    J_2 = rocket_params["J_2"]
-    J_3 = rocket_params["J_3"]
+    J = rocket_params["J"]
     dt = controller_params["dt"]
     x0 = controller_params["x0"]
-
-    params = {}
-    params["g"] = g
-    params["m"] = m
-    params["l_tvc"] = l_tvc
-    params["J_1"] = J_1
-    params["J_2"] = J_2
-    params["J_3"] = J_3
 
     t_list = np.linspace(t[0], t[-1], int((t[-1] - t[0]) / dt) + 1, endpoint=True)
 
@@ -261,12 +251,16 @@ def diff_flat_traj(
 
         norm_e1b = np.sqrt(R_new[0] ** 2 + R_new[1] ** 2 + R_new[2] ** 2)
         norm_e2b = np.sqrt(R_new[3] ** 2 + R_new[4] ** 2 + R_new[5] ** 2)
+        norm_e3b = np.sqrt(R_new[6] ** 2 + R_new[7] ** 2 + R_new[8] ** 2)
         e1bx[i + 1] = R_new[0] / norm_e1b
         e1by[i + 1] = R_new[1] / norm_e1b
         e1bz[i + 1] = R_new[2] / norm_e1b
         e2bx[i + 1] = R_new[3] / norm_e2b
         e2by[i + 1] = R_new[4] / norm_e2b
         e2bz[i + 1] = R_new[5] / norm_e2b
+        e3bx[i + 1] = R_new[6] / norm_e3b
+        e3by[i + 1] = R_new[7] / norm_e3b
+        e3bz[i + 1] = R_new[8] / norm_e3b
 
     # compute the angular velocity and acceleration in body frame
     omega_body = np.zeros((3, len(e1bx)))
@@ -317,7 +311,7 @@ def diff_flat_traj(
         )
 
         # Compute state of the center of gravity
-        r_go = Ri @ np.array([(J_2 + J_3) / (2 * m * l_tvc), 0, 0])
+        r_go = Ri @ np.array([0, 0, J / (m * l_tvc)])
 
         x_g[i] = x_o[i] - r_go[0]
         y_g[i] = y_o[i] - r_go[1]
@@ -335,10 +329,10 @@ def diff_flat_traj(
 
         # compute the thrust force and the thrust force derivative
         e3b_t = np.array([e3bx[i], e3by[i], e3bz[i]])
-        f1[i] = -J_2 * omega_dot_body[1, i] / l_tvc
-        f2[i] = J_1 * omega_dot_body[0, i] / l_tvc
+        f1[i] = -J * omega_dot_body[1, i] / l_tvc
+        f2[i] = J * omega_dot_body[0, i] / l_tvc
         f3[i] = m * e3b_t @ np.array([ax_o[i], ay_o[i], az_o[i] + g]).T + (
-            (J_1 + J_2) / (2 * l_tvc)
+            J / l_tvc
         ) * (omega_body[0, i] ** 2 + omega_body[1, i] ** 2)
         f[i] = np.sqrt(f1[i] ** 2 + f2[i] ** 2 + f3[i] ** 2)
 
@@ -346,9 +340,9 @@ def diff_flat_traj(
             [ax_o[i], ay_o[i], az_o[i] + g]
         ).T + m * Ri.T @ np.array([jx_o[i], jy_o[i], jz_o[i]])
 
-        f1_dot[i] = -(J_2 / l_tvc) * omega_dot_dot_body[1, i]
-        f2_dot[i] = (J_1 / l_tvc) * omega_dot_dot_body[0, i]
-        f3_dot[i] = temp[0] + ((J_1 + J_2) / (2 * l_tvc)) * (
+        f1_dot[i] = -(J / l_tvc) * omega_dot_dot_body[1, i]
+        f2_dot[i] = (J / l_tvc) * omega_dot_dot_body[0, i]
+        f3_dot[i] = temp[2] + (J / l_tvc) * (
             2 * omega_body[0, i] * omega_dot_body[0, i]
             + 2 * omega_body[1, i] * omega_dot_body[1, i]
         )

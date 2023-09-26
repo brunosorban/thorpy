@@ -10,14 +10,14 @@ from parameters import *
 target_points = np.array(
     [
         [0, 0, 0],
-        [20, 0, 50],
-        [50, 0, 50],
-        [80, 0, 50],
-        [100, 0, 0],
+        [0, 20, 50],
+        [0, 50, 50],
+        [0, 80, 50],
+        [0, 100, 0],
     ]
 )
 
-time_points = 6.7 * np.arange(0, len(target_points), 1)  # time list
+time_points = 9 * np.arange(0, len(target_points), 1)  # time list
 
 states = {
     "t": time_points,

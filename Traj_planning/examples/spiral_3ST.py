@@ -32,7 +32,7 @@ num_points = 20
 
 target_points = generate_spiral(radius, height, num_turns, num_points)
 
-time_points = 4.3 * np.arange(len(target_points))  # time list
+time_points = 6 * np.arange(len(target_points))  # time list
 
 states = {
     "t": time_points,

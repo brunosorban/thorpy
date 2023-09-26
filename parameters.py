@@ -24,18 +24,18 @@ T_thrust = 1  # Thrust time constant
 t0 = 0  # initial time
 tf = 60  # final time
 
-J_1 = (
+J_3 = (
     1 / 2 * m * radius**2
+)  # moment of inertia of the hopper perpendicular to the main axis
+J_1 = (
+    1 / 12 * m * (h**2 + 3 * radius**2)
 )  # moment of inertia of the hopper perpendicular to the main axis
 J_2 = (
     1 / 12 * m * (h**2 + 3 * radius**2)
 )  # moment of inertia of the hopper perpendicular to the main axis
-J_3 = (
-    1 / 12 * m * (h**2 + 3 * radius**2)
-)  # moment of inertia of the hopper perpendicular to the main axis
 
-I = J_1
-J = J_2
+I = J_3
+J = J_1
 
 # initial state of the oscillation point (the trajectory generator will return to the CM)
 initial_state = [
@@ -43,7 +43,7 @@ initial_state = [
     0,  # x_dot
     0,  # y
     0,  # y_dot
-    0,  # z
+    -J / (m * l_tvc),  # z
     0,  # z_dot
     1,  # e1bx
     0,  # e1by
@@ -71,8 +71,8 @@ initial_state = [
 x_target = None
 
 # controller parameters
-T = 2  # time horizon
-freq = 20  # frequency of the controller
+T = 3  # time horizon
+freq = 60  # frequency of the controller
 N = int(T * freq)  # Number of control intervals
 
 # controller input bounds
@@ -123,8 +123,8 @@ angle_rate_norm = 1  # np.deg2rad(5)  # angle rate normalization
 thrust_norm = 1  # thrust normalization
 
 # Trajectory generator parameters
-# max_drift = 5 / 100  # maximum drift of the trajectory (1 equals to 100%)
-# max_angular_drift = np.deg2rad(5)  # maximum angular drift of the trajectory in radians
+max_drift = 5 / 100  # maximum drift of the trajectory (1 equals to 100%)
+max_angular_drift = np.deg2rad(5)  # maximum angular drift of the trajectory in radians
 safety_factor_num_int = 1.1  # safety margin for the numerical integrator. The constraint will be the maximum value of the numerical integrator divided this factor
 
 ###################### Calculated and casadi varibles ##########################
@@ -143,8 +143,8 @@ R = ca.diag([r1, r2, r3])  # control cost matrix
 # environment parameters
 env_params = {
     "g": g,
-    # "max_drift": max_drift,
-    # "max_angular_drift": max_angular_drift,
+    "max_drift": max_drift,
+    "max_angular_drift": max_angular_drift,
 }
 
 # Rocket parameters
@@ -155,8 +155,8 @@ rocket_params = {
     "J_1": J_1,
     "J_2": J_2,
     "J_3": J_3,
-    "I": I,
-    "J": J,
+    "I": I,  # used during traj gen to leverage diferential flatness properties
+    "J": J,  # used during traj gen to leverage diferential flatness properties
     "K_tvc": K_tvc,
     "T_tvc": T_tvc,
     "l_tvc": l_tvc,
