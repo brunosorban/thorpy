@@ -1,0 +1,11 @@
+__pycache__
+**/test.py
+**/old/
+/Images/
+/.vscode/
+*.mp4
+/Traj_planning/Animation/
+/Traj_planning/Videos/
+/testing
+/performance_estimation/
+/notebooks/
