@@ -7,68 +7,6 @@ from Traj_planning.auxiliar_codes.compute_omega import compute_omega_np
 from Traj_planning.auxiliar_codes.compute_omega_dot import compute_omega_dot_np
 from Traj_planning.auxiliar_codes.compute_omega_dot_dot import compute_omega_dot_dot_np
 
-
-# def fun_R(x, u):
-#     """Compute the derivative of the rotation matrix R.
-
-#     Args:
-#         x (list): List containing the variables of the system. The first 9 elements are the rotation matrix R,
-#             the next 3 elements are the angular velocity omega_world.
-
-#         u (control input): 0 since it's just the kinematic model.
-
-#     Returns:
-#         R_dot: Derivative of the rotation matrix R.
-#     """
-#     e1bx = x[0]
-#     e1by = x[1]
-#     e1bz = x[2]
-#     e2bx = x[3]
-#     e2by = x[4]
-#     e2bz = x[5]
-#     e3bx = x[6]
-#     e3by = x[7]
-#     e3bz = x[8]
-#     omega_world = x[9:12]
-
-#     R = np.array(
-#         [
-#             [e1bx, e2bx, e3bx],
-#             [e1by, e2by, e3by],
-#             [e1bz, e2bz, e3bz],
-#         ]
-#     )
-
-#     omega = R.T @ omega_world
-
-#     R_dot = R @ np.array(
-#         [
-#             [0, -omega[2], omega[1]],
-#             [omega[2], 0, -omega[0]],
-#             [-omega[1], omega[0], 0],
-#         ]
-#     )
-
-#     u_dot = np.array(
-#         [
-#             R_dot[0, 0],
-#             R_dot[1, 0],
-#             R_dot[2, 0],
-#             R_dot[0, 1],
-#             R_dot[1, 1],
-#             R_dot[2, 1],
-#             R_dot[0, 2],
-#             R_dot[1, 2],
-#             R_dot[2, 2],
-#             0,  # not interested, but needed to compute R_dot
-#             0,  # not interested, but needed to compute R_dot
-#             0,  # not interested, but needed to compute R_dot
-#         ]
-#     )
-
-#     return u_dot
-
-
 def diff_flat_traj(
     Px_coeffs, Py_coeffs, Pz_coeffs, t, env_params, rocket_params, controller_params
 ):
@@ -97,7 +35,6 @@ def diff_flat_traj(
     l_tvc = rocket_params["l_tvc"]
     J = rocket_params["J"]
     dt = controller_params["dt"]
-    # x0 = controller_params["x0"]
 
     t_list = np.linspace(t[0], t[-1], int((t[-1] - t[0]) / dt) + 1, endpoint=True)
 
@@ -200,7 +137,7 @@ def diff_flat_traj(
         t = np.array([ax_o[i], ay_o[i], az_o[i] + g])
         zb = t / np.linalg.norm(t)
         yb = np.cross(zb, xc) / np.linalg.norm(np.cross(zb, xc))
-        xb = np.cross(yb, zb)
+        xb = np.cross(yb, zb) / np.linalg.norm(np.cross(yb, zb))
 
         e1bx[i] = xb[0]
         e1by[i] = xb[1]

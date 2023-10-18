@@ -72,7 +72,7 @@ x_target = None
 
 # controller parameters
 T = 3  # time horizon
-freq = 60  # frequency of the controller
+freq = 20  # frequency of the controller
 N = int(T * freq)  # Number of control intervals
 
 # controller input bounds
@@ -123,7 +123,7 @@ angle_rate_norm = 1  # np.deg2rad(5)  # angle rate normalization
 thrust_norm = 1  # thrust normalization
 
 # Trajectory generator parameters
-max_drift = 5 / 100  # maximum drift of the trajectory (1 equals to 100%)
+max_drift = 1 / 100  # maximum drift of the trajectory (1 equals to 100%)
 max_angular_drift = np.deg2rad(5)  # maximum angular drift of the trajectory in radians
 safety_factor_num_int = 1.1  # safety margin for the numerical integrator. The constraint will be the maximum value of the numerical integrator divided this factor
 

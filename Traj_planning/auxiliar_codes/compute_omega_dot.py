@@ -6,7 +6,7 @@ def compute_omega_dot(
     x_dot_dot, y_dot_dot, z_dot_dot, x_3dot, y_3dot, z_3dot, x_4dot, y_4dot, z_4dot, g
 ):
     """
-    This function computes the omega_dot vector written in the world frame.
+    This function computes the angular acceleration (omega_dot) vector written in the world frame.
 
     Args:
         x_dot_dot (float): x acceleration.
@@ -21,7 +21,7 @@ def compute_omega_dot(
         g (float): gravity.
 
     Returns:
-        e (list): omega_dot vector."""
+        e (list): angular acceleration (omega_dot) vector."""
 
     t = ca.vertcat(x_dot_dot, y_dot_dot, z_dot_dot + g)
 
@@ -52,7 +52,8 @@ def compute_omega_dot_np(
     x_dot_dot, y_dot_dot, z_dot_dot, x_3dot, y_3dot, z_3dot, x_4dot, y_4dot, z_4dot, g
 ):
     """
-    This function computes the omega_dot vector written in the world frame.
+    This function computes the angular acceleration (omega_dot) vector written in the world frame.
+    Numpy version.
 
     Args:
         x_dot_dot (float): x acceleration.
@@ -67,7 +68,7 @@ def compute_omega_dot_np(
         g (float): gravity.
 
     Returns:
-        e (list): omega_dot vector."""
+        e (list): angular acceleration (omega_dot) vector."""
 
     t = np.array([x_dot_dot, y_dot_dot, z_dot_dot + g])
 

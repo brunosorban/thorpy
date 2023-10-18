@@ -6,8 +6,7 @@ from RK4 import RK4
 
 class MPC_controller:
     """
-    Class to implement the MPC controller. The controller is implemented as a
-    class so that the controller can be updated with a new target position.
+    Class to implement the MPC controller.
     """
 
     def __init__(
@@ -634,28 +633,28 @@ class MPC_controller:
         # Calculate yaw (rotation around Z-axis)
         yaw = np.arctan2(rotation_matrix[1, 0], rotation_matrix[0, 0])
 
-        # Calculate pitch (rotation around Y-axis)
-        pitch = np.arctan2(
-            -rotation_matrix[2, 0],
-            np.sqrt(rotation_matrix[2, 1] ** 2 + rotation_matrix[2, 2] ** 2),
-        )
+        # # Calculate pitch (rotation around Y-axis)
+        # pitch = np.arctan2(
+        #     -rotation_matrix[2, 0],
+        #     np.sqrt(rotation_matrix[2, 1] ** 2 + rotation_matrix[2, 2] ** 2),
+        # )
 
-        # Calculate roll (rotation around X-axis)
-        roll = np.arctan2(rotation_matrix[2, 1], rotation_matrix[2, 2])
+        # # Calculate roll (rotation around X-axis)
+        # roll = np.arctan2(rotation_matrix[2, 1], rotation_matrix[2, 2])
 
-        ax1_2.plot(t, np.rad2deg(roll), label="roll")
-        ax1_2.set_xlabel("Time (s)")
-        ax1_2.set_ylabel("Roll angle (deg)")
-        ax1_2.set_title("Roll angle vs Time")
-        ax1_2.legend()
-        ax1_2.grid()
+        # ax1_2.plot(t, np.rad2deg(roll), label="roll")
+        # ax1_2.set_xlabel("Time (s)")
+        # ax1_2.set_ylabel("Roll angle (deg)")
+        # ax1_2.set_title("Roll angle vs Time")
+        # ax1_2.legend()
+        # ax1_2.grid()
 
-        ax2_2.plot(t, np.rad2deg(pitch), label="pitch")
-        ax2_2.set_xlabel("Time (s)")
-        ax2_2.set_ylabel("Pitch angle (deg)")
-        ax2_2.set_title("Pitch angle vs Time")
-        ax2_2.legend()
-        ax2_2.grid()
+        # ax2_2.plot(t, np.rad2deg(pitch), label="pitch")
+        # ax2_2.set_xlabel("Time (s)")
+        # ax2_2.set_ylabel("Pitch angle (deg)")
+        # ax2_2.set_title("Pitch angle vs Time")
+        # ax2_2.legend()
+        # ax2_2.grid()
 
         ax3_2.plot(t, np.rad2deg(yaw), label="yaw")
         ax3_2.set_xlabel("Time (s)")

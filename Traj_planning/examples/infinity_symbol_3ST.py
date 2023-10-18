@@ -42,20 +42,3 @@ states = {
 def traj_infinity_symbol_3ST():
     traj_params = trajenerator_3ST(states, env_params, rocket_params, controller_params)
     return traj_params
-
-
-# import matplotlib.pyplot as plt
-
-# # plot 3D trajectory
-# fig_5 = plt.figure(figsize=(15, 10))
-# ax = fig_5.add_subplot(111, projection='3d')
-# ax.plot(x, y, z, label="trajectory")
-# ax.set_xlabel("X position (m)")
-# ax.set_ylabel("Y position (m)")
-# ax.set_zlabel("Z position (m)")
-# ax.set_title("3D trajectory")
-# ax.set_box_aspect([1, 1, 1])
-# ax.axis('equal')
-
-# plt.tight_layout()
-# plt.show()

@@ -29,7 +29,7 @@ def trajenerator_3ST(states, env_params, rocket_params, controller_params):
     trajectory_params = traj_post_processing(
         Px_coeffs, Py_coeffs, Pz_coeffs, t, env_params, rocket_params, controller_params
     )
-
+    
     plot_trajectory(
         states, trajectory_params, controller_params, "Diff flat trajectory"
     )

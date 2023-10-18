@@ -13,23 +13,6 @@ from RK4 import RK4
 from parameters import *
 
 
-def plot_psd(time_points, x):
-    # Calculate the Power Spectral Density (PSD)
-    sampling_rate = 1 / (time_points[1] - time_points[0])  # Calculate the sampling rate
-    frequencies, psd = (
-        np.fft.rfftfreq(len(time_points), d=1 / sampling_rate),
-        np.abs(np.fft.rfft(x)) ** 2,
-    )
-
-    # Plot the PSD
-    plt.figure()
-    plt.plot(frequencies, psd)
-    plt.xlabel("Frequency (Hz)")
-    plt.ylabel("Power Spectral Density")
-    plt.title("Power Spectral Density")
-    # plt.show()
-
-
 def plot_states(time, sim_states, trajectory_params):
     fig, ((ax1, ax2, ax3), (ax4, ax5, ax6), (ax7, ax8, ax9)) = plt.subplots(
         3, 3, figsize=(15, 10)
@@ -42,7 +25,6 @@ def plot_states(time, sim_states, trajectory_params):
     ax1.set_title("Trajectory")
     ax1.grid()
     ax1.legend(["RK4", "Analytical"])
-    # ax1.axis("equal")
 
     ax2.plot(time, sim_states[2, :])
     ax2.plot(trajectory_params["t"], trajectory_params["y"])
@@ -51,7 +33,6 @@ def plot_states(time, sim_states, trajectory_params):
     ax2.set_title("y position")
     ax2.grid()
     ax2.legend(["RK4", "Analytical"])
-    # ax2.axis("equal")
 
     ax3.plot(time, sim_states[4, :])
     ax3.plot(trajectory_params["t"], trajectory_params["z"])
@@ -60,7 +41,6 @@ def plot_states(time, sim_states, trajectory_params):
     ax3.set_title("z position")
     ax3.grid()
     ax3.legend(["RK4", "Analytical"])
-    # ax3.axis("equal")
 
     ax4.plot(time, sim_states[1, :])
     ax4.plot(trajectory_params["t"], trajectory_params["vx"])
@@ -85,22 +65,6 @@ def plot_states(time, sim_states, trajectory_params):
     ax6.set_title("Velocity in z")
     ax6.grid()
     ax6.legend(["RK4", "Analytical"])
-
-    # ax7.plot(time, sim_states[27, :])
-    # ax7.plot(trajectory_params["t"], trajectory_params["f"])
-    # ax7.set_xlabel("t")
-    # ax7.set_ylabel("thrust")
-    # ax7.set_title("Thrust")
-    # ax7.grid()
-    # ax7.legend(["RK4", "Analytical"])
-
-    # ax8.plot(time, f_dot)
-    # ax8.plot(trajectory_params["t"], trajectory_params["f_dot"])
-    # ax8.set_xlabel("t")
-    # ax8.set_ylabel("thrust_dot")
-    # ax8.set_title("Thrust_dot")
-    # ax8.grid()
-    # ax8.legend(["RK4", "Analytical"])
 
     ax7.plot(time, sim_states[15, :])
     ax7.plot(trajectory_params["t"], trajectory_params["omega"][0, :])
@@ -204,10 +168,19 @@ def plot_states(time, sim_states, trajectory_params):
     ax9_2.set_title("Euler parameter e3bz")
     ax9_2.grid()
     ax9_2.legend(["e3bz RK4", "e3bz Analytical"])
-
-    ax7.plot(time, sim_states[15, :])
-    ax7.plot(trajectory_params["t"], trajectory_params["omega"][0, :])
-
+    
+    yaw_ana = np.arctan2(trajectory_params["e1by"], trajectory_params["e1bx"])
+    yaw_num = np.arctan2(sim_states[7, :], sim_states[6,:])
+    
+    plt.figure()
+    plt.plot(time, yaw_num)
+    plt.plot(trajectory_params["t"], yaw_ana)
+    plt.xlabel("t")
+    plt.ylabel("yaw")
+    plt.title("Yaw")
+    plt.grid()
+    plt.legend(["yaw RK4", "yaw Analytical"])
+    
     plt.show()
 
 
@@ -271,18 +244,33 @@ def ode(last_sol, u):
             (-(-J_1 + J_2) * omega_x * omega_y) / J_3,  # omega z
         ]
     )
-    # print("omega_y_dot =", sol[25])
     return sol
 
 
 ########################## Numerical integration ###############################
 def drift_checker(env_params, trajectory_params, plot=False):
+    """This function checks if the drift of the trajectory is within the limits.
+
+    Args:
+        env_params (dict): dictionary containing the environment parameters. Namely gravity (g), maximum drift (max_drift) and maximum angular drift (max_angular_drift).
+        trajectory_params (dict): dictionary containing the trajectory parameters. Namely the control inputs (f1, f2, f3), the euler parameters (e1bx, e1by, e1bz, e2bx, e2by, e2bz, e3bx, e3by, e3bz), the time (t) and the initial state (initial_state).
+        plot (bool, optional): Plots graphs showing the position drift if true. Defaults to False.
+
+    Raises:
+        ValueError: The drift was too high.
+    """
     print("Checking drift...")
     # retrieve control inputs
     f1 = trajectory_params["f1"]
     f2 = trajectory_params["f2"]
     f3 = trajectory_params["f3"]
 
+    x = trajectory_params["x"]
+    y = trajectory_params["y"]
+    z = trajectory_params["z"]
+    vx = trajectory_params["vx"]
+    vy = trajectory_params["vy"]
+    vz = trajectory_params["vz"]
     e1bx = trajectory_params["e1bx"]
     e1by = trajectory_params["e1by"]
     e1bz = trajectory_params["e1bz"]
@@ -292,31 +280,13 @@ def drift_checker(env_params, trajectory_params, plot=False):
     e3bx = trajectory_params["e3bx"]
     e3by = trajectory_params["e3by"]
     e3bz = trajectory_params["e3bz"]
+    omega = trajectory_params["omega"]
 
     # time = np.linspace(0, total_time, len(f_dot), endpoint=True)
     time = trajectory_params["t"]
     dt = time[1] - time[0]
 
-    initial_state = [
-        0,
-        0,
-        0,
-        0,
-        -J / (m * l_tvc),
-        0,
-        1,
-        0,
-        0,
-        0,
-        1,
-        0,
-        0,
-        0,
-        1,
-        0,
-        0,
-        0,
-    ]  # initial state of the center of mass (oscillation point displacement)
+    initial_state = np.array([x[0], vx[0], y[0], vy[0], z[0], vz[0], e1bx[0], e1by[0], e1bz[0], e2bx[0], e2by[0], e2bz[0], e3bx[0], e3by[0], e3bz[0], omega[0, 0], omega[1, 0], omega[2, 0]])
 
     sim_states = np.zeros((len(initial_state), len(time)))  # states in columns
     sim_states[:, 0] = initial_state
@@ -337,7 +307,6 @@ def drift_checker(env_params, trajectory_params, plot=False):
             )
         )
     )
-    pos_drift = np.linalg.norm(pos_drift)
     max_pos = np.linalg.norm(
         [
             np.max(np.abs(trajectory_params["x"])),
@@ -345,6 +314,7 @@ def drift_checker(env_params, trajectory_params, plot=False):
             np.max(np.abs(trajectory_params["z"])),
         ]
     )
+    rel_pos_drift = np.linalg.norm(pos_drift) / max_pos
 
     angular_drift_x = np.zeros_like(e1bx)
     angular_drift_y = np.zeros_like(e1by)
@@ -373,18 +343,20 @@ def drift_checker(env_params, trajectory_params, plot=False):
             np.max(np.abs(angular_drift_y)),
             np.max(np.abs(angular_drift_z)),
         ]
-    )  # very conservative
+    )  # norm of the maximum values (very conservative)
+    
+    rel_angular_drift = max_angular_drift / (np.pi) # assuming it goes from -pi to pi
 
     if plot:
         plot_states(time, sim_states, trajectory_params)
 
     if (
-        pos_drift / max_pos < env_params["max_drift"]
-        and max_angular_drift < env_params["max_angular_drift"]
+        rel_pos_drift <= env_params["max_drift"]
+        and max_angular_drift <= env_params["max_angular_drift"]
     ):
         print("Drift check passed!")
 
-    elif pos_drift / max_pos >= env_params["max_drift"]:
+    elif rel_angular_drift > env_params["max_drift"]:
         raise ValueError(
             "Position drift too high!\nThe trajectory is not feasible from the numerical integration point of view. Please, check the trajectory and controller parameters."
         )

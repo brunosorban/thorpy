@@ -300,7 +300,6 @@ def coupled_pol_interpolation(
             )
 
             f1, f2, f3, f1_dot, f2_dot, f3_dot = compute_f1f2f3(
-                t,
                 acc[0],
                 acc[1],
                 acc[2],
