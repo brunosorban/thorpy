@@ -1,92 +1,70 @@
 # Rocket Control Framework
 
-
-
-## Getting started
-
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
-
-```
-cd existing_repo
-git remote add origin https://gitlab.lrz.de/00000000014B2A56/rocket-control-framework.git
-git branch -M main
-git push -uf origin main
-```
-
-## Integrate with your tools
-
-- [ ] [Set up project integrations](https://gitlab.lrz.de/00000000014B2A56/rocket-control-framework/-/settings/integrations)
-
-## Collaborate with your team
-
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
 ## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+This is a Python implementation of an optimal trajectory controller using the CasADi library. The controller is designed to compute optimal control inputs that track a reference trajectory while satisfying constraints on the system dynamics and control inputs.
 
+The code is organized into several modules:
+
+Function.py: Defines a class to deal with functions in R1.
+RK4.py: Implements the Runge-Kutta 4th order numerical integration method for simulating the system dynamics.
+Flight.py: Contains a Flight class that defines the simulation environment.
+MPC_controller.py: Implements the optimal trajectory controller using the Model Predictive Control (MPC) framework and CasADi optimization.
+simulation.py: Sets up the simulation environment using the Flight class and runs the MPC controller to generate the optimal control inputs for the system. (Curently the simulation is being runned inside the controller defined in CasADi)
+animate.py: Animates the simulation results using matplotlib and pygame.
+
+The controller is built using the MPC framework, which solves a constrained optimization problem at each time step to compute the optimal control inputs for the next time step. The optimization problem is formulated using CasADi, a powerful tool for numerical optimization and automatic differentiation.
+
+The goal of this project is to derive an optimal controller for a hopper capable to compute safe trajectories, without compromising the system's dynamics and other constraints, such as hardware limits or spatial bounds. The computation of the control commands is based on a performance criterion, currently, minimizing a quadratic cost function that considers position error and energy efficiency. 
+<!-- 
 ## Badges
 On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
 
 ## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method. -->
+
+![Animation of the optimal trajectory](Videos/animation.gif)
 
 ## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+Currently, just clone the repository.
 
 ## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+The simulation can be run via the command line using the following command:
+
+```bash
+python simulation.py
+```
 
 ## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+For any questions or suggestions, please contact me at:
+- Email: bruno.sorban@tum.de or brunosorban@gmail.com
 
 ## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+This project is still in development. The next steps are:
+
+- Implement a more realistic model of the system dynamics.
+    - Aerodynamics
+        - Include the effects of drag and lift.
+        - Include the effects of wind.
+
+    - Equations of Motion:
+        - More degrees of freedom.
+        - Mass variation / Fuel consumption.
+
+    - Thrust Vectoring system:
+        - Include the system as a 1st order dynamics, both from force and moment perspective.
+
+- Implement a more realistic simulation environment per se
+    - Include the effects of wind.
+    - Include the effects of the atmosphere.
 
 ## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+Thank you for your interest in contributing to this project! Currently we have no guidelines for external aditions, but feel free to contact me if you have any suggestions or ideas.
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+## Acknowledgments
+I would like to express my gratitude to my mentors, Jon Arrizabalaga and Felix Ebert, for their guidance and support throughout this project. Their expertise and insights have been invaluable in this project and it's results.
 
 ## License
-For open source projects, say how it is licensed.
+Currenty, no license.
 
 ## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Under development.
