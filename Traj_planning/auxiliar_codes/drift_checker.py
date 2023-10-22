@@ -352,11 +352,11 @@ def drift_checker(env_params, trajectory_params, plot=False):
 
     if (
         rel_pos_drift <= env_params["max_drift"]
-        and max_angular_drift <= env_params["max_angular_drift"]
+        and rel_angular_drift <= env_params["max_angular_drift"]
     ):
         print("Drift check passed!")
 
-    elif rel_angular_drift > env_params["max_drift"]:
+    elif rel_pos_drift > env_params["max_drift"]:
         raise ValueError(
             "Position drift too high!\nThe trajectory is not feasible from the numerical integration point of view. Please, check the trajectory and controller parameters."
         )
