@@ -134,9 +134,7 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     axs[2, 1].legend()
     axs[2, 1].grid()
 
-    fig_2, ((ax1_2, ax2_2, ax3_2), (ax4_2, ax5_2, ax6_2)) = plt.subplots(
-        2, 3, figsize=(15, 10)
-    )
+    fig_2, ((ax1_2, ax2_2, ax3_2), (ax4_2, ax5_2, ax6_2)) = plt.subplots(2, 3, figsize=(15, 10))
     ax1_2.plot(t, omega[0, :], label="$\omega_x$")
     ax1_2.set_xlabel("Time (s)")
     ax1_2.set_ylabel("Angular velocity in x (rad/s)")
@@ -186,9 +184,7 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     delta_tvc_y_bounds = controller_params["delta_tvc_bounds"]
 
     # f1_bounds = np.cos(delta_tvc_y_bounds[1]) * np.array(thrust_bounds)
-    f2_bounds = np.sin(delta_tvc_y_bounds[1]) * np.array(
-        [-thrust_bounds[1], thrust_bounds[1]]
-    )
+    f2_bounds = np.sin(delta_tvc_y_bounds[1]) * np.array([-thrust_bounds[1], thrust_bounds[1]])
 
     fig_2, (
         (ax1_2, ax2_2, ax3_2),
@@ -206,9 +202,7 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
 
     ax2_2.plot(t, f2, "o", markersize=1, label="f2")
     ax2_2.plot(t, f1, "o", markersize=1, label="f1")
-    ax2_2.plot(
-        t, np.sin(delta_tvc_y_bounds[1]) * f, "--", color="orange", label="constraint"
-    )
+    ax2_2.plot(t, np.sin(delta_tvc_y_bounds[1]) * f, "--", color="orange", label="constraint")
     ax2_2.plot(t, [f2_bounds[0]] * len(t), "--", color="black", label="max")
     ax2_2.plot(t, [f2_bounds[1]] * len(t), "--", color="black")
     ax2_2.plot(t, -np.sin(delta_tvc_y_bounds[1]) * f, "--", color="orange")
@@ -228,12 +222,8 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     ax3_2.set_ylabel("f")
 
     ax4_2.plot(t, f3_dot, "o", markersize=1, label="f3_dot")
-    ax4_2.plot(
-        t, [controller_params["thrust_dot_bounds"][0]] * len(t), "--", color="black"
-    )
-    ax4_2.plot(
-        t, [controller_params["thrust_dot_bounds"][1]] * len(t), "--", color="black"
-    )
+    ax4_2.plot(t, [controller_params["thrust_dot_bounds"][0]] * len(t), "--", color="black")
+    ax4_2.plot(t, [controller_params["thrust_dot_bounds"][1]] * len(t), "--", color="black")
     ax4_2.grid()
     ax4_2.legend()
     ax4_2.set_title("Estimated f3_dot")
@@ -256,9 +246,7 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     #     "--",
     #     color="black",
     # )
-    ax5_2.plot(
-        t, f * controller_params["delta_tvc_dot_bounds"][1], "--", color="orange"
-    )
+    ax5_2.plot(t, f * controller_params["delta_tvc_dot_bounds"][1], "--", color="orange")
     # ax5_2.plot(
     #     t,
     #     f_dot * np.sin(delta_tvc_y_bounds[1])
@@ -284,9 +272,7 @@ def plot_trajectory(states, trajectory_params, controller_params, title="Traject
     fig_4 = plt.figure(figsize=(15, 15))
     axs_4 = fig_4.add_subplot(111, projection="3d")
     axs_4.plot(x, y, z, label="trajectory")
-    axs_4.plot(
-        states["x"], states["y"], states["z"], "o", markersize=5, label="target points"
-    )
+    axs_4.plot(states["x"], states["y"], states["z"], "o", markersize=5, label="target points")
 
     # Determine indices to sample every 5 seconds
     dt = t[1] - t[0]  # Assuming t is uniformly spaced

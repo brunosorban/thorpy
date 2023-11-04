@@ -7,9 +7,8 @@ from Traj_planning.auxiliar_codes.compute_omega import compute_omega_np
 from Traj_planning.auxiliar_codes.compute_omega_dot import compute_omega_dot_np
 from Traj_planning.auxiliar_codes.compute_omega_dot_dot import compute_omega_dot_dot_np
 
-def diff_flat_traj(
-    Px_coeffs, Py_coeffs, Pz_coeffs, t, env_params, rocket_params, controller_params
-):
+
+def diff_flat_traj(Px_coeffs, Py_coeffs, Pz_coeffs, t, env_params, rocket_params, controller_params):
     """This function computes the trajectory parameters for the 2D case using differential flatness.
         One shall mind that the polinomials are for the trajectory of the oscillation point, but the
         returned variables are converted for the center of gravity of the rocket.
@@ -85,15 +84,9 @@ def diff_flat_traj(
         sy_o[i0:i1] = snap_processor(Py_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
         sz_o[i0:i1] = snap_processor(Pz_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
 
-        cx_o[i0:i1] = crackle_processor(
-            Px_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1]
-        )
-        cy_o[i0:i1] = crackle_processor(
-            Py_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1]
-        )
-        cz_o[i0:i1] = crackle_processor(
-            Pz_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1]
-        )
+        cx_o[i0:i1] = crackle_processor(Px_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
+        cy_o[i0:i1] = crackle_processor(Py_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
+        cz_o[i0:i1] = crackle_processor(Pz_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
 
     e1bx = np.zeros_like(t_list)
     e1by = np.zeros_like(t_list)
@@ -238,9 +231,9 @@ def diff_flat_traj(
         e3b_t = np.array([e3bx[i], e3by[i], e3bz[i]])
         f1[i] = -J * omega_dot_body[1, i] / l_tvc
         f2[i] = J * omega_dot_body[0, i] / l_tvc
-        f3[i] = m * e3b_t @ np.array([ax_o[i], ay_o[i], az_o[i] + g]).T + (
-            J / l_tvc
-        ) * (omega_body[0, i] ** 2 + omega_body[1, i] ** 2)
+        f3[i] = m * e3b_t @ np.array([ax_o[i], ay_o[i], az_o[i] + g]).T + (J / l_tvc) * (
+            omega_body[0, i] ** 2 + omega_body[1, i] ** 2
+        )
 
         f[i] = np.sqrt(f1[i] ** 2 + f2[i] ** 2 + f3[i] ** 2)
 

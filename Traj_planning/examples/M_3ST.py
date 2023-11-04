@@ -20,7 +20,7 @@ target_points = np.array(
     ]
 )
 
-time_points = 7 * np.arange(len(target_points))  # time list
+time_points = 5 * np.arange(len(target_points))  # time list
 
 states = {
     "t": time_points,

@@ -18,9 +18,7 @@ def generate_spiral(radius, height, num_turns, num_points):
     y = radius * np.sin(theta)
 
     # Create a list of (x, y, z) points
-    spiral_points = np.array(
-        [[x_val, y_val, z_val] for x_val, y_val, z_val in zip(x, y, z)]
-    )
+    spiral_points = np.array([[x_val, y_val, z_val] for x_val, y_val, z_val in zip(x, y, z)])
 
     return spiral_points
 

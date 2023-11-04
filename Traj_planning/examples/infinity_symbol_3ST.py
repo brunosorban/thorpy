@@ -15,9 +15,7 @@ def generate_infinity_symbol(length, height_variation, num_points):
     y = length * np.sin(theta) * np.cos(theta)
     z = height_variation * (1 + np.cos(theta))
 
-    infinity_symbol_points = np.array(
-        [[x_val, y_val, z_val] for x_val, y_val, z_val in zip(x, y, z)]
-    )
+    infinity_symbol_points = np.array([[x_val, y_val, z_val] for x_val, y_val, z_val in zip(x, y, z)])
 
     return infinity_symbol_points
 
@@ -29,7 +27,7 @@ num_points = 9
 
 target_points = generate_infinity_symbol(length, height_variation, num_points)
 
-time_points = 5 * np.arange(len(target_points))  # time list
+time_points = 4 * np.arange(len(target_points))  # time list
 
 states = {
     "t": time_points,

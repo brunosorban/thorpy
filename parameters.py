@@ -24,15 +24,9 @@ T_thrust = 1  # Thrust time constant
 t0 = 0  # initial time
 tf = 60  # final time
 
-J_3 = (
-    1 / 2 * m * radius**2
-)  # moment of inertia of the hopper perpendicular to the main axis
-J_1 = (
-    1 / 12 * m * (h**2 + 3 * radius**2)
-)  # moment of inertia of the hopper perpendicular to the main axis
-J_2 = (
-    1 / 12 * m * (h**2 + 3 * radius**2)
-)  # moment of inertia of the hopper perpendicular to the main axis
+J_1 = 1 / 12 * m * (h**2 + 3 * radius**2)  # moment of inertia of the hopper perpendicular to the main axis
+J_2 = 1 / 12 * m * (h**2 + 3 * radius**2)  # moment of inertia of the hopper perpendicular to the main axis
+J_3 = 1 / 2 * m * radius**2  # moment of inertia of the hopper perpendicular to the main axis
 
 I = J_3
 J = J_1
@@ -72,7 +66,7 @@ x_target = None
 
 # controller parameters
 T = 3  # time horizon
-freq = 20  # frequency of the controller
+freq = 40  # frequency of the controller
 N = int(T * freq)  # Number of control intervals
 
 # controller input bounds
@@ -84,9 +78,7 @@ max_delta_tvc_z = np.deg2rad(15)  # maxium thrust vector angle
 min_delta_tvc_z = -np.deg2rad(15)  # minium thrust vector angle
 
 stab_time_criterion = 3  # corresponds to the system reach 95% of the final value
-max_thrust_deriv = max_thrust / (
-    stab_time_criterion * T_thrust
-)  # max_thrust / T_thrust # maxium thrust rate
+max_thrust_deriv = max_thrust / (stab_time_criterion * T_thrust)  # max_thrust / T_thrust # maxium thrust rate
 min_thrust_deriv = -max_thrust_deriv  # should be 30% to 40% of the max thrust
 
 max_delta_tvc_y_deriv = np.deg2rad(30)  # 30 deg/s
@@ -125,16 +117,14 @@ thrust_norm = 1  # thrust normalization
 # Trajectory generator parameters
 max_drift = 1 / 100  # maximum drift of the trajectory (1 equals to 100%)
 max_angular_drift = np.deg2rad(5)  # maximum angular drift of the trajectory in radians
-safety_factor_num_int = 1.1  # safety margin for the numerical integrator. The constraint will be the maximum value of the numerical integrator divided this factor
+safety_factor_num_int = 1.0  # safety margin for the numerical integrator. The constraint will be the maximum value of the numerical integrator divided this factor
 
 ###################### Calculated and casadi varibles ##########################
 # initial state
 t0_val = 0  # initial time
 x0_val = ca.vertcat(*initial_state)  # initial state in casadi varible
 
-Q = ca.diag(
-    [q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, q11, q12, q13, q14, q15]
-)  # cost matrix
+Q = ca.diag([q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, q11, q12, q13, q14, q15])  # cost matrix
 Qf = Qf_gain * Q  # final cost matrix
 R = ca.diag([r1, r2, r3])  # control cost matrix
 
@@ -178,8 +168,6 @@ controller_params = {
     "thrust_bounds": (min_thrust, max_thrust),
     "thrust_dot_bounds": (min_thrust_deriv, max_thrust_deriv),
     "delta_tvc_bounds": (min_delta_tvc_y, max_delta_tvc_y),
-    "delta_tvc_bounds": (min_delta_tvc_z, max_delta_tvc_z),
     "delta_tvc_dot_bounds": (min_delta_tvc_y_deriv, max_delta_tvc_y_deriv),
-    "delta_tvc_dot_bounds": (min_delta_tvc_z_deriv, max_delta_tvc_z_deriv),
     "safety_factor_num_int": safety_factor_num_int,
 }

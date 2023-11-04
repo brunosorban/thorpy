@@ -18,9 +18,7 @@ def pos_processor(coeffs, time_interval, cur_time):
         The value of the polinomial at the given time.
     """
     if cur_time[0] < time_interval[0] or cur_time[1] > time_interval[1]:
-        raise ValueError(
-            "The given time is not in the time interval of the polinomial."
-        )
+        raise ValueError("The given time is not in the time interval of the polinomial.")
 
     scaled_time = (cur_time - time_interval[0]) / (time_interval[1] - time_interval[0])
 
@@ -51,9 +49,7 @@ def vel_processor(coeffs, time_interval, cur_time):
         The value of the first derivative of the polinomial at the given time.
     """
     if cur_time[0] < time_interval[0] or cur_time[1] > time_interval[1]:
-        raise ValueError(
-            "The given time is not in the time interval of the polinomial."
-        )
+        raise ValueError("The given time is not in the time interval of the polinomial.")
 
     dt = time_interval[1] - time_interval[0]
     scaled_time = (cur_time - time_interval[0]) / dt
@@ -85,9 +81,7 @@ def acc_processor(coeffs, time_interval, cur_time):
         The value of the second derivative of the polinomial at the given time.
     """
     if cur_time[0] < time_interval[0] or cur_time[1] > time_interval[1]:
-        raise ValueError(
-            "The given time is not in the time interval of the polinomial."
-        )
+        raise ValueError("The given time is not in the time interval of the polinomial.")
 
     dt = time_interval[1] - time_interval[0]
     scaled_time = (cur_time - time_interval[0]) / dt
@@ -119,9 +113,7 @@ def jerk_processor(coeffs, time_interval, cur_time):
         The value of the third derivative of the polinomial at the given time.
     """
     if cur_time[0] < time_interval[0] or cur_time[1] > time_interval[1]:
-        raise ValueError(
-            "The given time is not in the time interval of the polinomial."
-        )
+        raise ValueError("The given time is not in the time interval of the polinomial.")
 
     dt = time_interval[1] - time_interval[0]
     scaled_time = (cur_time - time_interval[0]) / dt
@@ -153,9 +145,7 @@ def snap_processor(coeffs, time_interval, cur_time):
         The value of the fourth derivative of the polinomial at the given time.
     """
     if cur_time[0] < time_interval[0] or cur_time[1] > time_interval[1]:
-        raise ValueError(
-            "The given time is not in the time interval of the polinomial."
-        )
+        raise ValueError("The given time is not in the time interval of the polinomial.")
 
     dt = time_interval[1] - time_interval[0]
     scaled_time = (cur_time - time_interval[0]) / dt
@@ -163,15 +153,7 @@ def snap_processor(coeffs, time_interval, cur_time):
     # define the polinomial
     snap = 0
     for i in range(4, len(coeffs)):
-        snap += (
-            i
-            * (i - 1)
-            * (i - 2)
-            * (i - 3)
-            * coeffs[i]
-            * (scaled_time ** (i - 4))
-            / dt**4
-        )
+        snap += i * (i - 1) * (i - 2) * (i - 3) * coeffs[i] * (scaled_time ** (i - 4)) / dt**4
 
     return snap
 
@@ -195,9 +177,7 @@ def crackle_processor(coeffs, time_interval, cur_time):
         The value of the fifth derivative of the polinomial at the given time.
     """
     if cur_time[0] < time_interval[0] or cur_time[1] > time_interval[1]:
-        raise ValueError(
-            "The given time is not in the time interval of the polinomial."
-        )
+        raise ValueError("The given time is not in the time interval of the polinomial.")
 
     dt = time_interval[1] - time_interval[0]
     scaled_time = (cur_time - time_interval[0]) / dt
@@ -205,16 +185,7 @@ def crackle_processor(coeffs, time_interval, cur_time):
     # define the polinomial
     crackle = 0
     for i in range(5, len(coeffs)):
-        crackle += (
-            i
-            * (i - 1)
-            * (i - 2)
-            * (i - 3)
-            * (i - 4)
-            * coeffs[i]
-            * (scaled_time ** (i - 5))
-            / dt**5
-        )
+        crackle += i * (i - 1) * (i - 2) * (i - 3) * (i - 4) * coeffs[i] * (scaled_time ** (i - 5)) / dt**5
 
     return crackle
 
@@ -238,9 +209,7 @@ def pop_processor(coeffs, time_interval, cur_time):
         The value of the sixth derivative of the polinomial at the given time.
     """
     if cur_time[0] < time_interval[0] or cur_time[1] > time_interval[1]:
-        raise ValueError(
-            "The given time is not in the time interval of the polinomial."
-        )
+        raise ValueError("The given time is not in the time interval of the polinomial.")
 
     dt = time_interval[1] - time_interval[0]
     scaled_time = (cur_time - time_interval[0]) / dt
@@ -248,16 +217,6 @@ def pop_processor(coeffs, time_interval, cur_time):
     # define the polinomial
     pop = 0
     for i in range(6, len(coeffs)):
-        pop += (
-            i
-            * (i - 1)
-            * (i - 2)
-            * (i - 3)
-            * (i - 4)
-            * (i - 5)
-            * coeffs[i]
-            * (scaled_time ** (i - 6))
-            / dt**6
-        )
+        pop += i * (i - 1) * (i - 2) * (i - 3) * (i - 4) * (i - 5) * coeffs[i] * (scaled_time ** (i - 6)) / dt**6
 
     return pop

@@ -14,9 +14,7 @@ from parameters import *
 
 
 def plot_states(time, sim_states, trajectory_params):
-    fig, ((ax1, ax2, ax3), (ax4, ax5, ax6), (ax7, ax8, ax9)) = plt.subplots(
-        3, 3, figsize=(15, 10)
-    )
+    fig, ((ax1, ax2, ax3), (ax4, ax5, ax6), (ax7, ax8, ax9)) = plt.subplots(3, 3, figsize=(15, 10))
 
     ax1.plot(time, sim_states[0, :])
     ax1.plot(trajectory_params["t"], trajectory_params["x"])
@@ -168,10 +166,10 @@ def plot_states(time, sim_states, trajectory_params):
     ax9_2.set_title("Euler parameter e3bz")
     ax9_2.grid()
     ax9_2.legend(["e3bz RK4", "e3bz Analytical"])
-    
+
     yaw_ana = np.arctan2(trajectory_params["e1by"], trajectory_params["e1bx"])
-    yaw_num = np.arctan2(sim_states[7, :], sim_states[6,:])
-    
+    yaw_num = np.arctan2(sim_states[7, :], sim_states[6, :])
+
     plt.figure()
     plt.plot(time, yaw_num)
     plt.plot(trajectory_params["t"], yaw_ana)
@@ -180,7 +178,7 @@ def plot_states(time, sim_states, trajectory_params):
     plt.title("Yaw")
     plt.grid()
     plt.legend(["yaw RK4", "yaw Analytical"])
-    
+
     plt.show()
 
 
@@ -286,7 +284,28 @@ def drift_checker(env_params, trajectory_params, plot=False):
     time = trajectory_params["t"]
     dt = time[1] - time[0]
 
-    initial_state = np.array([x[0], vx[0], y[0], vy[0], z[0], vz[0], e1bx[0], e1by[0], e1bz[0], e2bx[0], e2by[0], e2bz[0], e3bx[0], e3by[0], e3bz[0], omega[0, 0], omega[1, 0], omega[2, 0]])
+    initial_state = np.array(
+        [
+            x[0],
+            vx[0],
+            y[0],
+            vy[0],
+            z[0],
+            vz[0],
+            e1bx[0],
+            e1by[0],
+            e1bz[0],
+            e2bx[0],
+            e2by[0],
+            e2bz[0],
+            e3bx[0],
+            e3by[0],
+            e3bz[0],
+            omega[0, 0],
+            omega[1, 0],
+            omega[2, 0],
+        ]
+    )
 
     sim_states = np.zeros((len(initial_state), len(time)))  # states in columns
     sim_states[:, 0] = initial_state
@@ -302,9 +321,7 @@ def drift_checker(env_params, trajectory_params, plot=False):
     pos_drift = np.max(
         np.abs(
             np.array([sim_states[0], sim_states[2], sim_states[4]])
-            - np.array(
-                [trajectory_params["x"], trajectory_params["y"], trajectory_params["z"]]
-            )
+            - np.array([trajectory_params["x"], trajectory_params["y"], trajectory_params["z"]])
         )
     )
     max_pos = np.linalg.norm(
@@ -344,16 +361,13 @@ def drift_checker(env_params, trajectory_params, plot=False):
             np.max(np.abs(angular_drift_z)),
         ]
     )  # norm of the maximum values (very conservative)
-    
-    rel_angular_drift = max_angular_drift / (np.pi) # assuming it goes from -pi to pi
+
+    rel_angular_drift = max_angular_drift / (np.pi)  # assuming it goes from -pi to pi
 
     if plot:
         plot_states(time, sim_states, trajectory_params)
 
-    if (
-        rel_pos_drift <= env_params["max_drift"]
-        and rel_angular_drift <= env_params["max_angular_drift"]
-    ):
+    if rel_pos_drift <= env_params["max_drift"] and rel_angular_drift <= env_params["max_angular_drift"]:
         print("Drift check passed!")
 
     elif rel_pos_drift > env_params["max_drift"]:

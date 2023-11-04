@@ -2,9 +2,7 @@ import casadi as ca
 import numpy as np
 
 
-def compute_omega_dot(
-    x_dot_dot, y_dot_dot, z_dot_dot, x_3dot, y_3dot, z_3dot, x_4dot, y_4dot, z_4dot, g
-):
+def compute_omega_dot(x_dot_dot, y_dot_dot, z_dot_dot, x_3dot, y_3dot, z_3dot, x_4dot, y_4dot, z_4dot, g):
     """
     This function computes the angular acceleration (omega_dot) vector written in the world frame.
 
@@ -25,11 +23,7 @@ def compute_omega_dot(
 
     t = ca.vertcat(x_dot_dot, y_dot_dot, z_dot_dot + g)
 
-    beta_dot = (
-        -2
-        * (x_dot_dot * x_3dot + y_dot_dot * y_3dot + (z_dot_dot + g) * z_3dot)
-        / ca.norm_2(t) ** 4
-    )
+    beta_dot = -2 * (x_dot_dot * x_3dot + y_dot_dot * y_3dot + (z_dot_dot + g) * z_3dot) / ca.norm_2(t) ** 4
 
     wx = -g * y_3dot - y_3dot * z_dot_dot + y_dot_dot * z_3dot
     wy = g * x_3dot + x_3dot * z_dot_dot - x_dot_dot * z_3dot
@@ -48,9 +42,7 @@ def compute_omega_dot(
     return e
 
 
-def compute_omega_dot_np(
-    x_dot_dot, y_dot_dot, z_dot_dot, x_3dot, y_3dot, z_3dot, x_4dot, y_4dot, z_4dot, g
-):
+def compute_omega_dot_np(x_dot_dot, y_dot_dot, z_dot_dot, x_3dot, y_3dot, z_3dot, x_4dot, y_4dot, z_4dot, g):
     """
     This function computes the angular acceleration (omega_dot) vector written in the world frame.
     Numpy version.
@@ -72,11 +64,7 @@ def compute_omega_dot_np(
 
     t = np.array([x_dot_dot, y_dot_dot, z_dot_dot + g])
 
-    beta_dot = (
-        -2
-        * (x_dot_dot * x_3dot + y_dot_dot * y_3dot + (z_dot_dot + g) * z_3dot)
-        / np.linalg.norm(t) ** 4
-    )
+    beta_dot = -2 * (x_dot_dot * x_3dot + y_dot_dot * y_3dot + (z_dot_dot + g) * z_3dot) / np.linalg.norm(t) ** 4
 
     wx = -g * y_3dot - y_3dot * z_dot_dot + y_dot_dot * z_3dot
     wy = g * x_3dot + x_3dot * z_dot_dot - x_dot_dot * z_3dot

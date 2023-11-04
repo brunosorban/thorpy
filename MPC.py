@@ -52,22 +52,11 @@ class MPC_controller:
         x_target = controller_params["x_target"]
 
         Q = controller_params["Q"]
-        Qf = controller_params["Qf"]
         R = controller_params["R"]
 
         # create variables used during operation (update function)
         self.dt = T / N
         self.x0_val = x0_val
-        # self.out = [0, 0]
-        # self.J_total = 0
-        # self.J_total_list = []
-        # self.horizon_list = []
-        # self.last_time_control = -self.dt
-        # self.thrust = []  # each line contains a control input
-        # self.torque = []  # each line contains a control input
-        # self.state_horizon_list = []
-        # self.control_horizon_list = []
-        # self.t = []
 
         # initializing the state varibles
         x = ca.SX.sym("x")  # states
@@ -162,21 +151,12 @@ class MPC_controller:
             (omega_x + delta_tvc_dot_x) * e3tx - omega_z * e1tx,  # e2tx
             (omega_x + delta_tvc_dot_x) * e3ty - omega_z * e1ty,  # e2ty
             (omega_x + delta_tvc_dot_x) * e3tz - omega_z * e1tz,  # e2tz
-            -(omega_x + delta_tvc_dot_x) * e2tx
-            + (omega_y + delta_tvc_dot_y) * e1tx,  # e3tx
-            -(omega_x + delta_tvc_dot_x) * e2ty
-            + (omega_y + delta_tvc_dot_y) * e1ty,  # e3ty
-            -(omega_x + delta_tvc_dot_x) * e2tz
-            + (omega_y + delta_tvc_dot_y) * e1tz,  # e3tz
-            (
-                thrust * l_tvc * (e3tx * e2bx + e3ty * e2by + e3tz * e2bz)
-                - (-J_2 + J_3) * omega_y * omega_z
-            )
+            -(omega_x + delta_tvc_dot_x) * e2tx + (omega_y + delta_tvc_dot_y) * e1tx,  # e3tx
+            -(omega_x + delta_tvc_dot_x) * e2ty + (omega_y + delta_tvc_dot_y) * e1ty,  # e3ty
+            -(omega_x + delta_tvc_dot_x) * e2tz + (omega_y + delta_tvc_dot_y) * e1tz,  # e3tz
+            (thrust * l_tvc * (e3tx * e2bx + e3ty * e2by + e3tz * e2bz) - (-J_2 + J_3) * omega_y * omega_z)
             / J_1,  # omega x
-            (
-                -thrust * l_tvc * (e3tx * e1bx + e3ty * e1by + e3tz * e1bz)
-                - (J_1 - J_3) * omega_x * omega_z
-            )
+            (-thrust * l_tvc * (e3tx * e1bx + e3ty * e1by + e3tz * e1bz) - (J_1 - J_3) * omega_x * omega_z)
             / J_2,  # omega y
             (-(-J_1 + J_2) * omega_x * omega_y) / J_3,  # omega z
             thrust_dot,  # thrust
@@ -256,9 +236,15 @@ class MPC_controller:
             self.opti.subject_to(self.x[27, k] <= thrust_bounds[1])
 
             # TODO: Update to 3D with rotation matrix
-            # delta_tvc = self.x[7, k]
-            # self.opti.subject_to(self.x[7, k] >= delta_tvc_bounds[0])
-            # self.opti.subject_to(self.x[7, k] <= delta_tvc_bounds[1])
+            e1b = [self.x[6, k], self.x[7, k], self.x[8, k]]
+            e2b = [self.x[9, k], self.x[10, k], self.x[11, k]]
+            e3t = [self.x[21, k], self.x[22, k], self.x[23, k]]
+
+            delta_tvc_x, delta_tvc_y = self.compute_rotation_angles(e1b, e2b, e3t)
+            self.opti.subject_to(delta_tvc_x >= delta_tvc_bounds[0])
+            self.opti.subject_to(delta_tvc_x <= delta_tvc_bounds[1])
+            self.opti.subject_to(delta_tvc_y >= delta_tvc_bounds[0])
+            self.opti.subject_to(delta_tvc_y <= delta_tvc_bounds[1])
 
         # set target
         if self.follow_trajectory:
@@ -272,6 +258,22 @@ class MPC_controller:
         # configure the solver
         opts = {"ipopt.print_level": 0, "print_time": 0}
         self.opti.solver("ipopt", opts)
+
+    @staticmethod
+    def compute_rotation_angles(e1b, e2b, e3t):
+        # Inline function for dot product
+        def dot_product(v1, v2):
+            return sum(x * y for x, y in zip(v1, v2))
+
+        # Calculate dot products
+        p_e1b = dot_product(e3t, e1b)
+        p_e2b = dot_product(e3t, e2b)
+
+        # Calculate angles in radians
+        theta_e1b = p_e2b  # Rotation around e1b
+        theta_e2b = -p_e1b  # Rotation around e2b
+
+        return theta_e1b, theta_e2b
 
     def update_target(self, new_target):
         # TODO: optimize this function
@@ -333,88 +335,6 @@ class MPC_controller:
         )
         self.update_target(target)
 
-    # def update(self, t, x):
-    #     # TODO: update to 3D
-    #     if t - self.last_time_control >= self.dt:  # update if time has reached
-    #         # if in trajectory mode, update the target
-    #         if self.follow_trajectory:
-    #             self.update_traj(t)
-
-    #         # update and solve the optimal control problem
-    #         self.opti.set_value(self.x_initial, x)
-
-    #         # solve the optimal control problem
-    #         if t == 0:
-    #             sol = self.opti.solve()
-    #         else:
-    #             # retrieve the results from the previous iteration
-    #             self.opti.set_initial(self.x, self.state_horizon_list[-1])
-    #             self.opti.set_initial(self.u, self.control_horizon_list[-1])
-    #             sol = self.opti.solve()
-
-    #         # retrieve the results
-    #         u = sol.value(self.u)
-    #         horizon = sol.value(self.x)
-
-    #         self.out = np.array(sol.value(self.u))[:, 0]
-    #         self.last_time_control = t  # update last time it was controlled
-
-    #         # normalization of the angular parameters
-    #         for i in range(4, 12, 2):
-    #             for j in range(len(horizon)):
-    #                 horizon[i][j] = horizon[i][j] / np.linalg.norm(
-    #                     [horizon[i][j], horizon[i + 1][j]]
-    #                 )
-    #                 horizon[i + 1][j] = horizon[i + 1][j] / np.linalg.norm(
-    #                     [horizon[i][j], horizon[i + 1][j]]
-    #                 )
-
-    #         # save the resutls
-    #         self.state_horizon_list.append(horizon)
-    #         self.control_horizon_list.append(u)
-    #         self.thrust.append(u[0, 0])
-    #         self.torque.append(u[1, 0])
-    #         self.t.append(t + self.dt)
-
-    #         # compute actual error
-    #         px_target = self.linear_spline(
-    #             t, self.trajectory_params["t"], self.trajectory_params["x"]
-    #         )
-    #         py_target = self.linear_spline(
-    #             t, self.trajectory_params["t"], self.trajectory_params["y"]
-    #         )
-
-    #         pos_error = np.array([x[0], x[2]]) - np.array([px_target, py_target])
-    #         self.epos_list.append(pos_error)
-
-    #         e1bx_target = self.linear_spline(
-    #             t, self.trajectory_params["t"], self.trajectory_params["e1bx"]
-    #         )
-    #         e1by_target = self.linear_spline(
-    #             t, self.trajectory_params["t"], self.trajectory_params["e1by"]
-    #         )
-    #         e2bx_target = self.linear_spline(
-    #             t, self.trajectory_params["t"], self.trajectory_params["e2bx"]
-    #         )
-    #         e2by_target = self.linear_spline(
-    #             t, self.trajectory_params["t"], self.trajectory_params["e2by"]
-    #         )
-
-    #         er = (
-    #             0.5 * x[4] * e2bx_target
-    #             + 0.5 * x[5] * e2by_target
-    #             - 0.5 * e1bx_target * x[6]
-    #             - 0.5 * e1by_target * x[7]
-    #         )
-    #         self.er_list.append(er)
-
-    #         # # add the cost payed on this solution
-    #         # self.J_total += sol.value(self.obj)
-    #         # self.J_total_list.append((t, self.J_total))
-
-    #         print("t = ", t, "s", "    out = ", self.out)
-    #     return self.out
-
     def simulate_inside(self, sim_time, plot_online=False):
         print("Starting simulation")
         t = [0]
@@ -459,9 +379,7 @@ class MPC_controller:
             # normalization of the angular parameters
             for i in range(6, 24, 3):
                 for j in range(len(horizon[0])):
-                    norm = np.linalg.norm(
-                        [horizon[i][j], horizon[i + 1][j], horizon[i + 2][j]]
-                    )
+                    norm = np.linalg.norm([horizon[i][j], horizon[i + 1][j], horizon[i + 2][j]])
 
                     horizon[i][j] = horizon[i][j] / norm
                     horizon[i + 1][j] = horizon[i + 1][j] / norm
@@ -510,25 +428,17 @@ class MPC_controller:
 
             # compute actual error
             # TODO: create get target function
-            px_target = self.linear_spline(
-                t[-1], self.trajectory_params["t"], self.trajectory_params["x"]
-            )
-            py_target = self.linear_spline(
-                t[-1], self.trajectory_params["t"], self.trajectory_params["y"]
-            )
-            pz_target = self.linear_spline(
-                t[-1], self.trajectory_params["t"], self.trajectory_params["z"]
-            )
+            px_target = self.linear_spline(t[-1], self.trajectory_params["t"], self.trajectory_params["x"])
+            py_target = self.linear_spline(t[-1], self.trajectory_params["t"], self.trajectory_params["y"])
+            pz_target = self.linear_spline(t[-1], self.trajectory_params["t"], self.trajectory_params["z"])
 
-            pos_error = np.array(
-                [x_list[-1][0], x_list[-1][2], x_list[-1][4]]
-            ) - np.array([px_target, py_target, pz_target])
+            pos_error = np.array([x_list[-1][0], x_list[-1][2], x_list[-1][4]]) - np.array(
+                [px_target, py_target, pz_target]
+            )
             self.epos_list.append(pos_error)
 
             if plot_online and t[-1] > self.dt:
-                self.plot_horizon_online(
-                    t, np.array(x_list), [thrust, delta_tvc_y, delta_tvc_z], u, horizon
-                )
+                self.plot_horizon_online(t, np.array(x_list), [thrust, delta_tvc_y, delta_tvc_z], u, horizon)
 
         print("Simulation finished")
 
@@ -540,20 +450,25 @@ class MPC_controller:
             np.array(control_horizon_list),
         )
 
+    ############################ Auxiliar functions ################################
+    @staticmethod
+    def compute_rotation_angles(e1b, e2b, e3t):
+        # Angles
+        p_e1b = np.dot(e3t, e1b)
+        p_e2b = np.dot(e3t, e2b)
+        theta_e1b = p_e2b  # Rotation around e1b
+        theta_e2b = -p_e1b  # Rotation around e2b
+
+        return theta_e1b, theta_e2b
+
+
+    ########################## Plotting the trajectory #############################
     def plot_simulation(self, t, x, u):
-        fig_1, ((ax1_1, ax2_1, ax3_1), (ax4_1, ax5_1, ax6_1)) = plt.subplots(
-            2, 3, figsize=(15, 12)
-        )
+        fig_1, ((ax1_1, ax2_1, ax3_1), (ax4_1, ax5_1, ax6_1)) = plt.subplots(2, 3, figsize=(15, 12))
         t_ref = self.trajectory_params["t"]
         x_ref = self.trajectory_params["x"]
-        vx_ref = self.trajectory_params["vx"]
-        ax_ref = self.trajectory_params["ax"]
         y_ref = self.trajectory_params["y"]
-        vy_ref = self.trajectory_params["vy"]
-        ay_ref = self.trajectory_params["ay"]
         z_ref = self.trajectory_params["z"]
-        vz_ref = self.trajectory_params["vz"]
-        az_ref = self.trajectory_params["az"]
         e1bx_ref = self.trajectory_params["e1bx"]
         e1by_ref = self.trajectory_params["e1by"]
         e1bz_ref = self.trajectory_params["e1bz"]
@@ -563,8 +478,20 @@ class MPC_controller:
         e3bx_ref = self.trajectory_params["e3bx"]
         e3by_ref = self.trajectory_params["e3by"]
         e3bz_ref = self.trajectory_params["e3bz"]
-        omega_ref = self.trajectory_params["omega"]
-        omega_dot_ref = self.trajectory_params["omega_dot"]
+
+        e1b = np.array([x[:, 6], x[:, 7], x[:, 8]])
+        e2b = np.array([x[:, 9], x[:, 10], x[:, 11]])
+        e3b = np.array([x[:, 12], x[:, 13], x[:, 14]])
+        e3t = np.array([x[:, 21], x[:, 22], x[:, 23]])
+
+        omega_control = np.array([u[1, :], u[2, :], np.zeros_like(u[2, :])])  # The TVC does not rotate around e3b
+        omega_control = np.concatenate((omega_control, np.zeros((3, 1))), axis=1)
+
+        delta_tvc_x = np.zeros_like(x[:, 0])
+        delta_tvc_y = np.zeros_like(x[:, 0])
+
+        for i in range(len(delta_tvc_x)):
+            delta_tvc_x[i], delta_tvc_y[i] = self.compute_rotation_angles(e1b[:, i], e2b[:, i], e3t[:, i])  # rad
 
         fig_1.suptitle("Simulation results (position and velocity))")
 
@@ -616,51 +543,34 @@ class MPC_controller:
         ax6_1.legend()
         ax6_1.grid()
 
-        fig_2, ((ax1_2, ax2_2, ax3_2), (ax4_2, ax5_2, ax6_2)) = plt.subplots(
-            2, 3, figsize=(15, 12)
-        )
+        fig_2, ((ax1_2, ax2_2, ax3_2), (ax4_2, ax5_2, ax6_2)) = plt.subplots(2, 3, figsize=(15, 12))
         fig_2.suptitle("Simulation results (attitude and angular velocity))")
 
-        # Extract the rotation matrix
-        rotation_matrix = np.array(
-            [
-                [x[:, 6], x[:, 7], x[:, 8]],
-                [x[:, 9], x[:, 10], x[:, 11]],
-                [x[:, 12], x[:, 13], x[:, 14]],
-            ]
-        )  # world to body
+        # plot 4: e1
+        ax1_2.plot(t, e1b[0, :])
+        ax1_2.plot(t, e1b[1, :])
+        ax1_2.plot(t, e1b[2, :])
+        ax1_2.set_xlabel("Time (s)")
+        ax1_2.set_ylabel("e1b")
+        ax1_2.set_title("e1b vs Time")
+        ax1_2.grid()
 
-        # Calculate yaw (rotation around Z-axis)
-        yaw = np.arctan2(rotation_matrix[1, 0], rotation_matrix[0, 0])
+        # plot 5: e2
+        ax2_2.plot(t, e2b[0, :])
+        ax2_2.plot(t, e2b[1, :])
+        ax2_2.plot(t, e2b[2, :])
+        ax2_2.set_xlabel("Time (s)")
+        ax2_2.set_ylabel("e2b")
+        ax2_2.set_title("e2b vs Time")
+        ax2_2.grid()
 
-        # # Calculate pitch (rotation around Y-axis)
-        # pitch = np.arctan2(
-        #     -rotation_matrix[2, 0],
-        #     np.sqrt(rotation_matrix[2, 1] ** 2 + rotation_matrix[2, 2] ** 2),
-        # )
-
-        # # Calculate roll (rotation around X-axis)
-        # roll = np.arctan2(rotation_matrix[2, 1], rotation_matrix[2, 2])
-
-        # ax1_2.plot(t, np.rad2deg(roll), label="roll")
-        # ax1_2.set_xlabel("Time (s)")
-        # ax1_2.set_ylabel("Roll angle (deg)")
-        # ax1_2.set_title("Roll angle vs Time")
-        # ax1_2.legend()
-        # ax1_2.grid()
-
-        # ax2_2.plot(t, np.rad2deg(pitch), label="pitch")
-        # ax2_2.set_xlabel("Time (s)")
-        # ax2_2.set_ylabel("Pitch angle (deg)")
-        # ax2_2.set_title("Pitch angle vs Time")
-        # ax2_2.legend()
-        # ax2_2.grid()
-
-        ax3_2.plot(t, np.rad2deg(yaw), label="yaw")
+        # plot 6: e3
+        ax3_2.plot(t, e3b[0, :])
+        ax3_2.plot(t, e3b[1, :])
+        ax3_2.plot(t, e3b[2, :])
         ax3_2.set_xlabel("Time (s)")
-        ax3_2.set_ylabel("Yaw angle (deg)")
-        ax3_2.set_title("Yaw angle vs Time")
-        ax3_2.legend()
+        ax3_2.set_ylabel("e3b")
+        ax3_2.set_title("e3b vs Time")
         ax3_2.grid()
 
         ax4_2.plot(t, x[:, 24], label="$\\omega_x$")
@@ -686,9 +596,7 @@ class MPC_controller:
 
         # tvc_angle = np.angle(x[:, 8] + 1j * x[:, 9]) - gamma
 
-        fig_3, ((ax1_3, ax2_3, ax3_3), (ax4_3, ax5_3, ax6_3)) = plt.subplots(
-            2, 3, figsize=(15, 12)
-        )
+        fig_3, ((ax1_3, ax2_3, ax3_3), (ax4_3, ax5_3, ax6_3)) = plt.subplots(2, 3, figsize=(15, 12))
         fig_3.suptitle("Simulation results (control inputs))")
 
         thrust_bounds = self.controller_params["thrust_bounds"]
@@ -708,48 +616,26 @@ class MPC_controller:
         ax1_3.set_title("Thrust vs Time")
         ax1_3.grid()
 
-        # delta_tvc_y is define as the angle between e1b and e1t in the e1b-e3b plane
-        # it is computed using the definition delta = arctan((e1t · e2b) / (e1t · e1b))
-        e1b = np.array([x[:, 6], x[:, 7], x[:, 8]])
-        e2b = np.array([x[:, 9], x[:, 10], x[:, 11]])
-        e3b = np.array([x[:, 12], x[:, 13], x[:, 14]])
-        e1t = np.array([x[:, 15], x[:, 16], x[:, 17]])
-
-        delta_tvc_y = np.zeros_like(x[:, 0])
-        delta_tvc_z = np.zeros_like(x[:, 0])
-
-        for i in range(len(delta_tvc_y)):
-            delta_tvc_y[i] = np.arctan2(
-                np.dot(e2b[:, i], e1t[:, i]), np.dot(e1b[:, i], e1t[:, i])
-            )
-            delta_tvc_z[i] = np.arctan2(
-                np.dot(e3b[:, i], e1t[:, i]), np.dot(e1b[:, i], e1t[:, i])
-            )
-
-        # plot 2: delta_tvc_y
-        ax2_3.plot(t, np.rad2deg(delta_tvc_y))
+        # plot 2: delta_tvc_x
+        ax2_3.plot(t, np.rad2deg(delta_tvc_x), label="$\\delta_{tvcx}$")
         ax2_3.plot(t, [np.rad2deg(delta_tvc_bounds[0])] * len(t), "--", color="black")
         ax2_3.plot(t, [np.rad2deg(delta_tvc_bounds[1])] * len(t), "--", color="black")
-        ax2_3.legend(
-            ["$\\delta_{tvcy}$", "$\\delta_{tvcy_{min}}$", "$\\delta_{tvcy_{max}}$"],
-            loc="upper right",
-        )
+        ax2_3.legend()
         ax2_3.set_xlabel("Time (s)")
-        ax2_3.set_ylabel("$\\delta_{tvcy}$ (degrees)")
-        ax2_3.set_title("$\\delta_{tvcy}$ vs Time")
+        ax2_3.set_ylabel("$\\delta_{tvc}$ (degrees)")
+        ax2_3.set_title("$\\delta_{tvc}$ vs Time")
+        ax2_3.legend()
         ax2_3.grid()
 
-        # plot 3: delta_tvc_z
-        ax3_3.plot(t, np.rad2deg(delta_tvc_z))
+        # plot 3: delta_tvc_y
+        ax3_3.plot(t, np.rad2deg(delta_tvc_y), label="$\\delta_{tvcy}$")
         ax3_3.plot(t, [np.rad2deg(delta_tvc_bounds[0])] * len(t), "--", color="black")
         ax3_3.plot(t, [np.rad2deg(delta_tvc_bounds[1])] * len(t), "--", color="black")
-        ax3_3.legend(
-            ["$\\delta_{tvcz}$", "$\\delta_{tvcz_{min}}$", "$\\delta_{tvcz_{max}}$"],
-            loc="upper right",
-        )
+        ax3_3.legend()
         ax3_3.set_xlabel("Time (s)")
-        ax3_3.set_ylabel("$\\delta_{tvcz}$ (degrees)")
-        ax3_3.set_title("$\\delta_{tvcz}$ vs Time")
+        ax3_3.set_ylabel("$\\delta_{tvc}$ (degrees)")
+        ax3_3.set_title("$\\delta_{tvc}$ vs Time")
+        ax3_3.legend()
         ax3_3.grid()
 
         # plot 4: thrust derivative
@@ -762,51 +648,28 @@ class MPC_controller:
         ax4_3.set_title("Thrust derivative vs Time")
         ax4_3.grid()
 
-        # plot 5: delta_tvc_y derivative
-        ax5_3.plot(t, np.rad2deg(np.zeros_like(x[:, 0])))
-        ax5_3.plot(
-            t, [np.rad2deg(delta_tvc_dot_bounds[0])] * len(t), "--", color="black"
-        )
-        ax5_3.plot(
-            t, [np.rad2deg(delta_tvc_dot_bounds[1])] * len(t), "--", color="black"
-        )
-        ax5_3.legend(
-            [
-                "$\\dot{\\delta}_{tvcy}$",
-                "$\\dot{\\delta}_{tvcy_{min}}$",
-                "$\\dot{\\delta}_{tvcy_{max}}$",
-            ],
-            loc="upper right",
-        )
+        # plot 5: delta_tvc_x derivative
+        ax5_3.plot(t[0:-1], u[0, :], label=r"$\dot{f}$")
+        ax5_3.plot(t, [thrust_dot_bounds[0]] * len(t), "--", color="black")
+        ax5_3.plot(t, [thrust_dot_bounds[1]] * len(t), "--", color="black")
+        ax5_3.legend()
         ax5_3.set_xlabel("Time (s)")
-        ax5_3.set_ylabel("$\\dot{\\delta}_{tvcy}$ (degrees)")
-        ax5_3.set_title("$\\dot{\\delta}_{tvcy}$ vs Time")
+        ax5_3.set_ylabel("Thrust derivative (N)")
+        ax5_3.set_title("Thrust derivative vs Time")
         ax5_3.grid()
 
-        # plot 6: delta_tvc_z derivative
-        ax6_3.plot(t, np.rad2deg(np.zeros_like(x[:, 0])))
-        ax6_3.plot(
-            t, [np.rad2deg(delta_tvc_dot_bounds[0])] * len(t), "--", color="black"
-        )
-        ax6_3.plot(
-            t, [np.rad2deg(delta_tvc_dot_bounds[1])] * len(t), "--", color="black"
-        )
-        ax6_3.legend(
-            [
-                "$\\dot{\\delta}_{tvcz}$",
-                "$\\dot{\\delta}_{tvcz_{min}}$",
-                "$\\dot{\\delta}_{tvcz_{max}}$",
-            ],
-            loc="upper right",
-        )
+        # plot 6: delta_tvc_y derivative
+        ax6_3.plot(t, omega_control[0, :], label="$\\dot{\\delta}_{tvcx}$")
+        ax6_3.plot(t, omega_control[1, :], label="$\\dot{\\delta}_{tvcy}$")
+        ax6_3.plot(t, [delta_tvc_dot_bounds[0]] * len(t), "--", color="black")
+        ax6_3.plot(t, [delta_tvc_dot_bounds[1]] * len(t), "--", color="black")
+        ax6_3.legend()
         ax6_3.set_xlabel("Time (s)")
-        ax6_3.set_ylabel("$\\dot{\\delta}_{tvcz}$ (degrees)")
-        ax6_3.set_title("$\\dot{\\delta}_{tvcz}$ vs Time")
+        ax6_3.set_ylabel("$\\dot{\\delta}_{tvcx}$ (rad/s)")
+        ax6_3.set_title("$\\dot{\\delta}_{tvcx}$ vs Time")
         ax6_3.grid()
 
-        fig_4, ((ax1_4, ax2_4, ax3_4), (ax4_4, ax5_4, ax6_4)) = plt.subplots(
-            2, 3, figsize=(15, 12)
-        )
+        fig_4, (ax1_4, ax2_4, ax3_4) = plt.subplots(1, 3, figsize=(15, 12))
         fig_4.suptitle("Simulation results (tracking error))")
 
         self.epos_list = np.array(self.epos_list)
@@ -832,55 +695,14 @@ class MPC_controller:
         ax3_4.set_title("Z error vs Time")
         ax3_4.grid()
 
-        # plot 4: e1
-        ax4_4.plot(t, e1b[0, :])
-        ax4_4.plot(t, e1b[1, :])
-        ax4_4.plot(t, e1b[2, :])
-        ax4_4.set_xlabel("Time (s)")
-        ax4_4.set_ylabel("e1b")
-        ax4_4.set_title("e1b vs Time")
-        ax4_4.grid()
-
-        # plot 5: e2
-        ax5_4.plot(t, e2b[0, :])
-        ax5_4.plot(t, e2b[1, :])
-        ax5_4.plot(t, e2b[2, :])
-        ax5_4.set_xlabel("Time (s)")
-        ax5_4.set_ylabel("e2b")
-        ax5_4.set_title("e2b vs Time")
-        ax5_4.grid()
-
-        # plot 6: e3
-        ax6_4.plot(t, e3b[0, :])
-        ax6_4.plot(t, e3b[1, :])
-        ax6_4.plot(t, e3b[2, :])
-        ax6_4.set_xlabel("Time (s)")
-        ax6_4.set_ylabel("e3b")
-        ax6_4.set_title("e3b vs Time")
-        ax6_4.grid()
-
         # plot 3D trajectory
         fig_5 = plt.figure(figsize=(15, 10))
         ax = fig_5.add_subplot(111, projection="3d")
         ax.plot(x[:, 0], x[:, 2], x[:, 4])
         ax.plot(x_ref, y_ref, z_ref, label="trajectory")
 
-        # # Determine indices to sample every 5 seconds
-        # dt = t[1] - t[0]  # Assuming t is uniformly spaced
-        # sample_interval = int(5 / dt)
-        # sampled_indices = range(0, len(t), sample_interval)
-        arrow_length = 10
-
-        # # Plot e1b, e2b, e3b vectors
-        # for i in sampled_indices:
-        #     ax.quiver(x[i, 0], x[i, 2], x[i, 4],
-        #             e1b[0, i], e1b[1, i], e1b[2, i], color='r', label='e1b' if i == sampled_indices[0] else "")
-        #     ax.quiver(x[i, 0], x[i, 2], x[i, 4],
-        #             e2b[0, i], e2b[1, i], e2b[2, i], color='g', label='e2b' if i == sampled_indices[0] else "")
-        #     ax.quiver(x[i, 0], x[i, 2], x[i, 4],
-        #             e3b[0, i], e3b[1, i], e3b[2, i], color='b', label='e3b' if i == sampled_indices[0] else "")
-
         # Determine indices to sample every 5 seconds
+        arrow_length = 10
         dt = t_ref[1] - t_ref[0]  # Assuming t is uniformly spaced
         sample_interval = int(3 / dt)
         sampled_indices = range(0, len(t), sample_interval)
@@ -929,231 +751,3 @@ class MPC_controller:
 
         plt.tight_layout()
         plt.show()
-
-    # def plot_tracking_results(self, t, x):
-    #     # TODO: update to 3D
-    #     fig, ((ax1, ax2, ax3), (ax4, ax5, ax6)) = plt.subplots(2, 3, figsize=(15, 12))
-    #     gamma = np.angle(x[:, 4] + 1j * x[:, 5])
-
-    #     ax1.plot(t, x[:, 0], label="x")
-    #     ax1.plot(
-    #         self.trajectory_params["t"], self.trajectory_params["x"], label="x_ref"
-    #     )
-    #     ax1.legend()
-    #     ax1.set_xlabel("Time (s)")
-    #     ax1.set_ylabel("X position (m)")
-    #     ax1.set_title("X position vs Time")
-    #     ax1.set_xlim([t[0], t[-1]])
-    #     ax1.grid()
-
-    #     ax2.plot(t, x[:, 2], label="y")
-    #     ax2.plot(
-    #         self.trajectory_params["t"], self.trajectory_params["y"], label="y_ref"
-    #     )
-    #     ax2.legend()
-    #     ax2.set_xlabel("Time (s)")
-    #     ax2.set_ylabel("Y position (m)")
-    #     ax2.set_title("Y position vs Time")
-    #     ax2.set_xlim([t[0], t[-1]])
-    #     ax2.grid()
-
-    #     ax3.plot(t, np.rad2deg(gamma), label="gamma")
-    #     ax3.plot(
-    #         self.trajectory_params["t"],
-    #         np.rad2deg(
-    #             np.arctan2(
-    #                 self.trajectory_params["e1by"], self.trajectory_params["e1bx"]
-    #             )
-    #         ),
-    #         label="gamma_ref",
-    #     )
-    #     ax3.legend()
-    #     ax3.set_xlabel("Time (s)")
-    #     ax3.set_ylabel("Gamma angle (deg)")
-    #     ax3.set_title("Gamma angle vs Time")
-    #     ax3.set_xlim([t[0], t[-1]])
-    #     ax3.grid()
-
-    #     ax4.plot(t, x[:, 1], label="vx")
-    #     ax4.plot(
-    #         self.trajectory_params["t"], self.trajectory_params["vx"], label="vx_ref"
-    #     )
-    #     ax4.legend()
-    #     ax4.set_xlabel("Time (s)")
-    #     ax4.set_ylabel("X velocity (m/s)")
-    #     ax4.set_title("X velocity vs Time")
-    #     ax4.set_xlim([t[0], t[-1]])
-    #     ax4.grid()
-
-    #     ax5.plot(t, x[:, 3], label="vy")
-    #     ax5.plot(
-    #         self.trajectory_params["t"], self.trajectory_params["vy"], label="vy_ref"
-    #     )
-    #     ax5.legend()
-    #     ax5.set_xlabel("Time (s)")
-    #     ax5.set_ylabel("Y velocity (m/s)")
-    #     ax5.set_title("Y velocity vs Time")
-    #     ax5.set_xlim([t[0], t[-1]])
-    #     ax5.grid()
-
-    #     ax6.plot(t, x[:, 4], label="$e_{1bx}$")
-    #     ax6.plot(t, x[:, 5], label="$e_{1by}$")
-    #     ax6.plot(t, x[:, 6], label="$e_{2bx}$")
-    #     ax6.plot(t, x[:, 7], label="$e_{2by}$")
-    #     ax6.legend()
-    #     ax6.set_xlabel("Time (s)")
-    #     ax6.set_ylabel("Orientation parameters (-)")
-    #     ax6.set_title("Orientation parameters vs Time")
-    #     ax6.set_xlim([t[0], t[-1]])
-    #     ax6.grid()
-
-    #     plt.tight_layout()
-    #     fig.show()
-
-    # def plot_horizon_online(self, t, x, last_u, u, horizon):
-    #     # TODO: update to 3D
-    #     # Clear the previous plot
-    #     self.ax1.clear()
-    #     self.ax2.clear()
-    #     self.ax3.clear()
-    #     self.ax4.clear()
-    #     self.ax5.clear()
-    #     self.ax6.clear()
-    #     self.ax7.clear()
-    #     self.ax8.clear()
-    #     self.ax9.clear()
-
-    #     N = self.controller_params["N"]
-    #     t_list = np.linspace(t[-2], t[-2] + N * self.dt, N + 1, endpoint=True)
-    #     t_full = np.concatenate((t, t_list))
-    #     horizon = np.array(horizon)
-
-    #     thrust_deriv_list = u[0]
-    #     delta_tvc_dot_list = u[1]
-    #     thrust_dot_bounds = self.controller_params["thrust_dot_bounds"]
-    #     delta_tvc_dot_bounds = self.controller_params["delta_tvc_dot_bounds"]
-    #     thrust_bounds = self.controller_params["thrust_bounds"]
-    #     delta_tvc_bounds = self.controller_params["delta_tvc_bounds"]
-    #     last_thrust_deriv_list = last_u[0]
-    #     last_delta_tvc_dot_list = last_u[1]
-
-    #     # Plot the new data
-    #     self.ax1.scatter(np.array(x)[:, 0], np.array(x)[:, 2], s=5)
-    #     self.ax1.scatter(horizon[0, :], horizon[2, :], s=5)
-    #     self.ax1.legend(["$xy$", "$xy_{hor}$"])
-    #     self.ax1.set_xlabel("x position (m)")
-    #     self.ax1.set_ylabel("y position (m)")
-    #     self.ax1.set_title("Position of the hopper")
-    #     self.ax1.axis("equal")
-    #     self.ax1.grid()
-
-    #     self.ax2.scatter(t, np.array(x)[:, 13], s=5)
-    #     self.ax2.scatter(t_list, horizon[13, :], s=5)
-    #     self.ax2.plot(t_full, [thrust_bounds[0]] * len(t_full), "--", color="black")
-    #     self.ax2.plot(t_full, [thrust_bounds[1]] * len(t_full), "--", color="black")
-    #     self.ax2.legend(["$f$", "$f_{ref}$"])
-    #     self.ax2.set_xlabel("Time (s)")
-    #     self.ax2.set_ylabel("Thrust (N)")
-    #     self.ax2.set_title("Thrust vs Time")
-    #     self.ax2.grid()
-
-    #     self.ax3.scatter(t[: len(t) - 1], last_thrust_deriv_list, s=5)
-    #     self.ax3.scatter(t_list[: len(t_list) - 1], thrust_deriv_list, s=5)
-    #     self.ax3.plot(t_full, [thrust_dot_bounds[0]] * len(t_full), "--", color="black")
-    #     self.ax3.plot(t_full, [thrust_dot_bounds[1]] * len(t_full), "--", color="black")
-    #     self.ax3.legend(["$\\dot{f}$", "$\\dot{f}_{ref}$"])
-    #     self.ax3.set_xlabel("Time (s)")
-    #     self.ax3.set_ylabel("Thrust derivative (N/s)")
-    #     self.ax3.set_title("Thrust derivative vs Time")
-    #     self.ax3.grid()
-
-    #     gamma = np.arctan2(np.array(x)[:, 5], np.array(x)[:, 4])
-    #     gamma_horizon = np.arctan2(horizon[5, :], horizon[4, :])
-    #     self.ax4.scatter(t, np.rad2deg(gamma), s=5)
-    #     self.ax4.scatter(t_list, np.rad2deg(gamma_horizon), s=5)
-    #     self.ax4.legend(
-    #         ["$\\gamma$", "$\\gamma_{hor}$"]  # , "$\\gamma_{min}$", "$\\gamma_{max}$"]
-    #     )
-    #     self.ax4.set_xlabel("Time (s)")
-    #     self.ax4.set_ylabel("Gamma (degrees)")
-    #     self.ax4.set_title("Gamma vs Time")
-    #     self.ax4.grid()
-
-    #     delta_tvc = np.arctan2(np.array(x)[:, 9], np.array(x)[:, 8]) - gamma
-    #     delta_tvc_horizon = np.arctan2(horizon[9, :], horizon[8, :]) - gamma_horizon
-    #     self.ax5.scatter(t, np.rad2deg(delta_tvc), s=5)
-    #     self.ax5.scatter(t_list, np.rad2deg(delta_tvc_horizon), s=5)
-    #     self.ax5.plot(
-    #         t_full, [np.rad2deg(delta_tvc_bounds[0])] * len(t_full), "--", color="black"
-    #     )
-    #     self.ax5.plot(
-    #         t_full, [np.rad2deg(delta_tvc_bounds[1])] * len(t_full), "--", color="black"
-    #     )
-    #     self.ax5.legend(
-    #         [
-    #             "$\\delta_{tvc}$",
-    #             "$\\delta_{tvc_{horizon}}$",
-    #         ],
-    #         loc="upper right",
-    #     )
-    #     self.ax5.set_xlabel("Time (s)")
-    #     self.ax5.set_ylabel("$\\delta_{tvc}$ (degrees)")
-    #     self.ax5.set_title("$\\delta_{tvc}$ vs Time")
-    #     self.ax5.grid()
-
-    #     self.ax6.scatter(t[: len(t) - 1], last_delta_tvc_dot_list, s=5)
-    #     self.ax6.scatter(t_list[: len(t_list) - 1], delta_tvc_dot_list, s=5)
-    #     self.ax6.plot(
-    #         t_full, [delta_tvc_dot_bounds[0]] * len(t_full), "--", color="black"
-    #     )
-    #     self.ax6.plot(
-    #         t_full, [delta_tvc_dot_bounds[1]] * len(t_full), "--", color="black"
-    #     )
-    #     self.ax6.legend(
-    #         [
-    #             "$\\dot{\\delta_{tvc}}$",
-    #             "$\\dot{\\delta_{tvc}}_{horizon}$",
-    #         ],
-    #         loc="upper right",
-    #     )
-    #     self.ax6.set_xlabel("Time (s)")
-    #     self.ax6.set_ylabel("$\\dot{\\delta_{tvc}}$ (rad/s)")
-    #     self.ax6.set_title("$\\dot{\\delta_{tvc}}$ vs Time")
-    #     self.ax6.grid()
-
-    #     self.ax7.scatter(t, np.array(x)[:, 5], s=5)
-    #     self.ax7.scatter(t_list, horizon[5, :], s=5)
-    #     self.ax7.plot(t_full, [1] * len(t_full), "--", color="black")
-    #     self.ax7.plot(t_full, [-1] * len(t_full), "--", color="black")
-    #     self.ax7.legend(["$e_{1bx} / e_{2by}$", "$e_{1bx_hor}$"])
-    #     self.ax7.set_xlabel("Time (s)")
-    #     self.ax7.set_ylabel("Orientation parameter (-)")
-    #     self.ax7.set_title("Orientation parameter vs Time")
-    #     self.ax7.grid()
-
-    #     self.ax8.scatter(t, np.array(x)[:, 6], s=5)
-    #     self.ax8.scatter(t_list, horizon[6, :], s=5)
-    #     self.ax8.plot(t_full, [1] * len(t_full), "--", color="black")
-    #     self.ax8.plot(t_full, [-1] * len(t_full), "--", color="black")
-    #     self.ax8.legend(["$e_{1by}$", "$e_{1by_hor}$"])
-    #     self.ax8.set_xlabel("Time (s)")
-    #     self.ax8.set_ylabel("Orientation parameter (-)")
-    #     self.ax8.set_title("Orientation parameter vs Time")
-    #     self.ax8.grid()
-
-    #     self.ax9.scatter(t, np.array(x)[:, 7], s=5)
-    #     self.ax9.scatter(t_list, horizon[7, :], s=5)
-    #     self.ax9.plot(t_full, [1] * len(t_full), "--", color="black")
-    #     self.ax9.plot(t_full, [-1] * len(t_full), "--", color="black")
-    #     self.ax9.legend(["$e_{2bx}$", "$e_{2bx_hor}$"])
-    #     self.ax9.set_xlabel("Time (s)")
-    #     self.ax9.set_ylabel("Orientation parameter (-)")
-    #     self.ax9.set_title("Orientation parameter vs Time")
-    #     self.ax9.grid()
-
-    #     # Redraw the plot and flush the events
-    #     self.fig.canvas.draw()
-    #     self.fig.canvas.flush_events()
-
-    #     # Display the plot
-    #     self.fig.show()

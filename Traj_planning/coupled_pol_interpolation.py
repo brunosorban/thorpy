@@ -16,9 +16,7 @@ from Traj_planning.auxiliar_codes.compute_f1f2f3 import *
 from Traj_planning.auxiliar_codes.coeffs2derivatives import *
 
 
-def coupled_pol_interpolation(
-    states, rocket_params, controller_params, env_params, num_intervals=100
-):
+def coupled_pol_interpolation(states, rocket_params, controller_params, env_params, num_intervals=100):
     """
     This function interpolates the polynomials between the points. X, Y and Z directions are coupled through the control
     input constraints. There is a given position, velocity and acceleration at the initial and final points, but the
@@ -59,22 +57,14 @@ def coupled_pol_interpolation(
     z_points = states["z"]
 
     # check if the time points and the position points have the same length
-    if (
-        len(time_points) != len(x_points)
-        or len(time_points) != len(y_points)
-        or len(time_points) != len(z_points)
-    ):
-        raise ValueError(
-            "The time points and the position points shall have the same length."
-        )
+    if len(time_points) != len(x_points) or len(time_points) != len(y_points) or len(time_points) != len(z_points):
+        raise ValueError("The time points and the position points shall have the same length.")
 
     params = deepcopy(rocket_params)
     params["g"] = env_params["g"]
 
     pol_order = 12  # order of the polynom (pol_order+1 coefficients)
-    num_intervals = int(
-        num_intervals
-    )  # number of points per polynomial where the cost function will be evaluated
+    num_intervals = int(num_intervals)  # number of points per polynomial where the cost function will be evaluated
 
     safety_factor_num_int = controller_params["safety_factor_num_int"]
     #######################################
@@ -107,14 +97,10 @@ def coupled_pol_interpolation(
 
     F_pos = ca.Function("F_pos", [coefs, t], [pos], ["[p0:p3]", "[t]"], ["position"])
     F_vel = ca.Function("F_vel", [coefs, t], [vel], ["[p0:p3]", "[t]"], ["velocity"])
-    F_acc = ca.Function(
-        "F_acc", [coefs, t], [acc], ["[p0:p3]", "[t]"], ["acceleration"]
-    )
+    F_acc = ca.Function("F_acc", [coefs, t], [acc], ["[p0:p3]", "[t]"], ["acceleration"])
     F_jerk = ca.Function("F_jerk", [coefs, t], [jerk], ["[p0:p3]", "[t]"], ["jerk"])
     F_snap = ca.Function("F_snap", [coefs, t], [snap], ["[p0:p3]", "[t]"], ["snap"])
-    F_crackle = ca.Function(
-        "F_crackle", [coefs, t], [crackle], ["[p0:p3]", "[t]"], ["crackle"]
-    )
+    F_crackle = ca.Function("F_crackle", [coefs, t], [crackle], ["[p0:p3]", "[t]"], ["crackle"])
 
     #######################################
     ##### interpolate the polinomial ######
@@ -202,59 +188,29 @@ def coupled_pol_interpolation(
         opti.subject_to(F_pos(pol_coeffs_z[:, i - 1], 1) == z_points[i])
 
         # add velocity constraints
-        opti.subject_to(
-            F_vel(pol_coeffs_x[:, i - 1], 1) == F_vel(pol_coeffs_x[:, i], 0)
-        )
-        opti.subject_to(
-            F_vel(pol_coeffs_y[:, i - 1], 1) == F_vel(pol_coeffs_y[:, i], 0)
-        )
-        opti.subject_to(
-            F_vel(pol_coeffs_z[:, i - 1], 1) == F_vel(pol_coeffs_z[:, i], 0)
-        )
+        opti.subject_to(F_vel(pol_coeffs_x[:, i - 1], 1) == F_vel(pol_coeffs_x[:, i], 0))
+        opti.subject_to(F_vel(pol_coeffs_y[:, i - 1], 1) == F_vel(pol_coeffs_y[:, i], 0))
+        opti.subject_to(F_vel(pol_coeffs_z[:, i - 1], 1) == F_vel(pol_coeffs_z[:, i], 0))
 
         # add acceleration constraints
-        opti.subject_to(
-            F_acc(pol_coeffs_x[:, i - 1], 1) == F_acc(pol_coeffs_x[:, i], 0)
-        )
-        opti.subject_to(
-            F_acc(pol_coeffs_y[:, i - 1], 1) == F_acc(pol_coeffs_y[:, i], 0)
-        )
-        opti.subject_to(
-            F_acc(pol_coeffs_z[:, i - 1], 1) == F_acc(pol_coeffs_z[:, i], 0)
-        )
+        opti.subject_to(F_acc(pol_coeffs_x[:, i - 1], 1) == F_acc(pol_coeffs_x[:, i], 0))
+        opti.subject_to(F_acc(pol_coeffs_y[:, i - 1], 1) == F_acc(pol_coeffs_y[:, i], 0))
+        opti.subject_to(F_acc(pol_coeffs_z[:, i - 1], 1) == F_acc(pol_coeffs_z[:, i], 0))
 
         # add jerk constraints
-        opti.subject_to(
-            F_jerk(pol_coeffs_x[:, i - 1], 1) == F_jerk(pol_coeffs_x[:, i], 0)
-        )
-        opti.subject_to(
-            F_jerk(pol_coeffs_y[:, i - 1], 1) == F_jerk(pol_coeffs_y[:, i], 0)
-        )
-        opti.subject_to(
-            F_jerk(pol_coeffs_z[:, i - 1], 1) == F_jerk(pol_coeffs_z[:, i], 0)
-        )
+        opti.subject_to(F_jerk(pol_coeffs_x[:, i - 1], 1) == F_jerk(pol_coeffs_x[:, i], 0))
+        opti.subject_to(F_jerk(pol_coeffs_y[:, i - 1], 1) == F_jerk(pol_coeffs_y[:, i], 0))
+        opti.subject_to(F_jerk(pol_coeffs_z[:, i - 1], 1) == F_jerk(pol_coeffs_z[:, i], 0))
 
         # add snap constraints
-        opti.subject_to(
-            F_snap(pol_coeffs_x[:, i - 1], 1) == F_snap(pol_coeffs_x[:, i], 0)
-        )
-        opti.subject_to(
-            F_snap(pol_coeffs_y[:, i - 1], 1) == F_snap(pol_coeffs_y[:, i], 0)
-        )
-        opti.subject_to(
-            F_snap(pol_coeffs_z[:, i - 1], 1) == F_snap(pol_coeffs_z[:, i], 0)
-        )
+        opti.subject_to(F_snap(pol_coeffs_x[:, i - 1], 1) == F_snap(pol_coeffs_x[:, i], 0))
+        opti.subject_to(F_snap(pol_coeffs_y[:, i - 1], 1) == F_snap(pol_coeffs_y[:, i], 0))
+        opti.subject_to(F_snap(pol_coeffs_z[:, i - 1], 1) == F_snap(pol_coeffs_z[:, i], 0))
 
         # add crackle constraints
-        opti.subject_to(
-            F_crackle(pol_coeffs_x[:, i - 1], 1) == F_crackle(pol_coeffs_x[:, i], 0)
-        )
-        opti.subject_to(
-            F_crackle(pol_coeffs_y[:, i - 1], 1) == F_crackle(pol_coeffs_y[:, i], 0)
-        )
-        opti.subject_to(
-            F_crackle(pol_coeffs_z[:, i - 1], 1) == F_crackle(pol_coeffs_z[:, i], 0)
-        )
+        opti.subject_to(F_crackle(pol_coeffs_x[:, i - 1], 1) == F_crackle(pol_coeffs_x[:, i], 0))
+        opti.subject_to(F_crackle(pol_coeffs_y[:, i - 1], 1) == F_crackle(pol_coeffs_y[:, i], 0))
+        opti.subject_to(F_crackle(pol_coeffs_z[:, i - 1], 1) == F_crackle(pol_coeffs_z[:, i], 0))
 
     # define cost function
     obj = 0
@@ -320,38 +276,21 @@ def coupled_pol_interpolation(
             # it is assumed that f1 > 0 - which holds because the rocket has no reverse thrust
             opti.subject_to(
                 f1**2 + f2**2
-                <= (
-                    f3
-                    * ca.tan(controller_params["delta_tvc_bounds"][1])
-                    / safety_factor_num_int
-                )
-                ** 2
+                <= (f3 * ca.tan(controller_params["delta_tvc_bounds"][1]) / safety_factor_num_int) ** 2
             )
 
             opti.subject_to(
-                f_squared
-                >= (controller_params["thrust_bounds"][0] * safety_factor_num_int) ** 2
+                f_squared >= (controller_params["thrust_bounds"][0] * safety_factor_num_int) ** 2
             )  # in this case is "*" because the thrust is always positive
-            opti.subject_to(
-                f_squared
-                <= (controller_params["thrust_bounds"][1] / safety_factor_num_int) ** 2
-            )
+            opti.subject_to(f_squared <= (controller_params["thrust_bounds"][1] / safety_factor_num_int) ** 2)
 
-            opti.subject_to(
-                f3_dot
-                >= controller_params["thrust_dot_bounds"][0] / safety_factor_num_int
-            )
+            opti.subject_to(f3_dot >= controller_params["thrust_dot_bounds"][0] / safety_factor_num_int)
 
-            opti.subject_to(
-                f3_dot
-                <= controller_params["thrust_dot_bounds"][1] / safety_factor_num_int
-            )
+            opti.subject_to(f3_dot <= controller_params["thrust_dot_bounds"][1] / safety_factor_num_int)
 
             opti.subject_to(
                 f1_dot**2 + f2_dot**2
-                <= f_squared
-                * (controller_params["delta_tvc_dot_bounds"][1] / safety_factor_num_int)
-                ** 2
+                <= f_squared * (controller_params["delta_tvc_dot_bounds"][1] / safety_factor_num_int) ** 2
             )
 
     # add final cost
@@ -396,14 +335,8 @@ def coupled_pol_interpolation(
     print("Interpolating trajectory...")
     sol = opti.solve()
     print("Interpolation done!")
-    print("Solution: \n")
-    print("\nx: \n", sol.value(pol_coeffs_x))
-    print("\ny: \n", sol.value(pol_coeffs_y))
-    print("\nz: \n", sol.value(pol_coeffs_z))
 
-    if (
-        number_of_points == 2
-    ):  # tweak for the 2 points case so that the output is still a 2D array
+    if number_of_points == 2:  # tweak for the 2 points case so that the output is still a 2D array
         return (
             np.array([sol.value(pol_coeffs_x)]).T,
             np.array([sol.value(pol_coeffs_y)]).T,

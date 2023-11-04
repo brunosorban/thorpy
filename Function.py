@@ -27,9 +27,7 @@ class Function:
             self.extrapolation = extrapolation
             self.I = [X[0], X[-1]]
             if method == "linear":
-                self.f = (
-                    self.splineLinear
-                )  # A spline Linear não precisa de processamento
+                self.f = self.splineLinear  # A spline Linear não precisa de processamento
             elif method == "MMQ":
                 self.MMQ()
             elif method == "spline":
@@ -337,12 +335,7 @@ class Function:
             X = np.linspace(lower, upper, 20001)
             Y = self.getValue(X)
             if title == "":
-                title = (
-                    self.__X_source_label__
-                    + " x "
-                    + self.__Y_source_label__
-                    + " Comparison "
-                )
+                title = self.__X_source_label__ + " x " + self.__Y_source_label__ + " Comparison "
 
             fig = go.Figure()
             fig.add_trace(go.Scatter(x=X, y=Y, name=self.name))
@@ -374,9 +367,7 @@ class Function:
             position = 1
         dx = float(self.__X_source__[position] - self.__X_source__[position - 1])
         dy = float(self.__Y_source__[position] - self.__Y_source__[position - 1])
-        return self.__Y_source__[position - 1] + (dy / dx) * (
-            x - self.__X_source__[position - 1]
-        )
+        return self.__Y_source__[position - 1] + (dy / dx) * (x - self.__X_source__[position - 1])
 
     def MMQ(self, ordem=5):
         """
@@ -402,9 +393,7 @@ class Function:
                     if j == 0:
                         B[i] += self.__Y_source__[k] * G[i](self.__X_source__[k])
 
-        root = np.linalg.solve(
-            A, B
-        )  # Resolução do sistema linear para o cálculo dos coeficientes.
+        root = np.linalg.solve(A, B)  # Resolução do sistema linear para o cálculo dos coeficientes.
 
         # Criação da função interpoladora com os coeficientes calculados.
         def f(x):
@@ -437,13 +426,9 @@ class Function:
                 def l(x):
                     lx = 1
                     for j in range(0, k):
-                        lx *= (x - self.__X_source__[j]) / (
-                            self.__X_source__[k] - self.__X_source__[j]
-                        )
+                        lx *= (x - self.__X_source__[j]) / (self.__X_source__[k] - self.__X_source__[j])
                     for j in range(k + 1, len(n)):
-                        lx *= (x - self.__X_source__[j]) / (
-                            self.__X_source__[k] - self.__X_source__[j]
-                        )
+                        lx *= (x - self.__X_source__[j]) / (self.__X_source__[k] - self.__X_source__[j])
                     return self.__Y_source__[k] * lx
 
                 p += l(x)
@@ -482,11 +467,7 @@ class Function:
             b[0] = 6 / h1 * ((self.__Y_source__[1] - self.__Y_source__[0]) / h1 - di)
             M[n - 1][n - 2] = 1
             M[n - 1][n - 1] = 2
-            b[n - 1] = (
-                6
-                / hn
-                * (df - (self.__Y_source__[n - 1] - self.__Y_source__[n - 2]) / hn)
-            )
+            b[n - 1] = 6 / hn * (df - (self.__Y_source__[n - 1] - self.__Y_source__[n - 2]) / hn)
         else:
             M[0][0] = 1
             b[0] = 0
@@ -508,14 +489,8 @@ class Function:
             y = (
                 (xi - x) / hi * self.__Y_source__[position - 1]
                 + (x - xi1) / hi * self.__Y_source__[position]
-                + hi**2
-                / 6
-                * (((xi - x) / hi) ** 3 - (xi - x) / hi)
-                * self.cubicSMi[position - 1]
-                + hi**2
-                / 6
-                * (((x - xi1) / hi) ** 3 - (x - xi1) / hi)
-                * self.cubicSMi[position]
+                + hi**2 / 6 * (((xi - x) / hi) ** 3 - (xi - x) / hi) * self.cubicSMi[position - 1]
+                + hi**2 / 6 * (((x - xi1) / hi) ** 3 - (x - xi1) / hi) * self.cubicSMi[position]
             )
             return y
 
@@ -558,9 +533,7 @@ class Function:
         if x_index == 0:
             h = self.__X_source__[x_index + 1] - self.__X_source__[x_index]
             df = (
-                -self.__Y_source__[x_index + 2]
-                + 4 * self.__Y_source__[x_index + 1]
-                - 3 * self.__Y_source__[x_index]
+                -self.__Y_source__[x_index + 2] + 4 * self.__Y_source__[x_index + 1] - 3 * self.__Y_source__[x_index]
             ) / (2 * h)
             return df
 
@@ -568,9 +541,7 @@ class Function:
         elif x_index == len(self.__X_source__) - 1:
             h = self.__X_source__[x_index] - self.__X_source__[x_index - 1]
             df = (
-                3 * self.__Y_source__[x_index]
-                - 4 * self.__Y_source__[x_index - 1]
-                + self.__Y_source__[x_index - 2]
+                3 * self.__Y_source__[x_index] - 4 * self.__Y_source__[x_index - 1] + self.__Y_source__[x_index - 2]
             ) / (2 * h)
             return df
 

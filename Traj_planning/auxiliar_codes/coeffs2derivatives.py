@@ -68,9 +68,7 @@ def get_crackle(coefs, t):
 
     for i in range(order):
         if i > 4:  # discard the constant, linear, quadratic, cubic and quartic terms
-            crackle += (
-                i * (i - 1) * (i - 2) * (i - 3) * (i - 4) * coefs[i] * t ** (i - 5)
-            )
+            crackle += i * (i - 1) * (i - 2) * (i - 3) * (i - 4) * coefs[i] * t ** (i - 5)
     return crackle
 
 

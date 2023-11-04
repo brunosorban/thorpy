@@ -69,9 +69,7 @@ def fun_R(x, u):
     return u_dot
 
 
-def traj_post_processing(
-    Px_coeffs, Py_coeffs, Pz_coeffs, t, env_params, rocket_params, controller_params
-):
+def traj_post_processing(Px_coeffs, Py_coeffs, Pz_coeffs, t, env_params, rocket_params, controller_params):
     """This function computes the trajectory parameters for the 2D case using differential flatness.
         One shall mind that the polinomials are for the trajectory of the oscillation point, but the
         returned variables are converted for the center of gravity of the rocket.
@@ -148,15 +146,9 @@ def traj_post_processing(
         sy_o[i0:i1] = snap_processor(Py_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
         sz_o[i0:i1] = snap_processor(Pz_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
 
-        cx_o[i0:i1] = crackle_processor(
-            Px_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1]
-        )
-        cy_o[i0:i1] = crackle_processor(
-            Py_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1]
-        )
-        cz_o[i0:i1] = crackle_processor(
-            Pz_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1]
-        )
+        cx_o[i0:i1] = crackle_processor(Px_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
+        cy_o[i0:i1] = crackle_processor(Py_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
+        cz_o[i0:i1] = crackle_processor(Pz_coeffs[:, i], [t[i], t[i + 1]], t_list[i0:i1])
 
     e3bx = np.zeros_like(t_list)
     e3by = np.zeros_like(t_list)
@@ -331,20 +323,19 @@ def traj_post_processing(
         e3b_t = np.array([e3bx[i], e3by[i], e3bz[i]])
         f1[i] = -J * omega_dot_body[1, i] / l_tvc
         f2[i] = J * omega_dot_body[0, i] / l_tvc
-        f3[i] = m * e3b_t @ np.array([ax_o[i], ay_o[i], az_o[i] + g]).T + (
-            J / l_tvc
-        ) * (omega_body[0, i] ** 2 + omega_body[1, i] ** 2)
+        f3[i] = m * e3b_t @ np.array([ax_o[i], ay_o[i], az_o[i] + g]).T + (J / l_tvc) * (
+            omega_body[0, i] ** 2 + omega_body[1, i] ** 2
+        )
         f[i] = np.sqrt(f1[i] ** 2 + f2[i] ** 2 + f3[i] ** 2)
 
-        temp = m * Ri_dot.T @ np.array(
-            [ax_o[i], ay_o[i], az_o[i] + g]
-        ).T + m * Ri.T @ np.array([jx_o[i], jy_o[i], jz_o[i]])
+        temp = m * Ri_dot.T @ np.array([ax_o[i], ay_o[i], az_o[i] + g]).T + m * Ri.T @ np.array(
+            [jx_o[i], jy_o[i], jz_o[i]]
+        )
 
         f1_dot[i] = -(J / l_tvc) * omega_dot_dot_body[1, i]
         f2_dot[i] = (J / l_tvc) * omega_dot_dot_body[0, i]
         f3_dot[i] = temp[2] + (J / l_tvc) * (
-            2 * omega_body[0, i] * omega_dot_body[0, i]
-            + 2 * omega_body[1, i] * omega_dot_body[1, i]
+            2 * omega_body[0, i] * omega_dot_body[0, i] + 2 * omega_body[1, i] * omega_dot_body[1, i]
         )
         f_dot[i] = (f1[i] * f1_dot[i] + f2[i] * f2_dot[i] + f3[i] * f3_dot[i]) / f[i]
 

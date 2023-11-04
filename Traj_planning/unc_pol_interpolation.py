@@ -68,14 +68,10 @@ def unconstrained_pol_interpolation(states, num_intervals=100):
 
     F_pos = ca.Function("F_pos", [coefs, t], [pos], ["[p0:p3]", "[t]"], ["position"])
     F_vel = ca.Function("F_vel", [coefs, t], [vel], ["[p0:p3]", "[t]"], ["velocity"])
-    F_acc = ca.Function(
-        "F_acc", [coefs, t], [acc], ["[p0:p3]", "[t]"], ["acceleration"]
-    )
+    F_acc = ca.Function("F_acc", [coefs, t], [acc], ["[p0:p3]", "[t]"], ["acceleration"])
     F_jerk = ca.Function("F_jerk", [coefs, t], [jerk], ["[p0:p3]", "[t]"], ["jerk"])
     F_snap = ca.Function("F_snap", [coefs, t], [snap], ["[p0:p3]", "[t]"], ["snap"])
-    F_crackle = ca.Function(
-        "F_crackle", [coefs, t], [crackle], ["[p0:p3]", "[t]"], ["crackle"]
-    )
+    F_crackle = ca.Function("F_crackle", [coefs, t], [crackle], ["[p0:p3]", "[t]"], ["crackle"])
 
     #######################################
     ##### interpolate the polinomial ######
@@ -131,9 +127,7 @@ def unconstrained_pol_interpolation(states, num_intervals=100):
         opti.subject_to(F_snap(pol_coeffs[:, i - 1], 1) == F_snap(pol_coeffs[:, i], 0))
 
         # add crackle constraints
-        opti.subject_to(
-            F_crackle(pol_coeffs[:, i - 1], 1) == F_crackle(pol_coeffs[:, i], 0)
-        )
+        opti.subject_to(F_crackle(pol_coeffs[:, i - 1], 1) == F_crackle(pol_coeffs[:, i], 0))
 
     # define cost function
     obj = 0

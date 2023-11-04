@@ -23,9 +23,7 @@ def compute_omega(x_dot_dot, y_dot_dot, z_dot_dot, x_3dot, y_3dot, z_3dot, g):
     wx = -g * y_3dot - y_3dot * z_dot_dot + y_dot_dot * z_3dot
     wy = g * x_3dot + x_3dot * z_dot_dot - x_dot_dot * z_3dot
     wz = -x_3dot * y_dot_dot + x_dot_dot * y_3dot
-    e = ca.vertcat(
-        wx / ca.norm_2(t) ** 2, wy / ca.norm_2(t) ** 2, wz / ca.norm_2(t) ** 2
-    )
+    e = ca.vertcat(wx / ca.norm_2(t) ** 2, wy / ca.norm_2(t) ** 2, wz / ca.norm_2(t) ** 2)
 
     return e
 

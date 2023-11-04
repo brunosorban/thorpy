@@ -20,7 +20,7 @@ def compute_f1f2f3(
     params,
 ):
     """This function computes the f1, f2 and f3 forces, which are used in the differential flatness approach.
-    The f1 and f2 forces are always perpendicular to the z axis, the f3 force is always parallel to the z axis. 
+    The f1 and f2 forces are always perpendicular to the z axis, the f3 force is always parallel to the z axis.
 
     Args:
         x_dot_dot (_type_): acceleration in the x direction
@@ -35,7 +35,7 @@ def compute_f1f2f3(
         x_5dot (_type_): crackle in the x direction
         y_5dot (_type_): crackle in the y direction
         z_5dot (_type_): crackle in the z direction
-        params (_type_): dictionary containing the parameters of the rocket. Currently mass (m), inertia in x and y (J), 
+        params (_type_): dictionary containing the parameters of the rocket. Currently mass (m), inertia in x and y (J),
         distance between the thruster and the center of mass (l_tvc) and gravity (g) are used.
 
     Returns:
@@ -102,8 +102,8 @@ def compute_f1f2f3(
 
     f1_dot = -J / l_tvc * omega_dot_dot_2
     f2_dot = J / l_tvc * omega_dot_dot_1
-    f3_dot = m * (
-        x_dot_dot * x_3dot + y_dot_dot * y_3dot + (z_dot_dot + g) * z_3dot
-    ) / ca.norm_2(t) + 2 * J / l_tvc * (omega_1 * omega_dot_1 + omega_2 * omega_dot_2)
+    f3_dot = m * (x_dot_dot * x_3dot + y_dot_dot * y_3dot + (z_dot_dot + g) * z_3dot) / ca.norm_2(t) + 2 * J / l_tvc * (
+        omega_1 * omega_dot_1 + omega_2 * omega_dot_2
+    )
 
     return f1, f2, f3, f1_dot, f2_dot, f3_dot
