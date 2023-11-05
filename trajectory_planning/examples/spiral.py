@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def generate_spiral(radius, height, num_turns, num_points):
     theta = np.linspace(0, 2 * np.pi * num_turns, num_points)  # Angle values
     z = np.linspace(0, height * num_turns, num_points)  # Height values

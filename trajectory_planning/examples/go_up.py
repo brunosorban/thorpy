@@ -1,4 +1,5 @@
 import numpy as np
+
 target_points = np.array(
     [
         [0, 0, 0],

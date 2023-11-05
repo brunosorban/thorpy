@@ -154,7 +154,7 @@ def unconstrained_pol_interpolation(states, num_intervals=100):
         "ipopt.print_level": 0,
         "print_time": False,
     }
-    
+
     # select the desired solver
     opti.solver("ipopt", ipopt_options)
 
@@ -170,5 +170,5 @@ def unconstrained_pol_interpolation(states, num_intervals=100):
         )
 
     sol = opti.solve()
-    
+
     return sol.value(pol_coeffs), time_points

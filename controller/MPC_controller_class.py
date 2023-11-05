@@ -4,6 +4,7 @@ from math_tools.RK4 import RK4
 from controller.plot_simulation import plot_simulation
 from math_tools.data_handler_class import DataHandler
 
+
 class MPC_controller:
     """
     Class to implement the MPC controller.
@@ -456,7 +457,7 @@ class MPC_controller:
                 self.plot_horizon_online(t, np.array(x_list), [thrust, delta_tvc_y, delta_tvc_z], u, horizon)
 
         print("Simulation finished")
-        
+
         self.t = t
         self.x_list = x_list
         self.thrust = thrust
@@ -472,10 +473,17 @@ class MPC_controller:
             np.array(state_horizon_list),
             np.array(control_horizon_list),
         )
-    
+
     def plot_simulation(self):
-        plot_simulation(self.t, self.x_list, [self.thrust, self.delta_tvc_y, self.delta_tvc_z], self.trajectory_params, self.controller_params, self.epos_list)
-        
+        plot_simulation(
+            self.t,
+            self.x_list,
+            [self.thrust, self.delta_tvc_y, self.delta_tvc_z],
+            self.trajectory_params,
+            self.controller_params,
+            self.epos_list,
+        )
+
     def export_simulation(self, folder_path: str, file_name: str):
         sol_dict = {
             "t": self.t,

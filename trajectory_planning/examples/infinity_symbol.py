@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def generate_infinity_symbol(length, height_variation, num_points):
     theta = np.linspace(-np.pi, np.pi, num_points, endpoint=True)  # Angle values
     x = length * np.sin(theta)

@@ -2,7 +2,8 @@ import warnings
 import numpy as np
 
 # Suppress RankWarning
-warnings.simplefilter('ignore', np.RankWarning)
+warnings.simplefilter("ignore", np.RankWarning)
+
 
 def estimate_coeffs(time, points, n):
     """Estimate coefficients of a polynomial of nth order. n is calculated based on the number of points.

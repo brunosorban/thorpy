@@ -11,6 +11,7 @@ sys.path.append("../trajectory_planning")
 
 from math_tools.RK4 import RK4
 
+
 class DriftChecker:
     def __init__(self, env_params, rocket_params, trajectory_params):
         # Initialize class attributes for environment and rocket parameters
@@ -21,7 +22,7 @@ class DriftChecker:
         self.J_2 = rocket_params["J_2"]
         self.J_3 = rocket_params["J_3"]
         self.trajectory_params = trajectory_params
-        
+
         self.drift_checker()
 
     def _plot_states(self):
@@ -192,7 +193,6 @@ class DriftChecker:
 
         plt.show()
 
-
     ############################ Vee map operation #################################
     def vee(self, in_mat):
         """
@@ -206,7 +206,6 @@ class DriftChecker:
         """
         out_vec = np.array([in_mat[2, 1], in_mat[0, 2], in_mat[1, 0]])
         return out_vec
-
 
     ######################### Creating the EOM ##############################
     def ode(self, last_sol, u):
@@ -254,7 +253,6 @@ class DriftChecker:
             ]
         )
         return sol
-
 
     ########################## Numerical integration ###############################
     def drift_checker(self, plot=False):
