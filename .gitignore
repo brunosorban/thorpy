@@ -15,3 +15,5 @@ __pycache__
 Traj_planning/examples/data/
 Traj_planning/examples/plots/
 pyproject.toml
+/__backup__/
+*.json

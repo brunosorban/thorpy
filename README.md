@@ -1,16 +1,8 @@
 # Rocket Control Framework
 
 ## Description
-This is a Python implementation of an optimal trajectory controller using the CasADi library. The controller is designed to compute optimal control inputs that track a reference trajectory while satisfying constraints on the system dynamics and control inputs.
-
-The code is organized into several modules:
-
-Function.py: Defines a class to deal with functions in R1.
-RK4.py: Implements the Runge-Kutta 4th order numerical integration method for simulating the system dynamics.
-Flight.py: Contains a Flight class that defines the simulation environment.
-MPC_controller.py: Implements the optimal trajectory controller using the Model Predictive Control (MPC) framework and CasADi optimization.
-simulation.py: Sets up the simulation environment using the Flight class and runs the MPC controller to generate the optimal control inputs for the system. (Curently the simulation is being runned inside the controller defined in CasADi)
-animate.py: Animates the simulation results using matplotlib and pygame.
+This repositry comprises two main projects: a trajectory generation framework and a trajectory tracking controller. The trajectory generation framework was developed using differential flatness theory and the trajectory tracking controller was developed using the Model Predictive Control (MPC) framework. The trajectory generation framework is capable of generating trajectories for a rocket with a thrust vectoring system that satisfy the system's dynamics and constraints. The trajectory tracking controller is capable of computing optimal control inputs that track a reference trajectory while satisfying constraints on the system dynamics and control inputs.
+For the optimization the CasADi library was adopted. The controller is designed to compute optimal control inputs that track a reference trajectory while satisfying constraints on the system dynamics and control inputs.
 
 The controller is built using the MPC framework, which solves a constrained optimization problem at each time step to compute the optimal control inputs for the next time step. The optimization problem is formulated using CasADi, a powerful tool for numerical optimization and automatic differentiation.
 
@@ -25,20 +17,32 @@ Depending on what you are making, it can be a good idea to include screenshots o
 ![Animation of the optimal trajectory](Videos/animation.gif)
 
 ## Installation
-Currently, just clone the repository.
-
-## Usage
-The simulation can be run via the command line using the following command:
+One may install the required packages using the following command:
 
 ```bash
-python simulation.py
+pip install hopper_traj
 ```
+
+Alternatively, one may clone the repository and install the required packages using the following commands:
+
+```bash
+pip install -r requirements.txt
+```
+
+To install the requirements, and to install the library, one may use the following command:
+
+```bash
+pip install -e .
+```
+
+## Usage
+Examples of both trajectory generation and controller simulation can be found in the examples folder. There are Jupyter Notebooks showing how the workflow was meant to be used.
 
 ## Support
 For any questions or suggestions, please contact me at:
 - Email: bruno.sorban@tum.de or brunosorban@gmail.com
 
-## Roadmap
+## Roadmap for future contributions
 This project is still in development. The next steps are:
 
 - Implement a more realistic model of the system dynamics.
@@ -47,11 +51,7 @@ This project is still in development. The next steps are:
         - Include the effects of wind.
 
     - Equations of Motion:
-        - More degrees of freedom.
         - Mass variation / Fuel consumption.
-
-    - Thrust Vectoring system:
-        - Include the system as a 1st order dynamics, both from force and moment perspective.
 
 - Implement a more realistic simulation environment per se
     - Include the effects of wind.
@@ -64,7 +64,7 @@ Thank you for your interest in contributing to this project! Currently we have n
 I would like to express my gratitude to my mentors, Jon Arrizabalaga and Felix Ebert, for their guidance and support throughout this project. Their expertise and insights have been invaluable in this project and it's results.
 
 ## License
-Currenty, no license.
+This project is licensed under the MIT License - see the LICENSE.md file for details
 
 ## Project status
-Under development.
+Concluded.

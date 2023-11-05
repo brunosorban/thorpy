@@ -20,11 +20,13 @@ def animate_traj(
     trajectory_params,
     duration=15,
     save=True,
+    file_name="rocket.mp4",
+    directory="",
 ):
-    if save:
-        w = imageio.get_writer("Videos/rocket.mp4", format="FFMPEG", fps=60)
-
     fps = 60
+    if save:
+        w = imageio.get_writer(f"{directory}/{file_name}", format="FFMPEG", fps=fps)
+
     time_list = np.linspace(0, t[-1], duration * fps)
 
     x_ref = trajectory_params["x"]
@@ -233,8 +235,8 @@ def animate_traj(
         mlab.process_ui_events()
 
         if save:
-            mlab.savefig(filename="Videos/temp.jpg")
-            w.append_data(imageio.imread("Videos/temp.jpg"))
+            mlab.savefig(filename=f"{directory}/temp.jpg")
+            w.append_data(imageio.imread(f"{directory}/temp.jpg"))
 
     if save:
         w.close()
