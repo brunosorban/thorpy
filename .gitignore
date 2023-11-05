@@ -9,3 +9,11 @@ __pycache__
 /testing
 /performance_estimation/
 /notebooks/
+**/plots.py
+**/plots_compare.py
+**/plots_controller.py
+Traj_planning/examples/data/
+Traj_planning/examples/plots/
+pyproject.toml
+/__backup__/
+*.json

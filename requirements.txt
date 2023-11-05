@@ -3,6 +3,11 @@ scipy>=1.0
 matplotlib>=3.0
 ipywidgets>=7.6.3
 sympy
-plotly
 mayavi
 imageio
+typing
+copy
+os
+casadi
+sys
+json

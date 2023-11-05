@@ -20,11 +20,13 @@ def animate_traj(
     trajectory_params,
     duration=15,
     save=True,
+    file_name="rocket.mp4",
+    directory="",
 ):
-    if save:
-        w = imageio.get_writer("Videos/rocket.mp4", format="FFMPEG", fps=60)
-
     fps = 60
+    if save:
+        w = imageio.get_writer(f"{directory}/{file_name}", format="FFMPEG", fps=fps)
+
     time_list = np.linspace(0, t[-1], duration * fps)
 
     x_ref = trajectory_params["x"]
@@ -73,18 +75,14 @@ def animate_traj(
 
     # Ground plane
     ground_size = 10 * height_body
-    ground_x, ground_y = np.mgrid[
-        -ground_size:ground_size:0.5, -ground_size:ground_size:0.5
-    ]
+    ground_x, ground_y = np.mgrid[-ground_size:ground_size:0.5, -ground_size:ground_size:0.5]
     ground_z = np.zeros_like(ground_x) - x_cm
     mlab.mesh(ground_x, ground_y, ground_z, color=(0.5, 0.5, 0.5))
     # Plot reference trajectory
     mlab.plot3d(x_ref, y_ref, z_ref, color=(0, 0, 1), tube_radius=0.1)
 
     # Plot reference orientation vectors sampled every 3 seconds
-    step = max(
-        1, 3 * int(len(x_ref) / len(x))
-    )  # Assuming equal time steps for both trajectories
+    step = max(1, 3 * int(len(x_ref) / len(x)))  # Assuming equal time steps for both trajectories
     mlab.quiver3d(
         x_ref[::step],
         y_ref[::step],
@@ -129,18 +127,14 @@ def animate_traj(
 
     # Initial camera view settings
     azimuth = 45  # rotation around the up axis
-    elevation = 1.5 * np.rad2deg(
-        np.arctan(1 / np.sqrt(2))
-    )  # elevation angle (90 means top-down view)
+    elevation = 1.5 * np.rad2deg(np.arctan(1 / np.sqrt(2)))  # elevation angle (90 means top-down view)
     initial_distance = 2 * ground_size  # initial distance from the focal point
 
     mlab.view(azimuth=azimuth, elevation=elevation, distance=initial_distance)
 
     ############## Define auxiliar functions ##############
     # Function to apply rotation in the body frame around the center of mass
-    def apply_center_of_mass_rotation(
-        X, Y, Z, rotation_matrix, x_translation, y_translation, z_translation, x_cm
-    ):
+    def apply_center_of_mass_rotation(X, Y, Z, rotation_matrix, x_translation, y_translation, z_translation, x_cm):
         # Translate so that center of mass is at the origin
         X_origin = X
         Y_origin = Y
@@ -204,15 +198,9 @@ def animate_traj(
         )
 
         # Normalize vectors
-        rotation_matrix[0, :] = rotation_matrix[0, :] / np.linalg.norm(
-            rotation_matrix[0, :]
-        )
-        rotation_matrix[1, :] = rotation_matrix[1, :] / np.linalg.norm(
-            rotation_matrix[1, :]
-        )
-        rotation_matrix[2, :] = rotation_matrix[2, :] / np.linalg.norm(
-            rotation_matrix[2, :]
-        )
+        rotation_matrix[0, :] = rotation_matrix[0, :] / np.linalg.norm(rotation_matrix[0, :])
+        rotation_matrix[1, :] = rotation_matrix[1, :] / np.linalg.norm(rotation_matrix[1, :])
+        rotation_matrix[2, :] = rotation_matrix[2, :] / np.linalg.norm(rotation_matrix[2, :])
 
         # Update ball position
         # Update the ball position according to the center of gravity
@@ -240,19 +228,15 @@ def animate_traj(
         )
 
         # Update rocket meshes with new coordinates
-        rocket_nose.mlab_source.set(
-            x=X_nose_rotated, y=Y_nose_rotated, z=Z_nose_rotated
-        )
-        rocket_body.mlab_source.set(
-            x=X_body_rotated, y=Y_body_rotated, z=Z_body_rotated
-        )
+        rocket_nose.mlab_source.set(x=X_nose_rotated, y=Y_nose_rotated, z=Z_nose_rotated)
+        rocket_body.mlab_source.set(x=X_body_rotated, y=Y_body_rotated, z=Z_body_rotated)
         # ball.mlab_source.set(x=x_translation, y=y_translation, z=z_translation)
 
         mlab.process_ui_events()
 
         if save:
-            mlab.savefig(filename="Videos/temp.jpg")
-            w.append_data(imageio.imread("Videos/temp.jpg"))
+            mlab.savefig(filename=f"{directory}/temp.jpg")
+            w.append_data(imageio.imread(f"{directory}/temp.jpg"))
 
     if save:
         w.close()
