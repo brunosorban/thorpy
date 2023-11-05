@@ -1,70 +1,62 @@
+
 # Rocket Control Framework
 
 ## Description
-This repositry comprises two main projects: a trajectory generation framework and a trajectory tracking controller. The trajectory generation framework was developed using differential flatness theory and the trajectory tracking controller was developed using the Model Predictive Control (MPC) framework. The trajectory generation framework is capable of generating trajectories for a rocket with a thrust vectoring system that satisfy the system's dynamics and constraints. The trajectory tracking controller is capable of computing optimal control inputs that track a reference trajectory while satisfying constraints on the system dynamics and control inputs.
-For the optimization the CasADi library was adopted. The controller is designed to compute optimal control inputs that track a reference trajectory while satisfying constraints on the system dynamics and control inputs.
+This repository encompasses two primary projects: a trajectory generation framework and a trajectory tracking controller. The trajectory generation framework is rooted in differential flatness theory, while the trajectory tracking controller leverages the Model Predictive Control (MPC) methodology. Designed to accommodate rockets equipped with thrust vectoring systems, the trajectory generation framework proficiently generates trajectories that adhere to the system's dynamics and constraints. Concurrently, the trajectory tracking controller computes optimal control inputs that faithfully track a reference trajectory while conforming to the system dynamics and control input constraints.
 
-The controller is built using the MPC framework, which solves a constrained optimization problem at each time step to compute the optimal control inputs for the next time step. The optimization problem is formulated using CasADi, a powerful tool for numerical optimization and automatic differentiation.
+For optimization purposes, the CasADi library has been integrated. This controller, anchored in the MPC framework, systematically solves a constrained optimization problem at each time step to determine the most suitable control inputs for the subsequent time step. Formulated using CasADi, this framework serves as a potent instrument for numerical optimization and automatic differentiation.
 
-The goal of this project is to derive an optimal controller for a hopper capable to compute safe trajectories, without compromising the system's dynamics and other constraints, such as hardware limits or spatial bounds. The computation of the control commands is based on a performance criterion, currently, minimizing a quadratic cost function that considers position error and energy efficiency. 
-<!-- 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method. -->
-
-![Animation of the optimal trajectory](Videos/animation.gif)
+The overarching aim of this project is to devise an optimal controller for a hopper, ensuring the computation of safe trajectories without violating the system's dynamics or other constraints, such as hardware limitations or spatial bounds. The control commands are derived based on a performance criterion, presently focused on minimizing a quadratic cost function that accounts for position error and energy efficiency.
 
 ## Installation
-One may install the required packages using the following command:
+The necessary packages can be installed using the command:
 
 ```bash
 pip install hopper_traj
 ```
 
-Alternatively, one may clone the repository and install the required packages using the following commands:
+Alternatively, one can clone the repository and install the necessary packages using:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-To install the requirements, and to install the library, one may use the following command:
+To install the requirements and the library, the following command can be utilized:
 
 ```bash
 pip install -e .
 ```
 
 ## Usage
-Examples of both trajectory generation and controller simulation can be found in the examples folder. There are Jupyter Notebooks showing how the workflow was meant to be used.
+The examples folder contains instances of both trajectory generation and controller simulation. Jupyter Notebooks are available to demonstrate the intended workflow.
 
 ## Support
-For any questions or suggestions, please contact me at:
+For inquiries or suggestions, please reach out at:
 - Email: bruno.sorban@tum.de or brunosorban@gmail.com
 
-## Roadmap for future contributions
-This project is still in development. The next steps are:
+## Roadmap for Future Contributions
+This project is a work in progress. Forthcoming developments include:
 
-- Implement a more realistic model of the system dynamics.
-    - Aerodynamics
-        - Include the effects of drag and lift.
-        - Include the effects of wind.
+- Incorporating a more complete model of the system dynamics:
+    - Aerodynamics:
+        - Integration of drag and lift effects.
+        - Inclusion of wind effects.
 
     - Equations of Motion:
-        - Mass variation / Fuel consumption.
+        - Accounting for mass variation/fuel consumption.
 
-- Implement a more realistic simulation environment per se
-    - Include the effects of wind.
-    - Include the effects of the atmosphere.
+- Enhancing the simulation environment:
+    - Considering in wind effects.
+    - Considering atmospheric influences.
 
 ## Contributing
-Thank you for your interest in contributing to this project! Currently we have no guidelines for external aditions, but feel free to contact me if you have any suggestions or ideas.
+Interest in contributing to this project is greatly appreciated! While there are currently no formal guidelines for external additions, please don't hesitate to reach out if any proposals or ideas are present.
 
 ## Acknowledgments
-I would like to express my gratitude to my mentors, Jon Arrizabalaga and Felix Ebert, for their guidance and support throughout this project. Their expertise and insights have been invaluable in this project and it's results.
+Heartfelt thanks go to the mentors, Jon Arrizabalaga and Felix Ebert, for their invaluable guidance and support throughout this project. Their expertise and insights have been instrumental in achieving the results of this endeavor.
 
 ## License
-This project is licensed under the MIT License - see the LICENSE.md file for details
+This project is licensed under the MIT License - see the LICENSE.md file for details.
 
-## Project status
+## Project Status
 Concluded.
