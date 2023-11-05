@@ -1,13 +1,7 @@
 numpy>=1.0
 scipy>=1.0
 matplotlib>=3.0
-ipywidgets>=7.6.3
 sympy
 mayavi
 imageio
-typing
-copy
-os
 casadi
-sys
-json

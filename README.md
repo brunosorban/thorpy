@@ -12,7 +12,7 @@ The overarching aim of this project is to devise an optimal controller for a hop
 The necessary packages can be installed using the command:
 
 ```bash
-pip install hopper_traj
+pip install hopper-traj
 ```
 
 Alternatively, one can clone the repository and install the necessary packages using:

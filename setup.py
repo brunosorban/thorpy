@@ -2,22 +2,16 @@ from setuptools import setup, find_packages
 
 setup(
     name="hopper_traj",
-    version="0.1",
+    version="0.1.1",
     packages=find_packages(),
     install_requires=[
         "numpy",
         "scipy",
         "matplotlib",
-        "ipywidgets",
         "sympy",
         "mayavi",
         "imageio",
-        "typing",
-        "copy",
-        "os",
         "casadi",
-        "sys",
-        "json",
     ],
     # Metadata
     author="Bruno Sorban",

@@ -17,3 +17,6 @@ Traj_planning/examples/plots/
 pyproject.toml
 /__backup__/
 *.json
+/hopper_traj.egg-info/
+/build/
+/dist/
