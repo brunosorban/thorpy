@@ -11,16 +11,10 @@ The overarching aim of this project is to devise an optimal controller for a hop
 The necessary packages can be installed using the command:
 
 ```bash
-pip install hopper-traj
-```
-
-Alternatively, one can clone the repository and install the necessary packages using:
-
-```bash
 pip install -r requirements.txt
 ```
 
-To install the requirements and the library, the following command can be utilized:
+To install the the library, clone the repository and use the following command:
 
 ```bash
 pip install -e .
