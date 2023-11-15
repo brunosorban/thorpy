@@ -8,13 +8,13 @@ For optimization purposes, the CasADi library has been integrated. This controll
 The overarching aim of this project is to devise an optimal controller for a hopper, ensuring the computation of safe trajectories without violating the system's dynamics or other constraints, such as hardware limitations or spatial bounds. The control commands are derived based on a performance criterion, presently focused on minimizing a quadratic cost function that accounts for position error and energy efficiency.
 
 ## Installation
-The necessary packages can be installed using the command:
+The first step is to clone the repository to the local machine. Navigate to the project folder and type following command to install the dependent libraries:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-To install the the library, clone the repository and use the following command:
+Then use the following command to install the library:
 
 ```bash
 pip install -e .
