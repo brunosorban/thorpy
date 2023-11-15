@@ -1,5 +1,4 @@
-
-# Rocket Control Framework
+# Trajectory of Hopper Rockets (THoRPy)
 
 ## Description
 This repository encompasses two primary projects: a trajectory generation framework and a trajectory tracking controller. The trajectory generation framework is rooted in differential flatness theory, while the trajectory tracking controller leverages the Model Predictive Control (MPC) methodology. Designed to accommodate rockets equipped with thrust vectoring systems, the trajectory generation framework proficiently generates trajectories that adhere to the system's dynamics and constraints. Concurrently, the trajectory tracking controller computes optimal control inputs that faithfully track a reference trajectory while conforming to the system dynamics and control input constraints.
